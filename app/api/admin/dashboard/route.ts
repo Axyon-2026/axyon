@@ -52,14 +52,30 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
+    let verifiedUsers = 0;
+    let openTickets = 0;
+    let openReports = 0;
+
+    for (const user of users) {
+      if (user.emailVerified) verifiedUsers++;
+    }
+
+    for (const ticket of supportTickets) {
+      if (ticket.status === "OPEN") openTickets++;
+    }
+
+    for (const report of reports) {
+      if (report.status === "OPEN") openReports++;
+    }
+
     return NextResponse.json({
       stats: {
         totalUsers: users.length,
         totalProducts: products.length,
         totalOrders: orders.length,
-        verifiedUsers: users.filter((u) => u.emailVerified).length,
-        openTickets: supportTickets.filter((t) => t.status === "OPEN").length,
-        openReports: reports.filter((r) => r.status === "OPEN").length,
+        verifiedUsers,
+        openTickets,
+        openReports,
       },
       users,
       products,
