@@ -1,0 +1,179 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum ProductStatus {
+  AVAILABLE
+  SOLD
+  REMOVED
+}
+
+model User {
+  id              String   @id @default(cuid())
+  name            String
+  email           String   @unique
+  password        String
+
+  role            Role     @default(STUDENT)
+
+  college         String?
+  phone           String?
+
+  isVerified      Boolean  @default(false)
+  emailVerified   Boolean  @default(false)
+  verifyToken     String?
+
+  resetToken      String?
+  resetExpiresAt  DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  products        Product[]
+
+  profileImageUrl String?
+
+  isSuspended     Boolean @default(false)
+  strikeCount     Int @default(0)
+
+  collegeIdNumber String?
+  collegeIdImageUrl String?
+  studentVerified Boolean @default(false)
+  studentVerificationStatus String @default("NOT_SUBMITTED")
+}
+
+model College {
+  id         String    @id @default(cuid())
+  name       String    @unique
+  city       String
+  state      String
+  isApproved Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime? @updatedAt
+}
+
+model CollegeRequest {
+  id          String    @id @default(cuid())
+  collegeName String
+  userEmail   String
+  status      String    @default("PENDING")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime? @updatedAt
+}
+
+model Product {
+  id          String        @id @default(cuid())
+
+  title       String
+  description String
+  price       Int
+
+  category    String
+  condition   String
+
+  imageUrls   String[]
+
+  status      ProductStatus @default(AVAILABLE)
+
+  sellerId    String
+  seller      User @relation(fields: [sellerId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Order {
+  id                String   @id @default(cuid())
+
+  productId         String
+  buyerId           String
+  sellerId          String
+
+  amount            Int
+
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+
+  paymentStatus     String   @default("PENDING")
+
+  cancelReason      String?
+  cancelledAt       DateTime?
+  cancelledBy       String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Conversation {
+  id         String    @id @default(cuid())
+
+  buyerId    String
+  sellerId   String
+  productId  String
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  messages   Message[]
+}
+
+model Message {
+  id              String        @id @default(cuid())
+
+  conversationId  String
+  senderId        String
+
+  text            String
+
+  createdAt       DateTime      @default(now())
+
+  conversation    Conversation  @relation(fields: [conversationId], references: [id])
+}
+
+model SupportTicket {
+  id        String   @id @default(cuid())
+  userId    String?
+  name      String
+  email     String
+  subject   String
+  message   String
+  status    String   @default("OPEN")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+model Report {
+  id          String   @id @default(cuid())
+
+  reporterId  String?
+  targetType  String
+  targetId    String
+  reason      String
+  details     String?
+
+  status      String   @default("OPEN")
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AdminLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  adminEmail String
+  action     String
+  targetType String?
+  targetId   String?
+  details    String?
+  createdAt  DateTime @default(now())
+}
