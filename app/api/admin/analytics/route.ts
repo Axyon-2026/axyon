@@ -21,7 +21,7 @@ export async function GET() {
 
    const categoryStats: Record<string, number> = {};
 
-products.forEach((product) => {
+  products.forEach((product: any) => {
   categoryStats[product.category] =
     (categoryStats[product.category] || 0) + 1;
 });
