@@ -21,44 +21,69 @@ export async function GET() {
 
     const categoryStats: Record<string, number> = {};
 
+    let verifiedStudents = 0;
+    let pendingStudentVerifications = 0;
+    let suspendedUsers = 0;
+
+    let activeListings = 0;
+    let removedListings = 0;
+
+    let pendingOrders = 0;
+    let successfulOrders = 0;
+    let cancelledOrders = 0;
+
+    let openTickets = 0;
+    let openReports = 0;
+
+    for (const user of users) {
+      if (user.studentVerified) verifiedStudents++;
+      if (user.studentVerificationStatus === "PENDING") {
+        pendingStudentVerifications++;
+      }
+      if (user.isSuspended) suspendedUsers++;
+    }
+
     for (const product of products) {
       const category = product.category || "Uncategorized";
       categoryStats[category] = (categoryStats[category] || 0) + 1;
+
+      if (product.status === "AVAILABLE") activeListings++;
+      if (product.status === "REMOVED") removedListings++;
     }
 
-    const stats = {
-      totalUsers: users.length,
-      verifiedStudents: users.filter((user) => user.studentVerified).length,
-      pendingStudentVerifications: users.filter(
-        (user) => user.studentVerificationStatus === "PENDING"
-      ).length,
-      suspendedUsers: users.filter((user) => user.isSuspended).length,
+    for (const order of orders) {
+      if (order.paymentStatus === "PENDING") pendingOrders++;
+      if (order.paymentStatus === "SUCCESS") successfulOrders++;
+      if (order.paymentStatus === "CANCELLED") cancelledOrders++;
+    }
 
-      totalListings: products.length,
-      activeListings: products.filter(
-        (product) => product.status === "AVAILABLE"
-      ).length,
-      removedListings: products.filter(
-        (product) => product.status === "REMOVED"
-      ).length,
+    for (const ticket of tickets) {
+      if (ticket.status === "OPEN") openTickets++;
+    }
 
-      totalOrders: orders.length,
-      pendingOrders: orders.filter(
-        (order) => order.paymentStatus === "PENDING"
-      ).length,
-      successfulOrders: orders.filter(
-        (order) => order.paymentStatus === "SUCCESS"
-      ).length,
-      cancelledOrders: orders.filter(
-        (order) => order.paymentStatus === "CANCELLED"
-      ).length,
-
-      openTickets: tickets.filter((ticket) => ticket.status === "OPEN").length,
-      openReports: reports.filter((report) => report.status === "OPEN").length,
-    };
+    for (const report of reports) {
+      if (report.status === "OPEN") openReports++;
+    }
 
     return NextResponse.json({
-      stats,
+      stats: {
+        totalUsers: users.length,
+        verifiedStudents,
+        pendingStudentVerifications,
+        suspendedUsers,
+
+        totalListings: products.length,
+        activeListings,
+        removedListings,
+
+        totalOrders: orders.length,
+        pendingOrders,
+        successfulOrders,
+        cancelledOrders,
+
+        openTickets,
+        openReports,
+      },
       categoryStats,
     });
   } catch (error) {
