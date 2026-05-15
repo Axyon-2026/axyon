@@ -19,14 +19,12 @@ export async function GET() {
     const tickets = await prisma.supportTicket.findMany();
     const reports = await prisma.report.findMany();
 
-    const categoryStats = products.reduce<Record<string, number>>(
-  (acc, product) => {
-    acc[product.category] = (acc[product.category] || 0) + 1;
-    return acc;
-  },
-  {}
-);
+   const categoryStats: Record<string, number> = {};
 
+products.forEach((product) => {
+  categoryStats[product.category] =
+    (categoryStats[product.category] || 0) + 1;
+});
     return NextResponse.json({
       stats: {
         totalUsers: users.length,
