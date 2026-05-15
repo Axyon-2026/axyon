@@ -19,37 +19,46 @@ export async function GET() {
     const tickets = await prisma.supportTicket.findMany();
     const reports = await prisma.report.findMany();
 
-   const categoryStats: Record<string, number> = {};
+    const categoryStats: Record<string, number> = {};
 
-  products.forEach((product: any) => {
-  categoryStats[product.category] =
-    (categoryStats[product.category] || 0) + 1;
-});
+    for (const product of products) {
+      const category = product.category || "Uncategorized";
+      categoryStats[category] = (categoryStats[category] || 0) + 1;
+    }
+
+    const stats = {
+      totalUsers: users.length,
+      verifiedStudents: users.filter((user) => user.studentVerified).length,
+      pendingStudentVerifications: users.filter(
+        (user) => user.studentVerificationStatus === "PENDING"
+      ).length,
+      suspendedUsers: users.filter((user) => user.isSuspended).length,
+
+      totalListings: products.length,
+      activeListings: products.filter(
+        (product) => product.status === "AVAILABLE"
+      ).length,
+      removedListings: products.filter(
+        (product) => product.status === "REMOVED"
+      ).length,
+
+      totalOrders: orders.length,
+      pendingOrders: orders.filter(
+        (order) => order.paymentStatus === "PENDING"
+      ).length,
+      successfulOrders: orders.filter(
+        (order) => order.paymentStatus === "SUCCESS"
+      ).length,
+      cancelledOrders: orders.filter(
+        (order) => order.paymentStatus === "CANCELLED"
+      ).length,
+
+      openTickets: tickets.filter((ticket) => ticket.status === "OPEN").length,
+      openReports: reports.filter((report) => report.status === "OPEN").length,
+    };
+
     return NextResponse.json({
-      stats: {
-        totalUsers: users.length,
-        verifiedStudents: users.filter((u) => u.studentVerified).length,
-        pendingStudentVerifications: users.filter(
-          (u) => u.studentVerificationStatus === "PENDING"
-        ).length,
-        suspendedUsers: users.filter((u) => u.isSuspended).length,
-
-        totalListings: products.length,
-        activeListings: products.filter((p) => p.status === "AVAILABLE").length,
-        removedListings: products.filter((p) => p.status === "REMOVED").length,
-
-        totalOrders: orders.length,
-        pendingOrders: orders.filter((o) => o.paymentStatus === "PENDING")
-          .length,
-        successfulOrders: orders.filter((o) => o.paymentStatus === "SUCCESS")
-          .length,
-        cancelledOrders: orders.filter((o) => o.paymentStatus === "CANCELLED")
-          .length,
-
-        openTickets: tickets.filter((t) => t.status === "OPEN").length,
-        openReports: reports.filter((r) => r.status === "OPEN").length,
-      },
-
+      stats,
       categoryStats,
     });
   } catch (error) {
