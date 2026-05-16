@@ -6,46 +6,91 @@ import { NextResponse } from "next/server";
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("axyon_token")?.value;
+
+    const token =
+      cookieStore.get("axyon_token")?.value;
 
     if (!token) {
       return NextResponse.json(
-        { message: "Not logged in" },
-        { status: 401 }
+        {
+          message: "Not authenticated",
+        },
+        {
+          status: 401,
+        }
       );
     }
 
-    const decoded: any = verifyToken(token);
+    const decoded: any =
+      verifyToken(token);
 
-    const user = await prisma.user.findUnique({
-      where: {
-        id: decoded.id,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        college: true,
-        phone: true,
-        isVerified: true,
-        emailVerified: true,
-        profileImageUrl: true,
-      },
-    });
+    const user =
+      await prisma.user.findUnique({
+        where: {
+          id: decoded.id,
+        },
+      });
 
     if (!user) {
       return NextResponse.json(
-        { message: "User not found" },
-        { status: 404 }
+        {
+          message: "User not found",
+        },
+        {
+          status: 404,
+        }
       );
     }
 
-    return NextResponse.json({ user });
+    return NextResponse.json({
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+
+        emailVerified:
+          user.emailVerified,
+
+        studentVerified:
+          user.studentVerified,
+
+        studentVerificationStatus:
+          user.studentVerificationStatus,
+
+        college:
+          user.college,
+
+        collegeIdNumber:
+          user.collegeIdNumber,
+
+        collegeIdImageUrl:
+          user.collegeIdImageUrl,
+
+        isSuspended:
+          user.isSuspended,
+
+        createdAt:
+          user.createdAt,
+      },
+    });
+
   } catch (error) {
-    return NextResponse.json(
-      { message: "Invalid or expired session" },
-      { status: 401 }
+
+    console.log(
+      "AUTH ME ERROR:",
+      error
     );
+
+    return NextResponse.json(
+      {
+        message:
+          "Failed to fetch user",
+      },
+      {
+        status: 500,
+      }
+    );
+
   }
 }
