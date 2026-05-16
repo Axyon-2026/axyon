@@ -26,10 +26,7 @@ export default function ProductDetailPage() {
 
         setProduct(productData.product);
 
-        if (
-          productData.product.imageUrls &&
-          productData.product.imageUrls.length > 0
-        ) {
+        if (productData.product.imageUrls?.length > 0) {
           setSelectedImage(productData.product.imageUrls[0]);
         }
 
@@ -46,15 +43,11 @@ export default function ProductDetailPage() {
       }
     }
 
-    if (id) {
-      fetchData();
-    }
+    if (id) fetchData();
   }, [id]);
 
   async function handleChat() {
     try {
-      const text = "Hi, I am interested in this product.";
-
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: {
@@ -63,7 +56,7 @@ export default function ProductDetailPage() {
         body: JSON.stringify({
           sellerId: product.seller.id,
           productId: product.id,
-          text,
+          text: "Hi, I am interested in this product.",
         }),
       });
 
@@ -81,11 +74,8 @@ export default function ProductDetailPage() {
   }
 
   async function handleDelete() {
-    const confirmDelete = confirm(
-      "Are you sure you want to delete this product?"
-    );
-
-    if (!confirmDelete) return;
+    const confirmed = confirm("Are you sure you want to delete this product?");
+    if (!confirmed) return;
 
     const res = await fetch(`/api/products/${product.id}`, {
       method: "DELETE",
@@ -110,34 +100,31 @@ export default function ProductDetailPage() {
       return;
     }
 
-    try {
-      const res = await fetch("/api/reports", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          targetType: "PRODUCT",
-          targetId: product.id,
-          reason: reason.trim(),
-          details: `Reported product: ${product.title}`,
-        }),
-      });
+    const res = await fetch("/api/reports", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        targetType: "PRODUCT",
+        targetId: product.id,
+        reason: reason.trim(),
+        details: `Reported product: ${product.title}`,
+      }),
+    });
 
-      const data = await res.json();
+    const data = await res.json();
 
-      if (!res.ok) {
-        alert(data.message || "Failed to submit report");
-        return;
-      }
-
-      alert("Product reported successfully. Admin will review it.");
-    } catch {
-      alert("Something went wrong while reporting product.");
+    if (!res.ok) {
+      alert(data.message || "Failed to submit report");
+      return;
     }
+
+    alert("Product reported successfully. Admin will review it.");
   }
 
   const isSeller = currentUser?.id === product?.seller?.id;
+  const isAdmin = currentUser?.role === "ADMIN";
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -163,7 +150,7 @@ export default function ProductDetailPage() {
                 </div>
               </div>
 
-              {product.imageUrls && product.imageUrls.length > 1 && (
+              {product.imageUrls?.length > 1 && (
                 <div className="grid grid-cols-4 gap-3 mt-4">
                   {product.imageUrls.map((image: string, index: number) => (
                     <button
@@ -239,6 +226,12 @@ export default function ProductDetailPage() {
                     >
                       Delete Product
                     </button>
+                  </div>
+                ) : isAdmin ? (
+                  <div className="bg-purple-900/30 border border-purple-700 rounded-2xl p-5">
+                    <p className="text-purple-300 font-medium">
+                      Admin view only. Admins cannot buy, chat, or report products.
+                    </p>
                   </div>
                 ) : (
                   <div className="flex flex-col sm:flex-row gap-4">

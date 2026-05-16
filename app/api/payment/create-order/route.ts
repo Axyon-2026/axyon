@@ -16,13 +16,56 @@ export async function POST(req: Request) {
 
     if (!token) {
       return NextResponse.json(
-        { message: "Please login to buy product" },
+        { message: "Please login first" },
         { status: 401 }
       );
     }
 
     const decoded: any = verifyToken(token);
+
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { message: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    if (user.role === "ADMIN") {
+      return NextResponse.json(
+        { message: "Admins cannot purchase products." },
+        { status: 403 }
+      );
+    }
+
+    if (user.isSuspended) {
+      return NextResponse.json(
+        { message: "Your account is suspended." },
+        { status: 403 }
+      );
+    }
+
+    if (user.studentVerificationStatus !== "APPROVED") {
+      return NextResponse.json(
+        {
+          message:
+            "You must complete student verification before purchasing products.",
+        },
+        { status: 403 }
+      );
+    }
+
     const { productId } = await req.json();
+
+    if (!productId) {
+      return NextResponse.json(
+        { message: "Product ID is required" },
+        { status: 400 }
+      );
+    }
 
     const product = await prisma.product.findUnique({
       where: { id: productId },
@@ -35,7 +78,14 @@ export async function POST(req: Request) {
       );
     }
 
-    if (product.sellerId === decoded.id) {
+    if (product.status !== "AVAILABLE") {
+      return NextResponse.json(
+        { message: "Product is not available" },
+        { status: 400 }
+      );
+    }
+
+    if (product.sellerId === user.id) {
       return NextResponse.json(
         { message: "You cannot buy your own product" },
         { status: 400 }
@@ -43,33 +93,33 @@ export async function POST(req: Request) {
     }
 
     const razorpayOrder = await razorpay.orders.create({
-      amount: product.price * 100,
+      amount: Number(product.price) * 100,
       currency: "INR",
-      receipt: `order_${Date.now()}`,
+      receipt: `axyon_${Date.now()}`,
     });
 
     const order = await prisma.order.create({
       data: {
         productId: product.id,
-        buyerId: decoded.id,
+        buyerId: user.id,
         sellerId: product.sellerId,
-        amount: product.price,
+        amount: Number(product.price),
         razorpayOrderId: razorpayOrder.id,
+        paymentStatus: "PENDING",
       },
     });
 
     return NextResponse.json({
-      message: "Payment order created",
-      orderId: order.id,
-      razorpayOrderId: razorpayOrder.id,
-      amount: product.price,
+      message: "Payment order created successfully",
+      razorpayOrder,
+      order,
       key: process.env.RAZORPAY_KEY_ID,
     });
   } catch (error) {
-    console.log("PAYMENT ORDER ERROR:", error);
+    console.log("CREATE PAYMENT ORDER ERROR:", error);
 
     return NextResponse.json(
-      { message: "Payment order could not be created" },
+      { message: "Failed to create payment order" },
       { status: 500 }
     );
   }
