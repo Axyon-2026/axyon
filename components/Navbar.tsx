@@ -64,6 +64,8 @@ export default function Navbar() {
             <a href="/dashboard">Dashboard</a>
             <a href="/my-orders">My Orders</a>
             <a href="/profile">Profile</a>
+            <a href="/student-verification">
+            Verify Student</a>
             <a href="/notifications">Notifications</a>
           </>
         )}
