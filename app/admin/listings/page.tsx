@@ -1,265 +1,451 @@
 "use client";
 
 import Navbar from "@/components/Navbar";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function AdminListingsPage() {
-  const [listings, setListings] = useState<any[]>([]);
-  const [message, setMessage] = useState("Loading listings...");
-  const [accessDenied, setAccessDenied] = useState(false);
+  const [products, setProducts] =
+    useState<any[]>([]);
 
-  async function fetchListings() {
+  const [message, setMessage] =
+    useState(
+      "Loading listings..."
+    );
+
+  const [search, setSearch] =
+    useState("");
+
+  const [filter, setFilter] =
+    useState("ALL");
+
+  async function fetchProducts() {
     try {
-      const res = await fetch("/api/admin/listings");
-      const data = await res.json();
+      const res =
+        await fetch(
+          "/api/admin/listings"
+        );
 
-      if (res.status === 403) {
-        setAccessDenied(true);
-        setMessage("Access denied");
-        return;
-      }
+      const data =
+        await res.json();
 
       if (!res.ok) {
-        setMessage(data.message || "Failed to load listings");
+        setMessage(
+          data.message ||
+            "Failed to load listings"
+        );
+
         return;
       }
 
-      setListings(data.listings || []);
+      setProducts(
+        data.products || []
+      );
+
       setMessage("");
+
     } catch {
-      setMessage("Something went wrong");
+
+      setMessage(
+        "Something went wrong"
+      );
+
     }
   }
 
   useEffect(() => {
-    fetchListings();
+    fetchProducts();
   }, []);
 
-  async function handleListingAction(
-    productId: string,
-    action: string
+  async function deleteProduct(
+    productId: string
   ) {
-    const confirmed = confirm(
-      action === "REMOVE"
-        ? "Remove this listing?"
-        : "Restore this listing?"
-    );
+    const confirmed =
+      confirm(
+        "Remove this listing?"
+      );
 
     if (!confirmed) return;
 
-    const res = await fetch("/api/admin/listings", {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        productId,
-        action,
-      }),
-    });
+    try {
 
-    const data = await res.json();
+      const res =
+        await fetch(
+          `/api/admin/listings/${productId}`,
+          {
+            method: "DELETE",
+          }
+        );
 
-    alert(data.message || "Action completed");
+      const data =
+        await res.json();
 
-    fetchListings();
+      if (!res.ok) {
+
+        alert(
+          data.message ||
+            "Failed to remove listing"
+        );
+
+        return;
+      }
+
+      setProducts((prev) =>
+        prev.filter(
+          (p) =>
+            p.id !== productId
+        )
+      );
+
+      alert(
+        "Listing removed successfully"
+      );
+
+    } catch {
+
+      alert(
+        "Failed to remove listing"
+      );
+
+    }
   }
 
-  if (accessDenied) {
-    return (
-      <main className="min-h-screen bg-slate-950 text-white">
-        <Navbar />
+  const filteredProducts =
+    useMemo(() => {
 
-        <section className="flex items-center justify-center py-24 px-6">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-10 text-center max-w-lg">
-            <h1 className="text-4xl font-bold text-red-500">
-              Access Denied
-            </h1>
+      return products.filter(
+        (product) => {
 
-            <p className="mt-5 text-slate-400">
-              You do not have permission to view listings.
-            </p>
+          const matchesSearch =
+            product.title
+              ?.toLowerCase()
+              .includes(
+                search.toLowerCase()
+              ) ||
+            product.seller?.name
+              ?.toLowerCase()
+              .includes(
+                search.toLowerCase()
+              );
 
-            <a
-              href="/"
-              className="inline-block mt-8 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl font-medium"
-            >
-              Go Home
-            </a>
-          </div>
-        </section>
-      </main>
-    );
-  }
+          const matchesFilter =
+            filter === "ALL"
+              ? true
+              : filter ===
+                "REPORTED"
+              ? product.reports
+                  ?.length > 0
+              : filter ===
+                "VERIFIED"
+              ? product.seller
+                  ?.studentVerified
+              : true;
+
+          return (
+            matchesSearch &&
+            matchesFilter
+          );
+        }
+      );
+
+    }, [
+      products,
+      search,
+      filter,
+    ]);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
+    <main className="min-h-screen bg-[#0f172a] text-white">
       <Navbar />
 
-      <section className="px-8 py-12">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
-          <div>
-            <h1 className="text-4xl font-bold">
-              Marketplace Listings
-            </h1>
+      <section className="px-4 sm:px-6 lg:px-10 py-8 pb-28">
+        <div className="max-w-7xl mx-auto">
+          {/* hero */}
 
-            <p className="mt-3 text-slate-400">
-              Review and moderate marketplace products.
-            </p>
+          <div className="rounded-[2rem] bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 p-8 sm:p-10 shadow-2xl overflow-hidden relative">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(34,197,94,0.25),_transparent_35%)]" />
+
+            <div className="relative">
+              <span className="inline-flex bg-green-500/10 border border-green-500/20 text-green-400 rounded-full px-4 py-2 text-xs font-black">
+                Marketplace Moderation
+              </span>
+
+              <h1 className="mt-6 text-4xl sm:text-5xl font-black">
+                Admin Listings
+              </h1>
+
+              <p className="mt-4 text-slate-400 max-w-2xl leading-7">
+                Review marketplace products, moderate suspicious listings,
+                and monitor seller activity across Axyon.
+              </p>
+            </div>
           </div>
 
-          <a
-            href="/admin"
-            className="border border-slate-700 hover:border-slate-500 px-5 py-3 rounded-xl font-medium"
-          >
-            Back to Admin
-          </a>
-        </div>
+          {/* filters */}
 
-        {message && (
-          <p className="mt-8 text-slate-400">
-            {message}
-          </p>
-        )}
+          <div className="mt-8 bg-slate-900 border border-slate-800 rounded-[2rem] p-5 shadow-xl">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4">
+              <input
+                type="text"
 
-        {!message && listings.length === 0 && (
-          <div className="mt-10 bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center">
-            <h2 className="text-2xl font-semibold">
-              No Listings
-            </h2>
-          </div>
-        )}
+                placeholder="Search by product or seller..."
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-10">
-          {listings.map((listing) => (
-            <div
-              key={listing.id}
-              className={`bg-slate-900 border rounded-2xl overflow-hidden ${
-                listing.status === "REMOVED"
-                  ? "border-red-700"
-                  : "border-slate-800"
-              }`}
-            >
-              <div className="h-72 bg-slate-800">
-                {listing.imageUrls &&
-                listing.imageUrls.length > 0 ? (
-                  <img
-                    src={listing.imageUrls[0]}
-                    alt={listing.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-500">
-                    No Image
-                  </div>
-                )}
-              </div>
+                value={search}
 
-              <div className="p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="text-2xl font-bold">
-                      {listing.title}
-                    </h2>
+                onChange={(e) =>
+                  setSearch(
+                    e.target.value
+                  )
+                }
 
-                    <p className="mt-2 text-slate-400 line-clamp-2">
-                      {listing.description}
-                    </p>
-                  </div>
+                className="
+                  px-5
+                  py-4
+                  rounded-2xl
+                  bg-slate-800
+                  border
+                  border-slate-700
+                  outline-none
+                  focus:border-green-500
+                "
+              />
 
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      listing.status === "REMOVED"
-                        ? "bg-red-900/40 text-red-300"
-                        : "bg-green-900/40 text-green-300"
-                    }`}
+              <div className="flex flex-wrap gap-3">
+                {[
+                  "ALL",
+                  "REPORTED",
+                  "VERIFIED",
+                ].map((item) => (
+                  <button
+                    key={item}
+
+                    onClick={() =>
+                      setFilter(item)
+                    }
+
+                    className={`
+                      px-5
+                      py-3
+                      rounded-full
+                      text-sm
+                      font-black
+                      border
+                      transition
+
+                      ${
+                        filter === item
+                          ? "bg-green-600 border-green-600"
+                          : "bg-slate-800 border-slate-700 hover:border-green-500"
+                      }
+                    `}
                   >
-                    {listing.status}
-                  </span>
-                </div>
-
-                <div className="mt-5 grid grid-cols-2 gap-4 text-sm text-slate-300">
-                  <p>Price: ₹{listing.price}</p>
-
-                  <p>Category: {listing.category}</p>
-
-                  <p>Condition: {listing.condition}</p>
-
-                  <p>
-                    Seller: {listing.seller?.name}
-                  </p>
-
-                  <p className="col-span-2">
-                    Seller Email:{" "}
-                    {listing.seller?.email}
-                  </p>
-
-                  <p className="col-span-2">
-                    College:{" "}
-                    {listing.seller?.college ||
-                      "Not added"}
-                  </p>
-
-                  <p>
-                    Seller Strikes:{" "}
-                    {listing.seller?.strikeCount}
-                  </p>
-
-                  <p>
-                    Seller Status:{" "}
-                    <span
-                      className={
-                        listing.seller
-                          ?.isSuspended
-                          ? "text-red-400"
-                          : "text-green-400"
-                      }
-                    >
-                      {listing.seller
-                        ?.isSuspended
-                        ? "Suspended"
-                        : "Active"}
-                    </span>
-                  </p>
-                </div>
-
-                <div className="mt-6 flex gap-4">
-                  <a
-                    href={`/product/${listing.id}`}
-                    className="flex-1 border border-slate-700 hover:border-slate-500 py-3 rounded-xl text-center font-medium"
-                  >
-                    View
-                  </a>
-
-                  {listing.status === "REMOVED" ? (
-                    <button
-                      onClick={() =>
-                        handleListingAction(
-                          listing.id,
-                          "RESTORE"
-                        )
-                      }
-                      className="flex-1 bg-green-600 hover:bg-green-700 py-3 rounded-xl font-medium"
-                    >
-                      Restore
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() =>
-                        handleListingAction(
-                          listing.id,
-                          "REMOVE"
-                        )
-                      }
-                      className="flex-1 bg-red-600 hover:bg-red-700 py-3 rounded-xl font-medium"
-                    >
-                      Remove
-                    </button>
-                  )}
-                </div>
+                    {item}
+                  </button>
+                ))}
               </div>
             </div>
-          ))}
+          </div>
+
+          {message && (
+            <div className="mt-6 bg-slate-900 border border-slate-800 rounded-3xl p-6">
+              <p className="text-slate-400 font-semibold">
+                {message}
+              </p>
+            </div>
+          )}
+
+          {!message &&
+            filteredProducts.length ===
+              0 && (
+              <div className="mt-6 bg-slate-900 border border-slate-800 rounded-[2rem] p-10 text-center">
+                <div className="text-6xl">
+                  🛍️
+                </div>
+
+                <h2 className="mt-5 text-3xl font-black">
+                  No Listings Found
+                </h2>
+
+                <p className="mt-3 text-slate-400">
+                  No products match the selected filters.
+                </p>
+              </div>
+            )}
+
+          {!message && (
+            <div className="mt-6 flex items-center justify-between">
+              <p className="text-sm text-slate-400 font-semibold">
+                Showing{" "}
+                {
+                  filteredProducts.length
+                }{" "}
+                listing(s)
+              </p>
+            </div>
+          )}
+
+          {/* products */}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
+            {filteredProducts.map(
+              (product) => {
+
+                const image =
+                  product.imageUrls &&
+                  product.imageUrls
+                    .length > 0
+                    ? product
+                        .imageUrls[0]
+                    : "";
+
+                return (
+                  <div
+                    key={product.id}
+
+                    className="
+                    bg-slate-900
+                    border
+                    border-slate-800
+                    rounded-[2rem]
+                    overflow-hidden
+                    shadow-2xl
+                  "
+                  >
+                    <div className="grid grid-cols-[140px_1fr]">
+                      <div className="bg-slate-800 aspect-square">
+                        {image ? (
+                          <img
+                            src={image}
+                            alt={
+                              product.title
+                            }
+
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-5xl">
+                            🛍️
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="p-5">
+                        <div className="flex flex-wrap gap-2">
+                          <span className="bg-green-500/10 text-green-400 border border-green-500/20 px-3 py-1 rounded-full text-[10px] font-black">
+                            {
+                              product.category
+                            }
+                          </span>
+
+                          <span className="bg-slate-800 border border-slate-700 px-3 py-1 rounded-full text-[10px] font-black">
+                            {
+                              product.condition
+                            }
+                          </span>
+
+                          {product.reports
+                            ?.length >
+                            0 && (
+                            <span className="bg-red-500/10 text-red-400 border border-red-500/20 px-3 py-1 rounded-full text-[10px] font-black">
+                              🚨 Reported
+                            </span>
+                          )}
+                        </div>
+
+                        <h2 className="mt-4 text-2xl font-black line-clamp-2">
+                          {product.title}
+                        </h2>
+
+                        <p className="mt-2 text-green-400 text-3xl font-black">
+                          ₹
+                          {Number(
+                            product.price
+                          ).toLocaleString(
+                            "en-IN"
+                          )}
+                        </p>
+
+                        <div className="mt-4 space-y-2">
+                          <p className="text-sm text-slate-400">
+                            Seller:{" "}
+                            <span className="text-white font-semibold">
+                              {
+                                product
+                                  .seller
+                                  ?.name
+                              }
+                            </span>
+                          </p>
+
+                          <p className="text-sm text-slate-400">
+                            College:{" "}
+                            <span className="text-white font-semibold">
+                              {
+                                product
+                                  .seller
+                                  ?.college
+                              }
+                            </span>
+                          </p>
+
+                          <p className="text-sm text-slate-400">
+                            Reports:{" "}
+                            <span className="text-white font-semibold">
+                              {
+                                product
+                                  .reports
+                                  ?.length ||
+                                  0
+                              }
+                            </span>
+                          </p>
+                        </div>
+
+                        <div className="mt-6 flex flex-wrap gap-3">
+                          <a
+                            href={`/product/${product.id}`}
+
+                            className="
+                              bg-green-600
+                              hover:bg-green-700
+                              px-5
+                              py-3
+                              rounded-full
+                              font-black
+                              text-sm
+                            "
+                          >
+                            View Product
+                          </a>
+
+                          <button
+                            onClick={() =>
+                              deleteProduct(
+                                product.id
+                              )
+                            }
+
+                            className="
+                              border
+                              border-red-500/30
+                              hover:border-red-500
+                              text-red-400
+                              px-5
+                              py-3
+                              rounded-full
+                              font-black
+                              text-sm
+                            "
+                          >
+                            Remove Listing
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+            )}
+          </div>
         </div>
       </section>
     </main>
