@@ -1,266 +1,436 @@
 "use client";
 
 import Navbar from "@/components/Navbar";
-import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 
 export default function ProductDetailPage() {
   const params = useParams();
-  const id = params.id as string;
 
-  const [product, setProduct] = useState<any>(null);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [selectedImage, setSelectedImage] = useState("");
-  const [message, setMessage] = useState("Loading product...");
+  const [product, setProduct] =
+    useState<any>(null);
+
+  const [currentUser, setCurrentUser] =
+    useState<any>(null);
+
+  const [message, setMessage] =
+    useState("Loading product...");
+
+  const [chatMessage, setChatMessage] =
+    useState("");
+
+  const [sending, setSending] =
+    useState(false);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const productRes = await fetch(`/api/products/${id}`);
-        const productData = await productRes.json();
+        const userRes =
+          await fetch("/api/auth/me");
 
-        if (!productRes.ok) {
-          setMessage(productData.message || "Product not found");
+        if (userRes.ok) {
+          const userData =
+            await userRes.json();
+
+          setCurrentUser(
+            userData.user
+          );
+        }
+
+        const res =
+          await fetch(
+            `/api/products/${params.id}`
+          );
+
+        const data =
+          await res.json();
+
+        if (!res.ok) {
+          setMessage(
+            data.message ||
+              "Failed to load product"
+          );
+
           return;
         }
 
-        setProduct(productData.product);
-
-        if (productData.product.imageUrls?.length > 0) {
-          setSelectedImage(productData.product.imageUrls[0]);
-        }
-
-        const userRes = await fetch("/api/auth/me");
-
-        if (userRes.ok) {
-          const userData = await userRes.json();
-          setCurrentUser(userData.user);
-        }
-
+        setProduct(data.product);
         setMessage("");
+
       } catch {
-        setMessage("Failed to load product");
+
+        setMessage(
+          "Something went wrong"
+        );
+
       }
     }
 
-    if (id) fetchData();
-  }, [id]);
+    fetchData();
+  }, [params.id]);
 
-  async function handleChat() {
+  async function sendMessage() {
+
+    if (
+      !chatMessage.trim() ||
+      !product
+    ) {
+      return;
+    }
+
+    setSending(true);
+
     try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          sellerId: product.seller.id,
-          productId: product.id,
-          text: "Hi, I am interested in this product.",
-        }),
-      });
 
-      const data = await res.json();
+      const res =
+        await fetch("/api/chat", {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            sellerId:
+              product.seller.id,
+
+            productId:
+              product.id,
+
+            text: chatMessage,
+          }),
+        });
+
+      const data =
+        await res.json();
 
       if (!res.ok) {
-        alert(data.message || "Failed to start chat");
+
+        alert(
+          data.message ||
+            "Failed to send message"
+        );
+
+        setSending(false);
+
         return;
       }
 
-      window.location.href = "/chat";
+      setChatMessage("");
+
+      alert(
+        "Message sent successfully!"
+      );
+
     } catch {
-      alert("Something went wrong");
+
+      alert(
+        "Failed to send message"
+      );
+
     }
+
+    setSending(false);
   }
 
-  async function handleDelete() {
-    const confirmed = confirm("Are you sure you want to delete this product?");
-    if (!confirmed) return;
+  if (message) {
+    return (
+      <main className="min-h-screen bg-[#f8fafc] text-slate-950">
+        <Navbar />
 
-    const res = await fetch(`/api/products/${product.id}`, {
-      method: "DELETE",
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.message || "Failed to delete product");
-      return;
-    }
-
-    alert("Product deleted successfully");
-    window.location.href = "/marketplace";
+        <div className="px-6 py-20 text-center text-slate-500">
+          {message}
+        </div>
+      </main>
+    );
   }
 
-  async function handleReportProduct() {
-    const reason = prompt("Why are you reporting this product?");
+  if (!product) return null;
 
-    if (!reason || reason.trim().length < 5) {
-      alert("Please enter a valid report reason.");
-      return;
-    }
+  const isSeller =
+    currentUser?.id ===
+    product.seller?.id;
 
-    const res = await fetch("/api/reports", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        targetType: "PRODUCT",
-        targetId: product.id,
-        reason: reason.trim(),
-        details: `Reported product: ${product.title}`,
-      }),
-    });
+  const isAdmin =
+    currentUser?.role ===
+    "ADMIN";
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.message || "Failed to submit report");
-      return;
-    }
-
-    alert("Product reported successfully. Admin will review it.");
-  }
-
-  const isSeller = currentUser?.id === product?.seller?.id;
-  const isAdmin = currentUser?.role === "ADMIN";
+  const image =
+    product.imageUrls &&
+    product.imageUrls.length > 0
+      ? product.imageUrls[0]
+      : "";
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
+    <main className="min-h-screen bg-[#f8fafc] text-slate-950">
       <Navbar />
 
-      <section className="px-8 py-12">
-        {message && <p className="text-slate-400">{message}</p>}
+      <section className="px-4 sm:px-6 lg:px-10 py-8 pb-28">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-8">
+            {/* image */}
 
-        {product && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
             <div>
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
-                <div className="h-[500px] bg-slate-800 flex items-center justify-center">
-                  {selectedImage ? (
+              <div className="bg-white border border-slate-200 rounded-[2rem] overflow-hidden shadow-sm">
+                <div className="aspect-square bg-slate-100">
+                  {image ? (
                     <img
-                      src={selectedImage}
+                      src={image}
                       alt={product.title}
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <p className="text-slate-500">No Image</p>
+                    <div className="w-full h-full flex items-center justify-center text-7xl">
+                      🛍️
+                    </div>
                   )}
                 </div>
               </div>
 
-              {product.imageUrls?.length > 1 && (
-                <div className="grid grid-cols-4 gap-3 mt-4">
-                  {product.imageUrls.map((image: string, index: number) => (
-                    <button
-                      key={image}
-                      onClick={() => setSelectedImage(image)}
-                      className={`border rounded-xl overflow-hidden h-24 ${
-                        selectedImage === image
-                          ? "border-blue-500"
-                          : "border-slate-700"
-                      }`}
-                    >
-                      <img
-                        src={image}
-                        alt={`Preview ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
+              <div className="mt-5 bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm">
+                <h2 className="text-2xl font-black">
+                  Product Description
+                </h2>
+
+                <p className="mt-5 text-slate-600 leading-8 whitespace-pre-wrap">
+                  {product.description}
+                </p>
+              </div>
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8">
-              <h1 className="text-4xl font-bold">{product.title}</h1>
+            {/* details */}
 
-              <p className="mt-4 text-3xl font-bold text-blue-400">
-                ₹{product.price}
-              </p>
+            <div>
+              <div className="bg-white border border-slate-200 rounded-[2rem] p-6 sm:p-8 shadow-sm">
+                <div className="flex flex-wrap gap-2">
+                  <span className="bg-green-100 text-green-700 px-4 py-2 rounded-full text-xs font-black">
+                    {product.category}
+                  </span>
 
-              <p className="mt-6 text-slate-300 leading-7">
-                {product.description}
-              </p>
+                  <span className="bg-slate-100 text-slate-700 px-4 py-2 rounded-full text-xs font-black">
+                    {product.condition}
+                  </span>
 
-              <div className="mt-6 flex flex-wrap gap-3 text-sm">
-                <span className="bg-slate-800 px-4 py-2 rounded-full">
-                  {product.category}
-                </span>
+                  {product.seller
+                    ?.studentVerified && (
+                    <span className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-xs font-black">
+                      Verified Student
+                    </span>
+                  )}
+                </div>
 
-                <span className="bg-slate-800 px-4 py-2 rounded-full">
-                  {product.condition}
-                </span>
+                <h1 className="mt-5 text-4xl font-black leading-tight">
+                  {product.title}
+                </h1>
 
-                <span className="bg-green-900/40 text-green-300 px-4 py-2 rounded-full">
-                  {product.status}
-                </span>
-              </div>
+                <div className="mt-5 flex items-end gap-3">
+                  <p className="text-5xl font-black text-green-600">
+                    ₹
+                    {Number(
+                      product.price
+                    ).toLocaleString(
+                      "en-IN"
+                    )}
+                  </p>
 
-              <div className="mt-8 border-t border-slate-800 pt-6">
-                <h2 className="text-xl font-semibold">Seller Details</h2>
+                  <span className="text-slate-400 font-semibold mb-1">
+                    Campus Deal
+                  </span>
+                </div>
 
-                <p className="mt-3 text-slate-300">
-                  Name: {product.seller?.name}
-                </p>
+                <div className="mt-8 bg-slate-50 border border-slate-200 rounded-3xl p-5">
+                  <div className="flex items-center gap-4">
+                    <div
+                      className="
+                      w-14
+                      h-14
+                      rounded-full
+                      bg-green-100
+                      text-green-700
+                      flex
+                      items-center
+                      justify-center
+                      font-black
+                      text-xl
+                    "
+                    >
+                      {product.seller?.name?.charAt(
+                        0
+                      ) || "U"}
+                    </div>
 
-                <p className="text-slate-300">
-                  College: {product.seller?.college || "Not added"}
-                </p>
-              </div>
+                    <div>
+                      <h2 className="font-black text-lg">
+                        {product.seller
+                          ?.name ||
+                          "Unknown"}
+                      </h2>
 
-              <div className="mt-8">
-                {isSeller ? (
-                  <div className="flex flex-col sm:flex-row gap-4">
+                      <p className="text-sm text-slate-500">
+                        {product.seller
+                          ?.college ||
+                          "Campus"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {!isAdmin && !isSeller && (
+                  <>
+                    <div className="mt-8 space-y-4">
+                      <button
+                        className="
+                        w-full
+                        bg-green-600
+                        hover:bg-green-700
+                        text-white
+                        py-4
+                        rounded-full
+                        font-black
+                        shadow-lg
+                        shadow-green-100
+                      "
+                      >
+                        Buy Now
+                      </button>
+
+                      <div className="bg-slate-50 border border-slate-200 rounded-[2rem] p-5">
+                        <h3 className="font-black text-lg">
+                          Message Seller
+                        </h3>
+
+                        <textarea
+                          rows={4}
+
+                          placeholder="Ask about condition, pickup, availability..."
+
+                          value={
+                            chatMessage
+                          }
+
+                          onChange={(e) =>
+                            setChatMessage(
+                              e.target
+                                .value
+                            )
+                          }
+
+                          className="
+                            w-full
+                            mt-4
+                            px-5
+                            py-4
+                            rounded-2xl
+                            bg-white
+                            border
+                            border-slate-200
+                            outline-none
+                            resize-none
+                            focus:border-green-500
+                          "
+                        />
+
+                        <button
+                          onClick={
+                            sendMessage
+                          }
+
+                          disabled={
+                            sending
+                          }
+
+                          className="
+                            w-full
+                            mt-4
+                            bg-slate-950
+                            hover:bg-slate-800
+                            text-white
+                            py-4
+                            rounded-full
+                            font-black
+                            disabled:opacity-60
+                          "
+                        >
+                          {sending
+                            ? "Sending..."
+                            : "Send Message"}
+                        </button>
+                      </div>
+
+                      <button
+                        className="
+                        w-full
+                        border
+                        border-red-200
+                        hover:border-red-400
+                        text-red-600
+                        py-4
+                        rounded-full
+                        font-black
+                      "
+                      >
+                        Report Product
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                {(isSeller ||
+                  isAdmin) && (
+                  <div className="mt-8 space-y-4">
                     <a
                       href={`/edit-product/${product.id}`}
-                      className="text-center bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl font-medium"
+
+                      className="
+                        block
+                        text-center
+                        bg-slate-950
+                        hover:bg-slate-800
+                        text-white
+                        py-4
+                        rounded-full
+                        font-black
+                      "
                     >
-                      Edit Product
+                      {isAdmin
+                        ? "Manage Product"
+                        : "Edit Listing"}
                     </a>
-
-                    <button
-                      onClick={handleDelete}
-                      className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-xl font-medium"
-                    >
-                      Delete Product
-                    </button>
-                  </div>
-                ) : isAdmin ? (
-                  <div className="bg-purple-900/30 border border-purple-700 rounded-2xl p-5">
-                    <p className="text-purple-300 font-medium">
-                      Admin view only. Admins cannot buy, chat, or report products.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <a
-                      href={`/buy/${product.id}`}
-                      className="text-center bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl font-medium"
-                    >
-                      Buy Now
-                    </a>
-
-                    <button
-                      onClick={handleChat}
-                      className="border border-slate-700 hover:border-slate-500 px-6 py-3 rounded-xl font-medium"
-                    >
-                      Chat with Seller
-                    </button>
-
-                    <button
-                      onClick={handleReportProduct}
-                      className="border border-red-500 text-red-400 hover:bg-red-500 hover:text-white px-6 py-3 rounded-xl font-medium"
-                    >
-                      Report Product
-                    </button>
                   </div>
                 )}
               </div>
+
+              <div className="mt-5 bg-slate-950 text-white rounded-[2rem] p-6 overflow-hidden relative">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(34,197,94,0.35),_transparent_40%)]" />
+
+                <div className="relative">
+                  <h3 className="text-2xl font-black">
+                    Campus Safety Tips
+                  </h3>
+
+                  <ul className="mt-5 space-y-3 text-slate-300">
+                    <li>
+                      • Meet inside campus when possible
+                    </li>
+
+                    <li>
+                      • Verify product before payment
+                    </li>
+
+                    <li>
+                      • Report suspicious behavior
+                    </li>
+
+                    <li>
+                      • Use verified student accounts
+                    </li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
-        )}
+        </div>
       </section>
     </main>
   );
