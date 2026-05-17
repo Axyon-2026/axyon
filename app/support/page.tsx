@@ -3,31 +3,85 @@
 import Navbar from "@/components/Navbar";
 import { useEffect, useState } from "react";
 
+const supportTopics = [
+  {
+    label: "Payment Issue",
+    icon: "💳",
+  },
+
+  {
+    label: "Order Problem",
+    icon: "📦",
+  },
+
+  {
+    label: "Product Report",
+    icon: "🚨",
+  },
+
+  {
+    label: "Account Issue",
+    icon: "👤",
+  },
+
+  {
+    label: "Technical Bug",
+    icon: "🐞",
+  },
+
+  {
+    label: "Other",
+    icon: "💬",
+  },
+];
+
 export default function SupportPage() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] =
+    useState<any>(null);
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [name, setName] =
+    useState("");
 
-  const [subject, setSubject] = useState("");
-  const [messageText, setMessageText] = useState("");
+  const [email, setEmail] =
+    useState("");
 
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [subject, setSubject] =
+    useState("");
+
+  const [
+    messageText,
+    setMessageText,
+  ] = useState("");
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [message, setMessage] =
+    useState("");
 
   useEffect(() => {
     async function fetchUser() {
       try {
-        const res = await fetch("/api/auth/me");
+        const res =
+          await fetch(
+            "/api/auth/me"
+          );
 
         if (!res.ok) return;
 
-        const data = await res.json();
+        const data =
+          await res.json();
 
         setUser(data.user);
 
-        setName(data.user.name || "");
-        setEmail(data.user.email || "");
+        setName(
+          data.user.name || ""
+        );
+
+        setEmail(
+          data.user.email || ""
+        );
+
       } catch {}
     }
 
@@ -40,27 +94,32 @@ export default function SupportPage() {
     e.preventDefault();
 
     setLoading(true);
-    setMessage("Submitting support request...");
+
+    setMessage(
+      "Submitting support ticket..."
+    );
 
     try {
-      const res = await fetch(
-        "/api/support",
-        {
-          method: "POST",
+      const res =
+        await fetch(
+          "/api/support",
+          {
+            method: "POST",
 
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
 
-          body: JSON.stringify({
-            name,
-            email,
-            subject,
-            message: messageText,
-          }),
-        }
-      );
+            body: JSON.stringify({
+              name,
+              email,
+              subject,
+              message:
+                messageText,
+            }),
+          }
+        );
 
       const data =
         await res.json();
@@ -72,6 +131,7 @@ export default function SupportPage() {
         );
 
         setLoading(false);
+
         return;
       }
 
@@ -94,149 +154,308 @@ export default function SupportPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
+    <main className="min-h-screen bg-[#f8fafc] text-slate-950">
       <Navbar />
 
-      <section className="flex items-center justify-center py-16 px-6">
-        <div className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl p-8">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold">
+      <section className="px-4 sm:px-6 lg:px-10 py-8 pb-28">
+        <div className="max-w-6xl mx-auto">
+          <div className="rounded-[2rem] bg-gradient-to-br from-green-600 to-emerald-400 text-white p-8 sm:p-10 shadow-xl shadow-green-200">
+            <span className="inline-flex bg-white/20 border border-white/30 rounded-full px-4 py-2 text-xs font-black">
+              Axyon Help Center
+            </span>
+
+            <h1 className="mt-5 text-4xl sm:text-5xl font-black">
               Support Center
             </h1>
 
-            <p className="mt-3 text-slate-400">
-              Need help with orders,
-              payments, products, or
-              account issues? Contact
-              Axyon support.
+            <p className="mt-4 text-green-50 max-w-2xl leading-7">
+              Get help with orders, payments, verification,
+              reports, listings, and technical issues.
             </p>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <div className="bg-white/15 border border-white/20 px-4 py-2 rounded-full text-sm font-bold">
+                ⚡ Avg response: Under 24h
+              </div>
+
+              <div className="bg-white/15 border border-white/20 px-4 py-2 rounded-full text-sm font-bold">
+                🛡️ Student Safety Support
+              </div>
+
+              <div className="bg-white/15 border border-white/20 px-4 py-2 rounded-full text-sm font-bold">
+                📩 Ticket Tracking
+              </div>
+            </div>
           </div>
 
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-5"
-          >
-            <input
-              type="text"
-              placeholder="Your Name"
-              value={name}
-              onChange={(e) =>
-                setName(
-                  e.target.value
-                )
-              }
-              className="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 outline-none"
-            />
+          <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {supportTopics.map(
+              (topic) => (
+                <button
+                  key={topic.label}
 
-            <input
-              type="email"
-              placeholder="Your Email"
-              value={email}
-              onChange={(e) =>
-                setEmail(
-                  e.target.value
-                )
-              }
-              className="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 outline-none"
-            />
+                  onClick={() =>
+                    setSubject(
+                      topic.label
+                    )
+                  }
 
-            <select
-              value={subject}
-              onChange={(e) =>
-                setSubject(
-                  e.target.value
-                )
-              }
-              className="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 outline-none"
-            >
-              <option value="">
-                Select Support Topic
-              </option>
+                  className={`
+                    bg-white
+                    border
+                    rounded-3xl
+                    p-5
+                    text-left
+                    shadow-sm
+                    transition
+                    hover:-translate-y-1
 
-              <option value="Payment Issue">
-                Payment Issue
-              </option>
+                    ${
+                      subject ===
+                      topic.label
+                        ? "border-green-500 bg-green-50"
+                        : "border-slate-200"
+                    }
+                  `}
+                >
+                  <div className="text-3xl">
+                    {topic.icon}
+                  </div>
 
-              <option value="Order Problem">
-                Order Problem
-              </option>
+                  <p className="mt-4 text-sm font-black">
+                    {topic.label}
+                  </p>
+                </button>
+              )
+            )}
+          </div>
 
-              <option value="Product Report">
-                Product Report
-              </option>
+          <div className="mt-8 grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
+            <div className="bg-white border border-slate-200 rounded-[2rem] shadow-sm p-6 sm:p-8">
+              <div className="mb-8">
+                <h2 className="text-3xl font-black">
+                  Submit Support Ticket
+                </h2>
 
-              <option value="Account Issue">
-                Account Issue
-              </option>
+                <p className="mt-2 text-slate-500">
+                  Our team will review your issue and respond as quickly as possible.
+                </p>
+              </div>
 
-              <option value="Seller Complaint">
-                Seller Complaint
-              </option>
+              <form
+                onSubmit={handleSubmit}
+                className="space-y-5"
+              >
+                <input
+                  type="text"
+                  placeholder="Your name"
+                  value={name}
+                  onChange={(e) =>
+                    setName(
+                      e.target.value
+                    )
+                  }
 
-              <option value="Buyer Complaint">
-                Buyer Complaint
-              </option>
+                  className="
+                    w-full
+                    px-5
+                    py-4
+                    rounded-2xl
+                    bg-slate-100
+                    border
+                    border-slate-200
+                    outline-none
+                    focus:bg-white
+                    focus:border-green-500
+                  "
+                />
 
-              <option value="Technical Bug">
-                Technical Bug
-              </option>
+                <input
+                  type="email"
+                  placeholder="Your email"
+                  value={email}
+                  onChange={(e) =>
+                    setEmail(
+                      e.target.value
+                    )
+                  }
 
-              <option value="Other">
-                Other
-              </option>
-            </select>
+                  className="
+                    w-full
+                    px-5
+                    py-4
+                    rounded-2xl
+                    bg-slate-100
+                    border
+                    border-slate-200
+                    outline-none
+                    focus:bg-white
+                    focus:border-green-500
+                  "
+                />
 
-            <textarea
-              placeholder="Describe your issue in detail..."
-              rows={6}
-              value={messageText}
-              onChange={(e) =>
-                setMessageText(
-                  e.target.value
-                )
-              }
-              className="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 outline-none resize-none"
-            />
+                <select
+                  value={subject}
+                  onChange={(e) =>
+                    setSubject(
+                      e.target.value
+                    )
+                  }
 
-            <button
-              disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-medium disabled:opacity-60"
-            >
-              {loading
-                ? "Submitting..."
-                : "Submit Support Ticket"}
-            </button>
-          </form>
+                  className="
+                    w-full
+                    px-5
+                    py-4
+                    rounded-2xl
+                    bg-slate-100
+                    border
+                    border-slate-200
+                    outline-none
+                    focus:bg-white
+                    focus:border-green-500
+                  "
+                >
+                  <option value="">
+                    Select support topic
+                  </option>
 
-          {message && (
-            <p className="mt-5 text-sm text-slate-300">
-              {message}
-            </p>
-          )}
+                  {supportTopics.map(
+                    (topic) => (
+                      <option
+                        key={
+                          topic.label
+                        }
 
-          <div className="mt-10 border-t border-slate-800 pt-6">
-            <h2 className="text-xl font-semibold">
-              Contact Information
-            </h2>
+                        value={
+                          topic.label
+                        }
+                      >
+                        {topic.label}
+                      </option>
+                    )
+                  )}
+                </select>
 
-            <div className="mt-4 space-y-3 text-slate-400">
-              <p>
-                Email:
-                {" "}
-                support@axyon.in
-              </p>
+                <textarea
+                  rows={7}
 
-              <p>
-                Response Time:
-                {" "}
-                Usually within 24 hours
-              </p>
+                  placeholder="Describe your issue in detail..."
 
-              <p>
-                Platform:
-                {" "}
-                Axyon Campus Marketplace
-              </p>
+                  value={messageText}
+
+                  onChange={(e) =>
+                    setMessageText(
+                      e.target.value
+                    )
+                  }
+
+                  className="
+                    w-full
+                    px-5
+                    py-4
+                    rounded-2xl
+                    bg-slate-100
+                    border
+                    border-slate-200
+                    outline-none
+                    resize-none
+                    focus:bg-white
+                    focus:border-green-500
+                  "
+                />
+
+                <button
+                  disabled={loading}
+
+                  className="
+                    w-full
+                    bg-green-600
+                    hover:bg-green-700
+                    text-white
+                    py-4
+                    rounded-full
+                    font-black
+                    shadow-lg
+                    shadow-green-100
+                    disabled:opacity-60
+                  "
+                >
+                  {loading
+                    ? "Submitting..."
+                    : "Submit Ticket"}
+                </button>
+              </form>
+
+              {message && (
+                <p className="mt-5 text-sm font-semibold text-slate-600">
+                  {message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-5">
+              <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm">
+                <h3 className="text-xl font-black">
+                  Ticket Status
+                </h3>
+
+                <div className="mt-5 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 rounded-full bg-yellow-400" />
+
+                    <p className="text-sm font-semibold text-slate-600">
+                      Pending Review
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 rounded-full bg-blue-500" />
+
+                    <p className="text-sm font-semibold text-slate-600">
+                      Under Investigation
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 rounded-full bg-green-500" />
+
+                    <p className="text-sm font-semibold text-slate-600">
+                      Resolved
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-slate-950 text-white rounded-[2rem] p-6 overflow-hidden relative">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(34,197,94,0.35),_transparent_40%)]" />
+
+                <div className="relative">
+                  <h3 className="text-2xl font-black">
+                    Campus Safety
+                  </h3>
+
+                  <p className="mt-3 text-slate-300 leading-7">
+                    Report suspicious users, fake listings, payment scams, or harassment.
+                  </p>
+
+                  <a
+                    href="/marketplace"
+
+                    className="
+                      inline-block
+                      mt-5
+                      bg-green-600
+                      hover:bg-green-700
+                      px-5
+                      py-3
+                      rounded-full
+                      font-black
+                    "
+                  >
+                    Explore Marketplace
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
         </div>
