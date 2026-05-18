@@ -1,119 +1,112 @@
 "use client";
 
 import Navbar from "@/components/Navbar";
-import { useEffect, useState } from "react";
+
+const notifications = [
+  {
+    title: "Welcome to Axyon",
+    message:
+      "Your campus ecosystem is ready to explore.",
+    time: "Just now",
+    icon: "🎉",
+  },
+
+  {
+    title: "Realtime Chat Enabled",
+    message:
+      "You can now connect with buyers and sellers instantly.",
+    time: "2 mins ago",
+    icon: "💬",
+  },
+
+  {
+    title: "Rentals Coming Soon",
+    message:
+      "Student rentals and barter systems are under development.",
+    time: "Today",
+    icon: "🔁",
+  },
+];
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [message, setMessage] = useState("Loading notifications...");
-
-  async function fetchNotifications() {
-    try {
-      const res = await fetch("/api/notifications");
-      const data = await res.json();
-
-      if (!res.ok) {
-        setMessage(data.message || "Failed to load notifications");
-        return;
-      }
-
-      setNotifications(data.notifications || []);
-      setMessage("");
-    } catch {
-      setMessage("Failed to load notifications");
-    }
-  }
-
-  useEffect(() => {
-    fetchNotifications();
-
-    const interval = setInterval(() => {
-      fetchNotifications();
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
-
   return (
-    <main className="min-h-screen bg-[#f8fafc] text-slate-950">
+    <main className="min-h-screen bg-[#071019] text-white">
       <Navbar />
 
-      <section className="px-4 sm:px-6 lg:px-10 py-8 pb-28">
+      <section className="px-4 sm:px-6 lg:px-10 py-10 pb-28">
         <div className="max-w-4xl mx-auto">
-          <div className="rounded-[2rem] bg-gradient-to-br from-green-600 to-emerald-400 text-white p-7 sm:p-10 shadow-xl shadow-green-200">
-            <span className="inline-flex bg-white/20 border border-white/30 rounded-full px-4 py-2 text-xs font-black">
-              Activity Center
-            </span>
-
-            <h1 className="mt-5 text-4xl sm:text-5xl font-black">
-              Notifications
-            </h1>
-
-            <p className="mt-3 text-green-50 max-w-2xl">
-              Track verification updates, orders, messages, reports, and
-              marketplace activity in one place.
-            </p>
-          </div>
-
-          {message && (
-            <div className="mt-6 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
-              <p className="text-slate-500 font-semibold">{message}</p>
-            </div>
-          )}
-
-          {!message && notifications.length === 0 && (
-            <div className="mt-6 bg-white border border-slate-200 rounded-[2rem] p-10 text-center shadow-sm">
-              <div className="w-20 h-20 mx-auto rounded-full bg-green-100 flex items-center justify-center text-4xl">
-                🔔
-              </div>
-
-              <h2 className="mt-6 text-2xl font-black">
-                No notifications yet
-              </h2>
-
-              <p className="mt-3 text-slate-500 max-w-md mx-auto">
-                When something important happens on Axyon, it will appear here.
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-green-400 text-sm font-black">
+                Updates & Activity
               </p>
 
-              <a
-                href="/marketplace"
-                className="inline-block mt-6 bg-green-600 hover:bg-green-700 text-white px-7 py-3 rounded-full font-black"
-              >
-                Explore Marketplace
-              </a>
+              <h1 className="mt-2 text-5xl font-black">
+                Notifications
+              </h1>
             </div>
-          )}
 
-          {!message && notifications.length > 0 && (
-            <div className="mt-6 space-y-3">
-              {notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm flex gap-4"
-                >
-                  <div className="w-12 h-12 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-xl shrink-0">
-                    🔔
+            <div className="w-16 h-16 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center text-3xl">
+              🔔
+            </div>
+          </div>
+
+          <div className="mt-10 space-y-5">
+            {notifications.map((item, index) => (
+              <div
+                key={index}
+                className="
+                  bg-white/[0.04]
+                  border
+                  border-white/10
+                  rounded-[2rem]
+                  p-6
+                  backdrop-blur-xl
+                  hover:border-green-500/30
+                  transition
+                "
+              >
+                <div className="flex items-start gap-5">
+                  <div className="w-14 h-14 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center text-2xl shrink-0">
+                    {item.icon}
                   </div>
 
-                  <div className="min-w-0">
-                    <h2 className="font-black text-slate-900">
-                      {notification.title || "Axyon Update"}
-                    </h2>
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h2 className="text-xl font-black">
+                          {item.title}
+                        </h2>
 
-                    <p className="mt-1 text-sm text-slate-500 leading-6">
-                      {notification.message || notification.text}
-                    </p>
+                        <p className="mt-2 text-slate-400 leading-7">
+                          {item.message}
+                        </p>
+                      </div>
 
-                    {notification.createdAt && (
-                      <p className="mt-2 text-xs text-slate-400 font-semibold">
-                        {new Date(notification.createdAt).toLocaleString()}
+                      <p className="text-xs text-slate-500 whitespace-nowrap">
+                        {item.time}
                       </p>
-                    )}
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-[2rem] p-8 text-black shadow-[0_0_40px_rgba(34,197,94,0.35)]">
+            <p className="text-sm font-black">
+              COMING NEXT
+            </p>
+
+            <h2 className="mt-2 text-4xl font-black">
+              Realtime Notifications
+            </h2>
+
+            <p className="mt-4 text-black/80 leading-7 max-w-2xl">
+              Axyon will soon support live alerts for messages,
+              orders, moderation actions, rentals, and barter requests.
+            </p>
+          </div>
         </div>
       </section>
     </main>

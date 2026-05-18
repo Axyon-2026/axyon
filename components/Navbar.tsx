@@ -116,7 +116,27 @@ export default function Navbar() {
                 >
                   Sell Now
                 </a>
+                <a
+  href="/notifications"
+  className="
+    relative
+    w-11
+    h-11
+    rounded-full
+    border
+    border-white/10
+    hover:border-green-500
+    flex
+    items-center
+    justify-center
+    text-lg
+    transition
+  "
+>
+  🔔
 
+  <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-green-400" />
+</a>
                 <a
                   href="/dashboard"
                   className="px-5 py-2.5 rounded-full border border-white/10 hover:border-green-500 transition text-sm font-semibold"
@@ -164,6 +184,7 @@ export default function Navbar() {
                 <>
                   <MobileLink href="/chat" label="Chat" />
                   <MobileLink href="/support" label="Support" />
+                  <MobileLink href="/notifications" label="Notifications"/>
                   <MobileLink href="/dashboard" label="Dashboard" />
                   <MobileLink href="/create-product" label="Sell Product" />
                 </>

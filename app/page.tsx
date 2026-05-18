@@ -8,34 +8,39 @@ const categories = [
     title: "Marketplace",
     desc: "Buy and sell campus essentials",
     icon: "🛍️",
+    href: "/marketplace",
   },
   {
     title: "Rentals",
     desc: "Rent items instead of buying",
     icon: "🔁",
+    href: "/rentals",
   },
   {
     title: "Barter",
     desc: "Exchange items with students",
     icon: "🤝",
+    href: "/barter",
   },
   {
     title: "Campus Chat",
     desc: "Talk safely before deals",
     icon: "💬",
+    href: "/chat",
   },
   {
     title: "Verification",
     desc: "Trusted student identities",
     icon: "✅",
+    href: "/student-verification",
   },
   {
     title: "Support",
     desc: "Help when something goes wrong",
     icon: "🛡️",
+    href: "/support",
   },
 ];
-
 const steps = [
   {
     number: "01",
@@ -100,7 +105,7 @@ export default function HomePage() {
 
               <h1 className="mt-7 text-5xl sm:text-6xl lg:text-7xl font-black leading-[0.95] tracking-tight text-slate-950">
                 The student network built for{" "}
-                <span className="text-green-600">real campus life.</span>
+                <span className="text-green-600">real campus life...</span>
               </h1>
 
               <p className="mt-7 text-lg sm:text-xl text-slate-600 max-w-2xl leading-8">
@@ -272,7 +277,7 @@ export default function HomePage() {
             {categories.map((item) => (
               <a
                 key={item.title}
-                href="/marketplace"
+                href={item.href}
                 className="bg-slate-50 border border-slate-200 rounded-3xl p-5 hover:border-green-400 hover:-translate-y-1 transition"
               >
                 <div className="w-12 h-12 rounded-2xl bg-green-100 flex items-center justify-center text-2xl">
