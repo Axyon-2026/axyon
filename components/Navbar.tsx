@@ -92,8 +92,8 @@ export default function Navbar() {
           >
            <div
   className="
-    w-14
-    h-14
+    w-16
+    h-16
     rounded-2xl
     overflow-hidden
     bg-white
@@ -105,9 +105,9 @@ export default function Navbar() {
   "
 >
   <img
-    src="/logo.png"
+    src="/logo.jpeg"
     alt="Axyon Logo"
-    className="w-full h-full object-contain"
+    className="w-full h-full object-contain scale-125"
   />
 </div>
 
