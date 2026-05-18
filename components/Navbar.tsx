@@ -45,7 +45,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="h-20 flex items-center justify-between">
           <a href="/" className="flex items-center gap-4 shrink-0">
-            <div className="w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center">
+           <div className="w-14 h-14 rounded-full overflow-hidden bg-white shadow-[0_0_20px_rgba(139,92,246,0.35)] flex items-center justify-center p-1">
               <img
                 src="/logo.png"
                 alt="Axyon Logo"
