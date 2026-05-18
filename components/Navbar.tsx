@@ -90,29 +90,26 @@ export default function Navbar() {
               shrink-0
             "
           >
-            <div
-              className="
-                relative
-                w-12
-                h-12
-                rounded-2xl
-                overflow-hidden
-                bg-gradient-to-br
-                from-green-400
-                via-emerald-500
-                to-green-700
-                shadow-[0_0_30px_rgba(34,197,94,0.45)]
-                flex
-                items-center
-                justify-center
-              "
-            >
-              <span className="text-black text-2xl font-black">
-                A
-              </span>
-
-              <div className="absolute inset-0 bg-white/10" />
-            </div>
+           <div
+  className="
+    w-14
+    h-14
+    rounded-2xl
+    overflow-hidden
+    bg-white
+    shadow-[0_0_25px_rgba(139,92,246,0.35)]
+    flex
+    items-center
+    justify-center
+    p-1
+  "
+>
+  <img
+    src="/logo.png"
+    alt="Axyon Logo"
+    className="w-full h-full object-contain"
+  />
+</div>
 
             <div>
               <h1 className="text-2xl font-black tracking-tight">
@@ -120,7 +117,7 @@ export default function Navbar() {
               </h1>
 
               <p className="text-xs text-slate-400 hidden sm:block">
-                The Operating System for Campus Life
+               India’s Smart Student Ecosystem
               </p>
             </div>
           </a>
@@ -137,7 +134,7 @@ export default function Navbar() {
               border
               border-white/10
               rounded-full
-              px-3
+              px-3 
               py-2
             "
           >
