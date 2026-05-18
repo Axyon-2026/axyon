@@ -1,33 +1,52 @@
 "use client";
 
 import Navbar from "@/components/Navbar";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<any[]>([]);
-  const [message, setMessage] = useState("Loading users...");
-  const [accessDenied, setAccessDenied] = useState(false);
+  const [users, setUsers] =
+    useState<any[]>([]);
+
+  const [message, setMessage] =
+    useState(
+      "Loading users..."
+    );
+
+  const [search, setSearch] =
+    useState("");
+
+  const [filter, setFilter] =
+    useState("ALL");
 
   async function fetchUsers() {
     try {
-      const res = await fetch("/api/admin/users");
-      const data = await res.json();
+      const res =
+        await fetch(
+          "/api/admin/users"
+        );
 
-      if (res.status === 403) {
-        setAccessDenied(true);
-        setMessage("Access denied");
-        return;
-      }
+      const data =
+        await res.json();
 
       if (!res.ok) {
-        setMessage(data.message || "Failed to load users");
+        setMessage(
+          data.message ||
+            "Failed to load users"
+        );
+
         return;
       }
 
       setUsers(data.users || []);
+
       setMessage("");
+
     } catch {
-      setMessage("Something went wrong");
+
+      setMessage(
+        "Something went wrong"
+      );
+
     }
   }
 
@@ -35,259 +54,464 @@ export default function AdminUsersPage() {
     fetchUsers();
   }, []);
 
-  async function handleUserAction(userId: string, action: string) {
-    if (action === "SUSPEND") {
-      const confirmed = confirm("Suspend this user?");
-      if (!confirmed) return;
+  async function updateVerification(
+    userId: string,
+    status: string
+  ) {
+    try {
+
+      const res =
+        await fetch(
+          `/api/admin/users/${userId}/verification`,
+          {
+            method: "PATCH",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body: JSON.stringify({
+              status,
+            }),
+          }
+        );
+
+      const data =
+        await res.json();
+
+      if (!res.ok) {
+
+        alert(
+          data.message ||
+            "Failed to update verification"
+        );
+
+        return;
+      }
+
+      setUsers((prev) =>
+        prev.map((user) =>
+          user.id === userId
+            ? {
+                ...user,
+                studentVerificationStatus:
+                  status,
+                studentVerified:
+                  status ===
+                  "APPROVED",
+              }
+            : user
+        )
+      );
+
+      alert(
+        `Verification ${status.toLowerCase()}`
+      );
+
+    } catch {
+
+      alert(
+        "Failed to update verification"
+      );
+
     }
-
-    const res = await fetch("/api/admin/users/action", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ userId, action }),
-    });
-
-    const data = await res.json();
-
-    alert(data.message || "Action completed");
-    fetchUsers();
   }
 
-  async function handleStudentVerification(userId: string, action: string) {
-    const confirmed = confirm(
-      action === "APPROVE"
-        ? "Approve this student's college ID?"
-        : "Reject this student's college ID?"
-    );
+  async function suspendUser(
+    userId: string
+  ) {
+    const confirmed =
+      confirm(
+        "Suspend this user?"
+      );
 
     if (!confirmed) return;
 
-    const res = await fetch("/api/admin/users/verify-student", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ userId, action }),
-    });
+    try {
 
-    const data = await res.json();
+      const res =
+        await fetch(
+          `/api/admin/users/${userId}/suspend`,
+          {
+            method: "PATCH",
+          }
+        );
 
-    alert(data.message || "Verification updated");
-    fetchUsers();
+      const data =
+        await res.json();
+
+      if (!res.ok) {
+
+        alert(
+          data.message ||
+            "Failed to suspend user"
+        );
+
+        return;
+      }
+
+      alert(
+        "User suspended"
+      );
+
+      fetchUsers();
+
+    } catch {
+
+      alert(
+        "Failed to suspend user"
+      );
+
+    }
   }
 
-  if (accessDenied) {
-    return (
-      <main className="min-h-screen bg-slate-950 text-white">
-        <Navbar />
+  const filteredUsers =
+    useMemo(() => {
 
-        <section className="flex items-center justify-center py-24 px-6">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-10 text-center max-w-lg">
-            <h1 className="text-4xl font-bold text-red-500">
-              Access Denied
-            </h1>
+      return users.filter(
+        (user) => {
 
-            <p className="mt-5 text-slate-400">
-              You do not have permission to access admin users.
-            </p>
+          const matchesSearch =
+            user.name
+              ?.toLowerCase()
+              .includes(
+                search.toLowerCase()
+              ) ||
+            user.email
+              ?.toLowerCase()
+              .includes(
+                search.toLowerCase()
+              );
 
-            <a
-              href="/"
-              className="inline-block mt-8 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl font-medium"
-            >
-              Go Home
-            </a>
-          </div>
-        </section>
-      </main>
-    );
-  }
+          const matchesFilter =
+            filter === "ALL"
+              ? true
+              : filter ===
+                "VERIFIED"
+              ? user.studentVerified
+              : filter ===
+                "PENDING"
+              ? user.studentVerificationStatus ===
+                "PENDING"
+              : filter ===
+                "ADMINS"
+              ? user.role ===
+                "ADMIN"
+              : true;
+
+          return (
+            matchesSearch &&
+            matchesFilter
+          );
+        }
+      );
+
+    }, [
+      users,
+      search,
+      filter,
+    ]);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
+    <main className="min-h-screen bg-[#0f172a] text-white">
       <Navbar />
 
-      <section className="px-8 py-12">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
-          <div>
-            <h1 className="text-4xl font-bold">User Management</h1>
+      <section className="px-4 sm:px-6 lg:px-10 py-8 pb-28">
+        <div className="max-w-7xl mx-auto">
+          {/* hero */}
 
-            <p className="mt-3 text-slate-400">
-              View, verify, warn, suspend, and monitor platform users.
-            </p>
-          </div>
+          <div className="rounded-[2rem] bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 p-8 sm:p-10 shadow-2xl overflow-hidden relative">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(34,197,94,0.25),_transparent_35%)]" />
 
-          <a
-            href="/admin"
-            className="border border-slate-700 hover:border-slate-500 px-5 py-3 rounded-xl font-medium"
-          >
-            Back to Admin
-          </a>
-        </div>
+            <div className="relative">
+              <span className="inline-flex bg-green-500/10 border border-green-500/20 text-green-400 rounded-full px-4 py-2 text-xs font-black">
+                User Management
+              </span>
 
-        {message && <p className="mt-8 text-slate-400">{message}</p>}
+              <h1 className="mt-6 text-4xl sm:text-5xl font-black">
+                Admin Users
+              </h1>
 
-        {!message && users.length === 0 && (
-          <div className="mt-10 bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center">
-            <h2 className="text-2xl font-semibold">No Users Found</h2>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-10">
-          {users.map((user) => (
-            <div
-              key={user.id}
-              className={`bg-slate-900 border rounded-2xl p-6 ${
-                user.isSuspended ? "border-red-600" : "border-slate-800"
-              }`}
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center">
-                  {user.profileImageUrl ? (
-                    <img
-                      src={user.profileImageUrl}
-                      alt={user.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-2xl font-bold text-slate-400">
-                      {user.name?.charAt(0)?.toUpperCase() || "U"}
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <h2 className="text-xl font-bold">{user.name}</h2>
-                  <p className="text-sm text-slate-400">{user.email}</p>
-                </div>
-              </div>
-
-              <div className="mt-6 space-y-3 text-sm text-slate-300">
-                <p>
-                  Role: <span className="font-medium">{user.role}</span>
-                </p>
-
-                <p>College: {user.college || "Not added"}</p>
-
-                <p>Phone: {user.phone || "Not added"}</p>
-
-                <p>Email Verified: {user.emailVerified ? "Yes" : "No"}</p>
-
-                <p>
-                  Student Verification:{" "}
-                  <span
-                    className={
-                      user.studentVerificationStatus === "APPROVED"
-                        ? "text-green-400"
-                        : user.studentVerificationStatus === "REJECTED"
-                        ? "text-red-400"
-                        : user.studentVerificationStatus === "PENDING"
-                        ? "text-yellow-400"
-                        : "text-slate-400"
-                    }
-                  >
-                    {user.studentVerificationStatus || "NOT_SUBMITTED"}
-                  </span>
-                </p>
-
-                <p>
-                  College ID Number:{" "}
-                  {user.collegeIdNumber || "Not submitted"}
-                </p>
-
-                <p>
-                  Strikes:{" "}
-                  <span className="font-medium">{user.strikeCount}</span>
-                </p>
-
-                <p>
-                  Status:{" "}
-                  <span
-                    className={
-                      user.isSuspended ? "text-red-400" : "text-green-400"
-                    }
-                  >
-                    {user.isSuspended ? "Suspended" : "Active"}
-                  </span>
-                </p>
-
-                <p>
-                  Joined: {new Date(user.createdAt).toLocaleDateString()}
-                </p>
-              </div>
-
-              {user.collegeIdImageUrl && (
-                <div className="mt-5">
-                  <p className="text-sm text-slate-400 mb-2">
-                    College ID Image
-                  </p>
-
-                  <img
-                    src={user.collegeIdImageUrl}
-                    alt="College ID"
-                    className="w-full max-h-72 object-cover rounded-xl border border-slate-700"
-                  />
-                </div>
-              )}
-
-              {user.role === "ADMIN" ? (
-                <p className="mt-6 text-sm text-purple-400">
-                  Admin accounts cannot be modified here.
-                </p>
-              ) : (
-                <>
-                  {user.studentVerificationStatus === "PENDING" && (
-                    <div className="mt-6 flex gap-3">
-                      <button
-                        onClick={() =>
-                          handleStudentVerification(user.id, "APPROVE")
-                        }
-                        className="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded-xl text-sm font-medium"
-                      >
-                        Approve ID
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          handleStudentVerification(user.id, "REJECT")
-                        }
-                        className="flex-1 bg-red-600 hover:bg-red-700 py-2 rounded-xl text-sm font-medium"
-                      >
-                        Reject ID
-                      </button>
-                    </div>
-                  )}
-
-                  <div className="mt-6 flex gap-3">
-                    <button
-                      onClick={() => handleUserAction(user.id, "WARN")}
-                      className="flex-1 bg-yellow-600 hover:bg-yellow-700 py-2 rounded-xl text-sm font-medium"
-                    >
-                      Warn
-                    </button>
-
-                    {user.isSuspended ? (
-                      <button
-                        onClick={() => handleUserAction(user.id, "UNSUSPEND")}
-                        className="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded-xl text-sm font-medium"
-                      >
-                        Unsuspend
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleUserAction(user.id, "SUSPEND")}
-                        className="flex-1 bg-red-600 hover:bg-red-700 py-2 rounded-xl text-sm font-medium"
-                      >
-                        Suspend
-                      </button>
-                    )}
-                  </div>
-                </>
-              )}
+              <p className="mt-4 text-slate-400 max-w-2xl leading-7">
+                Manage student verification, review accounts,
+                monitor admins, and moderate suspicious users.
+              </p>
             </div>
-          ))}
+          </div>
+
+          {/* filters */}
+
+          <div className="mt-8 bg-slate-900 border border-slate-800 rounded-[2rem] p-5 shadow-xl">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4">
+              <input
+                type="text"
+
+                placeholder="Search users..."
+
+                value={search}
+
+                onChange={(e) =>
+                  setSearch(
+                    e.target.value
+                  )
+                }
+
+                className="
+                  px-5
+                  py-4
+                  rounded-2xl
+                  bg-slate-800
+                  border
+                  border-slate-700
+                  outline-none
+                  focus:border-green-500
+                "
+              />
+
+              <div className="flex flex-wrap gap-3">
+                {[
+                  "ALL",
+                  "VERIFIED",
+                  "PENDING",
+                  "ADMINS",
+                ].map((item) => (
+                  <button
+                    key={item}
+
+                    onClick={() =>
+                      setFilter(item)
+                    }
+
+                    className={`
+                      px-5
+                      py-3
+                      rounded-full
+                      text-sm
+                      font-black
+                      border
+                      transition
+
+                      ${
+                        filter === item
+                          ? "bg-green-600 border-green-600"
+                          : "bg-slate-800 border-slate-700 hover:border-green-500"
+                      }
+                    `}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {message && (
+            <div className="mt-6 bg-slate-900 border border-slate-800 rounded-3xl p-6">
+              <p className="text-slate-400 font-semibold">
+                {message}
+              </p>
+            </div>
+          )}
+
+          {!message &&
+            filteredUsers.length ===
+              0 && (
+              <div className="mt-6 bg-slate-900 border border-slate-800 rounded-[2rem] p-10 text-center">
+                <div className="text-6xl">
+                  👥
+                </div>
+
+                <h2 className="mt-5 text-3xl font-black">
+                  No Users Found
+                </h2>
+
+                <p className="mt-3 text-slate-400">
+                  No users match the selected filters.
+                </p>
+              </div>
+            )}
+
+          {/* users */}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-6">
+            {filteredUsers.map(
+              (user) => (
+                <div
+                  key={user.id}
+
+                  className="
+                    bg-slate-900
+                    border
+                    border-slate-800
+                    rounded-[2rem]
+                    p-6
+                    shadow-2xl
+                  "
+                >
+                  <div className="flex items-start gap-4">
+                    <div
+                      className="
+                      w-16
+                      h-16
+                      rounded-full
+                      bg-green-100
+                      text-green-700
+                      flex
+                      items-center
+                      justify-center
+                      text-2xl
+                      font-black
+                      shrink-0
+                    "
+                    >
+                      {user.name?.charAt(
+                        0
+                      ) || "U"}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap gap-2">
+                        {user.role ===
+                          "ADMIN" && (
+                          <span className="bg-purple-500/10 text-purple-400 border border-purple-500/20 px-3 py-1 rounded-full text-[10px] font-black">
+                            ADMIN
+                          </span>
+                        )}
+
+                        {user.studentVerified && (
+                          <span className="bg-green-500/10 text-green-400 border border-green-500/20 px-3 py-1 rounded-full text-[10px] font-black">
+                            VERIFIED
+                          </span>
+                        )}
+
+                        {user.studentVerificationStatus ===
+                          "PENDING" && (
+                          <span className="bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-3 py-1 rounded-full text-[10px] font-black">
+                            PENDING
+                          </span>
+                        )}
+                      </div>
+
+                      <h2 className="mt-4 text-2xl font-black break-words">
+                        {user.name}
+                      </h2>
+
+                      <p className="mt-2 text-slate-400 break-all">
+                        {user.email}
+                      </p>
+
+                      <div className="mt-5 space-y-2 text-sm">
+                        <p className="text-slate-400">
+                          College:{" "}
+                          <span className="text-white font-semibold">
+                            {user.college ||
+                              "Not added"}
+                          </span>
+                        </p>
+
+                        <p className="text-slate-400">
+                          Phone:{" "}
+                          <span className="text-white font-semibold">
+                            {user.phone ||
+                              "Not added"}
+                          </span>
+                        </p>
+
+                        <p className="text-slate-400">
+                          Listings:{" "}
+                          <span className="text-white font-semibold">
+                            {
+                              user
+                                .products
+                                ?.length ||
+                                0
+                            }
+                          </span>
+                        </p>
+                      </div>
+
+                      {user.studentVerificationStatus ===
+                        "PENDING" && (
+                        <div className="mt-6 flex flex-wrap gap-3">
+                          <button
+                            onClick={() =>
+                              updateVerification(
+                                user.id,
+                                "APPROVED"
+                              )
+                            }
+
+                            className="
+                              bg-green-600
+                              hover:bg-green-700
+                              px-5
+                              py-3
+                              rounded-full
+                              font-black
+                              text-sm
+                            "
+                          >
+                            Approve
+                          </button>
+
+                          <button
+                            onClick={() =>
+                              updateVerification(
+                                user.id,
+                                "REJECTED"
+                              )
+                            }
+
+                            className="
+                              border
+                              border-red-500/30
+                              hover:border-red-500
+                              text-red-400
+                              px-5
+                              py-3
+                              rounded-full
+                              font-black
+                              text-sm
+                            "
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      )}
+
+                      {user.role !==
+                        "ADMIN" && (
+                        <div className="mt-5">
+                          <button
+                            onClick={() =>
+                              suspendUser(
+                                user.id
+                              )
+                            }
+
+                            className="
+                              border
+                              border-orange-500/30
+                              hover:border-orange-500
+                              text-orange-400
+                              px-5
+                              py-3
+                              rounded-full
+                              font-black
+                              text-sm
+                            "
+                          >
+                            Suspend User
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            )}
+          </div>
         </div>
       </section>
     </main>
