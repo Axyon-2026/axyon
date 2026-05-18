@@ -3,25 +3,41 @@
 import { useEffect, useState } from "react";
 
 export default function Navbar() {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [user, setUser] =
+    useState<any>(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [menuOpen, setMenuOpen] =
+    useState(false);
 
   useEffect(() => {
     async function checkUser() {
       try {
-        const res = await fetch("/api/auth/me");
+        const res = await fetch(
+          "/api/auth/me"
+        );
 
         if (res.ok) {
-          const data = await res.json();
+          const data =
+            await res.json();
+
           setUser(data.user);
+
         } else {
+
           setUser(null);
+
         }
       } catch {
+
         setUser(null);
+
       } finally {
+
         setLoading(false);
+
       }
     }
 
@@ -29,348 +45,534 @@ export default function Navbar() {
   }, []);
 
   async function handleLogout() {
-    await fetch("/api/auth/logout", {
-      method: "POST",
-    });
+    await fetch(
+      "/api/auth/logout",
+      {
+        method: "POST",
+      }
+    );
 
     setUser(null);
-    window.location.href = "/login";
+
+    window.location.href =
+      "/login";
   }
 
   const isLoggedIn = !!user;
-  const isAdmin = user?.role === "ADMIN";
+
+  const isAdmin =
+    user?.role === "ADMIN";
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/95 backdrop-blur text-white">
-      <div className="max-w-7xl mx-auto px-5 md:px-8 py-4 flex items-center justify-between">
-        <a href="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-black">
-            A
-          </div>
+    <nav
+      className="
+        sticky
+        top-0
+        z-50
+        border-b
+        border-white/10
+        bg-[#071019]/80
+        backdrop-blur-2xl
+        text-white
+      "
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="h-20 flex items-center justify-between">
+          {/* logo */}
 
-          <div>
-            <p className="text-2xl font-bold leading-none">Axyon</p>
-            <p className="text-xs text-slate-500 hidden sm:block">
-              Campus Marketplace
-            </p>
-          </div>
-        </a>
+          <a
+            href="/"
 
-        <div className="hidden lg:flex gap-6 text-sm text-slate-300 items-center">
-          <a href="/" className="hover:text-white">
-            Home
+            className="
+              flex
+              items-center
+              gap-4
+              shrink-0
+            "
+          >
+            <div
+              className="
+                relative
+                w-12
+                h-12
+                rounded-2xl
+                overflow-hidden
+                bg-gradient-to-br
+                from-green-400
+                via-emerald-500
+                to-green-700
+                shadow-[0_0_30px_rgba(34,197,94,0.45)]
+                flex
+                items-center
+                justify-center
+              "
+            >
+              <span className="text-black text-2xl font-black">
+                A
+              </span>
+
+              <div className="absolute inset-0 bg-white/10" />
+            </div>
+
+            <div>
+              <h1 className="text-2xl font-black tracking-tight">
+                Axyon
+              </h1>
+
+              <p className="text-xs text-slate-400 hidden sm:block">
+                The Operating System for Campus Life
+              </p>
+            </div>
           </a>
 
-          {!isAdmin && (
-            <a href="/marketplace" className="hover:text-white">
-              Marketplace
-            </a>
-          )}
+          {/* desktop nav */}
 
-          {!isLoggedIn && (
-            <a href="/support" className="hover:text-white">
-              Support
-            </a>
-          )}
-
-          {isLoggedIn && !isAdmin && (
-            <>
-              <a href="/marketplace" className="hover:text-white">
-                Marketplace
-              </a>
-
-              <a href="/create-product" className="hover:text-white">
-                Sell
-              </a>
-
-              <a href="/chat" className="hover:text-white">
-                Chat
-              </a>
-
-              <a href="/support" className="hover:text-white">
-                Support
-              </a>
-
-              <a href="/dashboard" className="hover:text-white">
-                Dashboard
-              </a>
-
-              <a href="/my-orders" className="hover:text-white">
-                Orders
-              </a>
-
-              <a href="/student-verification" className="hover:text-white">
-                Verify
-              </a>
-            </>
-          )}
-
-          {isAdmin && (
-            <>
-              <a href="/admin" className="text-purple-400 font-semibold">
-                Admin
-              </a>
-
-              <a href="/admin/users" className="text-purple-400">
-                Users
-              </a>
-
-              <a href="/admin/listings" className="text-purple-400">
-                Listings
-              </a>
-
-              <a href="/admin/support" className="text-purple-400">
-                Tickets
-              </a>
-
-              <a href="/admin/reports" className="text-purple-400">
-                Reports
-              </a>
-
-              <a href="/admin/logs" className="text-purple-400">
-                Logs
-              </a>
-
-              <a href="/admin/analytics" className="text-purple-400">
-                Analytics
-              </a>
-            </>
-          )}
-        </div>
-
-        <div className="hidden lg:flex gap-3 items-center">
-          {!loading && !isLoggedIn && (
-            <>
-              <a
-                href="/login"
-                className="px-4 py-2 rounded-xl border border-slate-700 hover:border-slate-500 text-sm"
-              >
-                Login
-              </a>
-
-              <a
-                href="/register"
-                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-sm font-medium"
-              >
-                Get Started
-              </a>
-            </>
-          )}
-
-          {!loading && isLoggedIn && (
-            <>
-              <a
-                href="/profile"
-                className={`px-4 py-2 rounded-xl text-sm font-medium ${
-                  isAdmin
-                    ? "bg-purple-600 hover:bg-purple-700"
-                    : "bg-blue-600 hover:bg-blue-700"
-                }`}
-              >
-                {isAdmin ? "Admin Profile" : "My Account"}
-              </a>
-
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 rounded-xl border border-red-500 text-red-400 hover:bg-red-500 hover:text-white text-sm"
-              >
-                Logout
-              </button>
-            </>
-          )}
-        </div>
-
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="lg:hidden w-11 h-11 rounded-xl border border-slate-700 flex items-center justify-center text-xl"
-        >
-          {menuOpen ? "×" : "☰"}
-        </button>
-      </div>
-
-      {menuOpen && (
-        <div className="lg:hidden border-t border-slate-800 bg-slate-950 px-5 py-5">
-          <div className="space-y-3">
-            <a
+          <div
+            className="
+              hidden
+              lg:flex
+              items-center
+              gap-2
+              bg-white/[0.03]
+              border
+              border-white/10
+              rounded-full
+              px-3
+              py-2
+            "
+          >
+            <NavLink
               href="/"
-              className="block bg-slate-900 border border-slate-800 rounded-xl px-4 py-3"
-            >
-              Home
-            </a>
+              label="Home"
+            />
 
             {!isAdmin && (
-              <a
-                href="/marketplace"
-                className="block bg-slate-900 border border-slate-800 rounded-xl px-4 py-3"
-              >
-                Marketplace
-              </a>
-            )}
-
-            {!loading && !isLoggedIn && (
               <>
-                <a
-                  href="/support"
-                  className="block bg-slate-900 border border-slate-800 rounded-xl px-4 py-3"
-                >
-                  Support
-                </a>
+                <NavLink
+                  href="/marketplace"
+                  label="Marketplace"
+                />
 
-                <a
-                  href="/login"
-                  className="block border border-slate-700 rounded-xl px-4 py-3 text-center"
-                >
-                  Login
-                </a>
+                {isLoggedIn && (
+                  <>
+                    <NavLink
+                      href="/chat"
+                      label="Chat"
+                    />
 
-                <a
-                  href="/register"
-                  className="block bg-blue-600 rounded-xl px-4 py-3 text-center font-medium"
-                >
-                  Get Started
-                </a>
+                    <NavLink
+                      href="/support"
+                      label="Support"
+                    />
+                  </>
+                )}
               </>
             )}
 
-            {!loading && isLoggedIn && !isAdmin && (
+            {isAdmin && (
               <>
-                <div className="grid grid-cols-2 gap-3">
+                <NavLink
+                  href="/admin"
+                  label="Dashboard"
+                />
+
+                <NavLink
+                  href="/admin/users"
+                  label="Users"
+                />
+
+                <NavLink
+                  href="/admin/listings"
+                  label="Listings"
+                />
+
+                <NavLink
+                  href="/admin/reports"
+                  label="Reports"
+                />
+
+                <NavLink
+                  href="/admin/analytics"
+                  label="Analytics"
+                />
+              </>
+            )}
+          </div>
+
+          {/* right */}
+
+          <div className="hidden lg:flex items-center gap-3">
+            {!loading &&
+              !isLoggedIn && (
+                <>
                   <a
-                    href="/create-product"
-                    className="bg-blue-600 rounded-xl px-4 py-3 text-center font-medium"
+                    href="/login"
+
+                    className="
+                      px-5
+                      py-2.5
+                      rounded-full
+                      border
+                      border-white/10
+                      hover:border-green-500
+                      transition
+                      text-sm
+                      font-semibold
+                    "
                   >
-                    Sell
+                    Login
                   </a>
 
                   <a
-                    href="/chat"
-                    className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-center"
+                    href="/register"
+
+                    className="
+                      px-6
+                      py-3
+                      rounded-full
+                      bg-gradient-to-r
+                      from-green-500
+                      to-emerald-600
+                      hover:scale-105
+                      transition
+                      shadow-[0_0_30px_rgba(34,197,94,0.35)]
+                      text-sm
+                      font-black
+                      text-black
+                    "
                   >
-                    Chat
+                    Join Campus
+                  </a>
+                </>
+              )}
+
+            {!loading &&
+              isLoggedIn &&
+              !isAdmin && (
+                <>
+                  <a
+                    href="/create-product"
+
+                    className="
+                      px-6
+                      py-3
+                      rounded-full
+                      bg-gradient-to-r
+                      from-green-500
+                      to-emerald-600
+                      hover:scale-105
+                      transition
+                      shadow-[0_0_30px_rgba(34,197,94,0.35)]
+                      text-sm
+                      font-black
+                      text-black
+                    "
+                  >
+                    Sell Now
                   </a>
 
                   <a
                     href="/dashboard"
-                    className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-center"
+
+                    className="
+                      px-5
+                      py-2.5
+                      rounded-full
+                      border
+                      border-white/10
+                      hover:border-green-500
+                      transition
+                      text-sm
+                      font-semibold
+                    "
                   >
-                    Dashboard
+                    Profile
                   </a>
+                </>
+              )}
 
-                  <a
-                    href="/my-orders"
-                    className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-center"
-                  >
-                    Orders
-                  </a>
-
-                  <a
-                    href="/student-verification"
-                    className="bg-yellow-600 rounded-xl px-4 py-3 text-center font-medium"
-                  >
-                    Verify ID
-                  </a>
-
-                  <a
-                    href="/support"
-                    className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-center"
-                  >
-                    Support
-                  </a>
-                </div>
-
-                <a
-                  href="/profile"
-                  className="block bg-blue-600 rounded-xl px-4 py-3 text-center font-medium"
-                >
-                  My Account
-                </a>
-
-                <button
-                  onClick={handleLogout}
-                  className="w-full border border-red-500 text-red-400 rounded-xl px-4 py-3"
-                >
-                  Logout
-                </button>
-              </>
-            )}
-
-            {!loading && isAdmin && (
-              <>
-                <div className="bg-purple-900/30 border border-purple-700 rounded-2xl p-4">
-                  <p className="text-purple-300 text-sm font-medium">
-                    Admin Control Panel
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
+            {!loading &&
+              isLoggedIn &&
+              isAdmin && (
+                <>
                   <a
                     href="/admin"
-                    className="bg-purple-600 rounded-xl px-4 py-3 text-center font-medium"
-                  >
-                    Admin
-                  </a>
 
-                  <a
+                    className="
+                      px-6
+                      py-3
+                      rounded-full
+                      bg-gradient-to-r
+                      from-green-500
+                      to-emerald-600
+                      shadow-[0_0_30px_rgba(34,197,94,0.35)]
+                      text-sm
+                      font-black
+                      text-black
+                    "
+                  >
+                    Admin Panel
+                  </a>
+                </>
+              )}
+
+            {isLoggedIn && (
+              <button
+                onClick={handleLogout}
+
+                className="
+                  px-5
+                  py-2.5
+                  rounded-full
+                  border
+                  border-red-500/20
+                  text-red-400
+                  hover:border-red-500
+                  transition
+                  text-sm
+                  font-semibold
+                "
+              >
+                Logout
+              </button>
+            )}
+          </div>
+
+          {/* mobile button */}
+
+          <button
+            onClick={() =>
+              setMenuOpen(
+                !menuOpen
+              )
+            }
+
+            className="
+              lg:hidden
+              w-12
+              h-12
+              rounded-2xl
+              bg-white/[0.05]
+              border
+              border-white/10
+              flex
+              items-center
+              justify-center
+              text-2xl
+            "
+          >
+            {menuOpen ? "×" : "☰"}
+          </button>
+        </div>
+
+        {/* mobile menu */}
+
+        {menuOpen && (
+          <div
+            className="
+              lg:hidden
+              pb-6
+              animate-in
+              fade-in
+            "
+          >
+            <div
+              className="
+                bg-[#0f172a]
+                border
+                border-white/10
+                rounded-[2rem]
+                p-5
+                space-y-3
+                shadow-2xl
+              "
+            >
+              <MobileLink
+                href="/"
+                label="Home"
+              />
+
+              {!isAdmin && (
+                <MobileLink
+                  href="/marketplace"
+                  label="Marketplace"
+                />
+              )}
+
+              {isLoggedIn &&
+                !isAdmin && (
+                  <>
+                    <MobileLink
+                      href="/chat"
+                      label="Chat"
+                    />
+
+                    <MobileLink
+                      href="/support"
+                      label="Support"
+                    />
+
+                    <MobileLink
+                      href="/dashboard"
+                      label="Dashboard"
+                    />
+
+                    <MobileLink
+                      href="/create-product"
+                      label="Sell Product"
+                    />
+                  </>
+                )}
+
+              {isAdmin && (
+                <>
+                  <MobileLink
+                    href="/admin"
+                    label="Admin Dashboard"
+                  />
+
+                  <MobileLink
                     href="/admin/users"
-                    className="bg-slate-900 border border-purple-800 rounded-xl px-4 py-3 text-center"
-                  >
-                    Users
-                  </a>
+                    label="Users"
+                  />
 
-                  <a
+                  <MobileLink
                     href="/admin/listings"
-                    className="bg-slate-900 border border-purple-800 rounded-xl px-4 py-3 text-center"
-                  >
-                    Listings
-                  </a>
+                    label="Listings"
+                  />
 
-                  <a
-                    href="/admin/support"
-                    className="bg-slate-900 border border-purple-800 rounded-xl px-4 py-3 text-center"
-                  >
-                    Tickets
-                  </a>
-
-                  <a
+                  <MobileLink
                     href="/admin/reports"
-                    className="bg-slate-900 border border-purple-800 rounded-xl px-4 py-3 text-center"
-                  >
-                    Reports
-                  </a>
+                    label="Reports"
+                  />
 
-                  <a
+                  <MobileLink
+                    href="/admin/support"
+                    label="Support"
+                  />
+
+                  <MobileLink
                     href="/admin/logs"
-                    className="bg-slate-900 border border-purple-800 rounded-xl px-4 py-3 text-center"
-                  >
-                    Logs
-                  </a>
+                    label="Logs"
+                  />
 
-                  <a
+                  <MobileLink
                     href="/admin/analytics"
-                    className="bg-slate-900 border border-purple-800 rounded-xl px-4 py-3 text-center col-span-2"
-                  >
-                    Analytics
-                  </a>
-                </div>
+                    label="Analytics"
+                  />
+                </>
+              )}
 
-                <a
-                  href="/profile"
-                  className="block bg-purple-600 rounded-xl px-4 py-3 text-center font-medium"
-                >
-                  Admin Profile
-                </a>
+              {!loading &&
+                !isLoggedIn && (
+                  <>
+                    <MobileLink
+                      href="/login"
+                      label="Login"
+                    />
 
+                    <a
+                      href="/register"
+
+                      className="
+                        block
+                        text-center
+                        mt-4
+                        bg-gradient-to-r
+                        from-green-500
+                        to-emerald-600
+                        text-black
+                        font-black
+                        py-4
+                        rounded-2xl
+                      "
+                    >
+                      Join Campus
+                    </a>
+                  </>
+                )}
+
+              {isLoggedIn && (
                 <button
-                  onClick={handleLogout}
-                  className="w-full border border-red-500 text-red-400 rounded-xl px-4 py-3"
+                  onClick={
+                    handleLogout
+                  }
+
+                  className="
+                    w-full
+                    mt-4
+                    border
+                    border-red-500/20
+                    text-red-400
+                    py-4
+                    rounded-2xl
+                    font-black
+                  "
                 >
                   Logout
                 </button>
-              </>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </nav>
+  );
+}
+
+function NavLink({
+  href,
+  label,
+}: {
+  href: string;
+  label: string;
+}) {
+  return (
+    <a
+      href={href}
+
+      className="
+        px-5
+        py-2.5
+        rounded-full
+        text-sm
+        font-semibold
+        text-slate-300
+        hover:text-white
+        hover:bg-white/[0.06]
+        transition
+      "
+    >
+      {label}
+    </a>
+  );
+}
+
+function MobileLink({
+  href,
+  label,
+}: {
+  href: string;
+  label: string;
+}) {
+  return (
+    <a
+      href={href}
+
+      className="
+        block
+        px-5
+        py-4
+        rounded-2xl
+        bg-white/[0.03]
+        border
+        border-white/5
+        hover:border-green-500/40
+        transition
+        font-semibold
+      "
+    >
+      {label}
+    </a>
   );
 }
