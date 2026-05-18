@@ -38,7 +38,7 @@ export default function AdminListingsPage() {
       }
 
       setProducts(
-        data.products || []
+        data.listings || []
       );
 
       setMessage("");
@@ -70,9 +70,19 @@ export default function AdminListingsPage() {
 
       const res =
         await fetch(
-          `/api/admin/listings/${productId}`,
+          "/api/admin/listings",
           {
-            method: "DELETE",
+            method: "PATCH",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body: JSON.stringify({
+              productId,
+              action: "REMOVE",
+            }),
           }
         );
 
@@ -90,9 +100,15 @@ export default function AdminListingsPage() {
       }
 
       setProducts((prev) =>
-        prev.filter(
-          (p) =>
-            p.id !== productId
+        prev.map((product) =>
+          product.id ===
+          productId
+            ? {
+                ...product,
+                status:
+                  "REMOVED",
+              }
+            : product
         )
       );
 
@@ -159,8 +175,6 @@ export default function AdminListingsPage() {
 
       <section className="px-4 sm:px-6 lg:px-10 py-8 pb-28">
         <div className="max-w-7xl mx-auto">
-          {/* hero */}
-
           <div className="rounded-[2rem] bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 p-8 sm:p-10 shadow-2xl overflow-hidden relative">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(34,197,94,0.25),_transparent_35%)]" />
 
@@ -180,23 +194,17 @@ export default function AdminListingsPage() {
             </div>
           </div>
 
-          {/* filters */}
-
           <div className="mt-8 bg-slate-900 border border-slate-800 rounded-[2rem] p-5 shadow-xl">
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4">
               <input
                 type="text"
-
                 placeholder="Search by product or seller..."
-
                 value={search}
-
                 onChange={(e) =>
                   setSearch(
                     e.target.value
                   )
                 }
-
                 className="
                   px-5
                   py-4
@@ -217,11 +225,9 @@ export default function AdminListingsPage() {
                 ].map((item) => (
                   <button
                     key={item}
-
                     onClick={() =>
                       setFilter(item)
                     }
-
                     className={`
                       px-5
                       py-3
@@ -283,8 +289,6 @@ export default function AdminListingsPage() {
             </div>
           )}
 
-          {/* products */}
-
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
             {filteredProducts.map(
               (product) => {
@@ -300,7 +304,6 @@ export default function AdminListingsPage() {
                 return (
                   <div
                     key={product.id}
-
                     className="
                     bg-slate-900
                     border
@@ -318,7 +321,6 @@ export default function AdminListingsPage() {
                             alt={
                               product.title
                             }
-
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -342,11 +344,10 @@ export default function AdminListingsPage() {
                             }
                           </span>
 
-                          {product.reports
-                            ?.length >
-                            0 && (
+                          {product.status ===
+                            "REMOVED" && (
                             <span className="bg-red-500/10 text-red-400 border border-red-500/20 px-3 py-1 rounded-full text-[10px] font-black">
-                              🚨 Reported
+                              REMOVED
                             </span>
                           )}
                         </div>
@@ -386,24 +387,11 @@ export default function AdminListingsPage() {
                               }
                             </span>
                           </p>
-
-                          <p className="text-sm text-slate-400">
-                            Reports:{" "}
-                            <span className="text-white font-semibold">
-                              {
-                                product
-                                  .reports
-                                  ?.length ||
-                                  0
-                              }
-                            </span>
-                          </p>
                         </div>
 
                         <div className="mt-6 flex flex-wrap gap-3">
                           <a
                             href={`/product/${product.id}`}
-
                             className="
                               bg-green-600
                               hover:bg-green-700
@@ -417,27 +405,29 @@ export default function AdminListingsPage() {
                             View Product
                           </a>
 
-                          <button
-                            onClick={() =>
-                              deleteProduct(
-                                product.id
-                              )
-                            }
-
-                            className="
-                              border
-                              border-red-500/30
-                              hover:border-red-500
-                              text-red-400
-                              px-5
-                              py-3
-                              rounded-full
-                              font-black
-                              text-sm
-                            "
-                          >
-                            Remove Listing
-                          </button>
+                          {product.status !==
+                            "REMOVED" && (
+                            <button
+                              onClick={() =>
+                                deleteProduct(
+                                  product.id
+                                )
+                              }
+                              className="
+                                border
+                                border-red-500/30
+                                hover:border-red-500
+                                text-red-400
+                                px-5
+                                py-3
+                                rounded-full
+                                font-black
+                                text-sm
+                              "
+                            >
+                              Remove Listing
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
