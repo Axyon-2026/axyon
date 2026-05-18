@@ -1,33 +1,54 @@
 "use client";
 
 import Navbar from "@/components/Navbar";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function AdminReportsPage() {
-  const [reports, setReports] = useState<any[]>([]);
-  const [message, setMessage] = useState("Loading reports...");
-  const [accessDenied, setAccessDenied] = useState(false);
+  const [reports, setReports] =
+    useState<any[]>([]);
+
+  const [message, setMessage] =
+    useState(
+      "Loading reports..."
+    );
+
+  const [search, setSearch] =
+    useState("");
+
+  const [filter, setFilter] =
+    useState("ALL");
 
   async function fetchReports() {
     try {
-      const res = await fetch("/api/admin/reports");
-      const data = await res.json();
+      const res =
+        await fetch(
+          "/api/admin/reports"
+        );
 
-      if (res.status === 403) {
-        setAccessDenied(true);
-        setMessage("Access denied");
-        return;
-      }
+      const data =
+        await res.json();
 
       if (!res.ok) {
-        setMessage(data.message || "Failed to load reports");
+        setMessage(
+          data.message ||
+            "Failed to load reports"
+        );
+
         return;
       }
 
-      setReports(data.reports || []);
+      setReports(
+        data.reports || []
+      );
+
       setMessage("");
+
     } catch {
-      setMessage("Something went wrong");
+
+      setMessage(
+        "Something went wrong"
+      );
+
     }
   }
 
@@ -35,161 +56,457 @@ export default function AdminReportsPage() {
     fetchReports();
   }, []);
 
-  async function updateStatus(reportId: string, status: string) {
-    const res = await fetch("/api/admin/reports", {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ reportId, status }),
-    });
+  async function resolveReport(
+    reportId: string
+  ) {
+    try {
 
-    const data = await res.json();
+      const res =
+        await fetch(
+          `/api/admin/reports/${reportId}/resolve`,
+          {
+            method: "PATCH",
+          }
+        );
 
-    if (!res.ok) {
-      alert(data.message || "Failed to update report");
-      return;
+      const data =
+        await res.json();
+
+      if (!res.ok) {
+
+        alert(
+          data.message ||
+            "Failed to resolve report"
+        );
+
+        return;
+      }
+
+      setReports((prev) =>
+        prev.map((report) =>
+          report.id === reportId
+            ? {
+                ...report,
+                resolved: true,
+              }
+            : report
+        )
+      );
+
+      alert(
+        "Report resolved"
+      );
+
+    } catch {
+
+      alert(
+        "Failed to resolve report"
+      );
+
     }
-
-    fetchReports();
   }
 
-  if (accessDenied) {
-    return (
-      <main className="min-h-screen bg-slate-950 text-white">
-        <Navbar />
-        <section className="flex items-center justify-center py-24 px-6">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-10 text-center max-w-lg">
-            <h1 className="text-4xl font-bold text-red-500">Access Denied</h1>
-            <p className="mt-5 text-slate-400">
-              You do not have permission to view reports.
-            </p>
-            <a
-              href="/"
-              className="inline-block mt-8 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl font-medium"
-            >
-              Go Home
-            </a>
-          </div>
-        </section>
-      </main>
-    );
+  async function deleteProduct(
+    productId: string
+  ) {
+    const confirmed =
+      confirm(
+        "Remove this reported product?"
+      );
+
+    if (!confirmed) return;
+
+    try {
+
+      const res =
+        await fetch(
+          `/api/admin/listings/${productId}`,
+          {
+            method: "DELETE",
+          }
+        );
+
+      const data =
+        await res.json();
+
+      if (!res.ok) {
+
+        alert(
+          data.message ||
+            "Failed to remove product"
+        );
+
+        return;
+      }
+
+      alert(
+        "Product removed successfully"
+      );
+
+      fetchReports();
+
+    } catch {
+
+      alert(
+        "Failed to remove product"
+      );
+
+    }
   }
+
+  const filteredReports =
+    useMemo(() => {
+
+      return reports.filter(
+        (report) => {
+
+          const matchesSearch =
+            report.reason
+              ?.toLowerCase()
+              .includes(
+                search.toLowerCase()
+              ) ||
+            report.product?.title
+              ?.toLowerCase()
+              .includes(
+                search.toLowerCase()
+              ) ||
+            report.reportedBy
+              ?.name
+              ?.toLowerCase()
+              .includes(
+                search.toLowerCase()
+              );
+
+          const matchesFilter =
+            filter === "ALL"
+              ? true
+              : filter ===
+                "OPEN"
+              ? !report.resolved
+              : filter ===
+                "RESOLVED"
+              ? report.resolved
+              : true;
+
+          return (
+            matchesSearch &&
+            matchesFilter
+          );
+        }
+      );
+
+    }, [
+      reports,
+      search,
+      filter,
+    ]);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
+    <main className="min-h-screen bg-[#0f172a] text-white">
       <Navbar />
 
-      <section className="px-8 py-12">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
-          <div>
-            <h1 className="text-4xl font-bold">Reports & Flags</h1>
-            <p className="mt-3 text-slate-400">
-              Review reported users, products, orders, and chats.
-            </p>
+      <section className="px-4 sm:px-6 lg:px-10 py-8 pb-28">
+        <div className="max-w-7xl mx-auto">
+          {/* hero */}
+
+          <div className="rounded-[2rem] bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 p-8 sm:p-10 shadow-2xl overflow-hidden relative">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(239,68,68,0.25),_transparent_35%)]" />
+
+            <div className="relative">
+              <span className="inline-flex bg-red-500/10 border border-red-500/20 text-red-400 rounded-full px-4 py-2 text-xs font-black">
+                Trust & Safety
+              </span>
+
+              <h1 className="mt-6 text-4xl sm:text-5xl font-black">
+                Admin Reports
+              </h1>
+
+              <p className="mt-4 text-slate-400 max-w-2xl leading-7">
+                Review suspicious listings, investigate abuse,
+                and maintain a safe student marketplace.
+              </p>
+            </div>
           </div>
 
-          <a
-            href="/admin"
-            className="border border-slate-700 hover:border-slate-500 px-5 py-3 rounded-xl font-medium"
-          >
-            Back to Admin
-          </a>
-        </div>
+          {/* filters */}
 
-        {message && <p className="mt-8 text-slate-400">{message}</p>}
+          <div className="mt-8 bg-slate-900 border border-slate-800 rounded-[2rem] p-5 shadow-xl">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4">
+              <input
+                type="text"
 
-        {!message && reports.length === 0 && (
-          <div className="mt-10 bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center">
-            <h2 className="text-2xl font-semibold">No Reports</h2>
-            <p className="mt-3 text-slate-400">
-              Reported content will appear here.
-            </p>
-          </div>
-        )}
+                placeholder="Search reports..."
 
-        <div className="mt-10 space-y-6">
-          {reports.map((report) => (
-            <div
-              key={report.id}
-              className="bg-slate-900 border border-slate-800 rounded-2xl p-6"
-            >
-              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
-                <div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h2 className="text-2xl font-bold">
-                      {report.targetType} Report
-                    </h2>
+                value={search}
 
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        report.status === "OPEN"
-                          ? "bg-red-900/40 text-red-300"
-                          : report.status === "REVIEWING"
-                          ? "bg-yellow-900/40 text-yellow-300"
-                          : report.status === "RESOLVED"
-                          ? "bg-green-900/40 text-green-300"
-                          : "bg-slate-800 text-slate-300"
-                      }`}
-                    >
-                      {report.status}
-                    </span>
-                  </div>
+                onChange={(e) =>
+                  setSearch(
+                    e.target.value
+                  )
+                }
 
-                  <div className="mt-5 space-y-3 text-slate-300">
-                    <p>
-                      <span className="text-slate-500">Target ID:</span>{" "}
-                      {report.targetId}
-                    </p>
+                className="
+                  px-5
+                  py-4
+                  rounded-2xl
+                  bg-slate-800
+                  border
+                  border-slate-700
+                  outline-none
+                  focus:border-red-500
+                "
+              />
 
-                    <p>
-                      <span className="text-slate-500">Reason:</span>{" "}
-                      {report.reason}
-                    </p>
+              <div className="flex flex-wrap gap-3">
+                {[
+                  "ALL",
+                  "OPEN",
+                  "RESOLVED",
+                ].map((item) => (
+                  <button
+                    key={item}
 
-                    {report.details && (
-                      <p>
-                        <span className="text-slate-500">Details:</span>{" "}
-                        {report.details}
-                      </p>
-                    )}
+                    onClick={() =>
+                      setFilter(item)
+                    }
 
-                    <p className="text-sm text-slate-500">
-                      Reported on:{" "}
-                      {new Date(report.createdAt).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
+                    className={`
+                      px-5
+                      py-3
+                      rounded-full
+                      text-sm
+                      font-black
+                      border
+                      transition
 
-                <div className="w-full lg:w-64">
-                  <label className="block text-sm text-slate-400 mb-2">
-                    Update Status
-                  </label>
-
-                  <select
-                    value={report.status}
-                    onChange={(e) => updateStatus(report.id, e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 outline-none"
+                      ${
+                        filter === item
+                          ? "bg-red-600 border-red-600"
+                          : "bg-slate-800 border-slate-700 hover:border-red-500"
+                      }
+                    `}
                   >
-                    <option value="OPEN">OPEN</option>
-                    <option value="REVIEWING">REVIEWING</option>
-                    <option value="RESOLVED">RESOLVED</option>
-                    <option value="DISMISSED">DISMISSED</option>
-                  </select>
-
-                  <div className="mt-4 grid grid-cols-2 gap-3">
-                    <button className="bg-yellow-600 hover:bg-yellow-700 py-2 rounded-xl text-sm font-medium">
-                      Warn
-                    </button>
-
-                    <button className="bg-red-600 hover:bg-red-700 py-2 rounded-xl text-sm font-medium">
-                      Flag
-                    </button>
-                  </div>
-                </div>
+                    {item}
+                  </button>
+                ))}
               </div>
             </div>
-          ))}
+          </div>
+
+          {message && (
+            <div className="mt-6 bg-slate-900 border border-slate-800 rounded-3xl p-6">
+              <p className="text-slate-400 font-semibold">
+                {message}
+              </p>
+            </div>
+          )}
+
+          {!message &&
+            filteredReports.length ===
+              0 && (
+              <div className="mt-6 bg-slate-900 border border-slate-800 rounded-[2rem] p-10 text-center">
+                <div className="text-6xl">
+                  🚨
+                </div>
+
+                <h2 className="mt-5 text-3xl font-black">
+                  No Reports Found
+                </h2>
+
+                <p className="mt-3 text-slate-400">
+                  No reports match the selected filters.
+                </p>
+              </div>
+            )}
+
+          {/* reports */}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-6">
+            {filteredReports.map(
+              (report) => {
+
+                const image =
+                  report.product
+                    ?.imageUrls &&
+                  report.product
+                    .imageUrls
+                    .length > 0
+                    ? report.product
+                        .imageUrls[0]
+                    : "";
+
+                return (
+                  <div
+                    key={report.id}
+
+                    className="
+                    bg-slate-900
+                    border
+                    border-slate-800
+                    rounded-[2rem]
+                    overflow-hidden
+                    shadow-2xl
+                  "
+                  >
+                    <div className="grid grid-cols-[140px_1fr]">
+                      <div className="bg-slate-800 aspect-square">
+                        {image ? (
+                          <img
+                            src={image}
+                            alt={
+                              report
+                                .product
+                                ?.title
+                            }
+
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-5xl">
+                            🚨
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="p-5">
+                        <div className="flex flex-wrap gap-2">
+                          {!report.resolved && (
+                            <span className="bg-red-500/10 text-red-400 border border-red-500/20 px-3 py-1 rounded-full text-[10px] font-black">
+                              OPEN
+                            </span>
+                          )}
+
+                          {report.resolved && (
+                            <span className="bg-green-500/10 text-green-400 border border-green-500/20 px-3 py-1 rounded-full text-[10px] font-black">
+                              RESOLVED
+                            </span>
+                          )}
+                        </div>
+
+                        <h2 className="mt-4 text-2xl font-black line-clamp-2">
+                          {
+                            report.product
+                              ?.title
+                          }
+                        </h2>
+
+                        <div className="mt-4 space-y-2 text-sm">
+                          <p className="text-slate-400">
+                            Reported By:{" "}
+                            <span className="text-white font-semibold">
+                              {
+                                report
+                                  .reportedBy
+                                  ?.name
+                              }
+                            </span>
+                          </p>
+
+                          <p className="text-slate-400">
+                            Seller:{" "}
+                            <span className="text-white font-semibold">
+                              {
+                                report
+                                  .product
+                                  ?.seller
+                                  ?.name
+                              }
+                            </span>
+                          </p>
+
+                          <p className="text-slate-400">
+                            Reason:{" "}
+                            <span className="text-white font-semibold">
+                              {
+                                report.reason
+                              }
+                            </span>
+                          </p>
+                        </div>
+
+                        {report.description && (
+                          <div className="mt-5 bg-slate-800 rounded-2xl p-4">
+                            <p className="text-sm text-slate-300 leading-6">
+                              {
+                                report.description
+                              }
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="mt-6 flex flex-wrap gap-3">
+                          <a
+                            href={`/product/${report.product?.id}`}
+
+                            className="
+                              bg-green-600
+                              hover:bg-green-700
+                              px-5
+                              py-3
+                              rounded-full
+                              font-black
+                              text-sm
+                            "
+                          >
+                            View Product
+                          </a>
+
+                          {!report.resolved && (
+                            <button
+                              onClick={() =>
+                                resolveReport(
+                                  report.id
+                                )
+                              }
+
+                              className="
+                                border
+                                border-blue-500/30
+                                hover:border-blue-500
+                                text-blue-400
+                                px-5
+                                py-3
+                                rounded-full
+                                font-black
+                                text-sm
+                              "
+                            >
+                              Resolve
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() =>
+                              deleteProduct(
+                                report
+                                  .product
+                                  ?.id
+                              )
+                            }
+
+                            className="
+                              border
+                              border-red-500/30
+                              hover:border-red-500
+                              text-red-400
+                              px-5
+                              py-3
+                              rounded-full
+                              font-black
+                              text-sm
+                            "
+                          >
+                            Remove Product
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+            )}
+          </div>
         </div>
       </section>
     </main>
