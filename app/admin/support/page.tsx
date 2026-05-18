@@ -1,33 +1,54 @@
 "use client";
 
 import Navbar from "@/components/Navbar";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function AdminSupportPage() {
-  const [tickets, setTickets] = useState<any[]>([]);
-  const [message, setMessage] = useState("Loading support tickets...");
-  const [accessDenied, setAccessDenied] = useState(false);
+  const [tickets, setTickets] =
+    useState<any[]>([]);
+
+  const [message, setMessage] =
+    useState(
+      "Loading support tickets..."
+    );
+
+  const [search, setSearch] =
+    useState("");
+
+  const [filter, setFilter] =
+    useState("ALL");
 
   async function fetchTickets() {
     try {
-      const res = await fetch("/api/admin/support");
-      const data = await res.json();
+      const res =
+        await fetch(
+          "/api/admin/support"
+        );
 
-      if (res.status === 403) {
-        setAccessDenied(true);
-        setMessage("Access denied");
-        return;
-      }
+      const data =
+        await res.json();
 
       if (!res.ok) {
-        setMessage(data.message || "Failed to load tickets");
+        setMessage(
+          data.message ||
+            "Failed to load support tickets"
+        );
+
         return;
       }
 
-      setTickets(data.tickets || []);
+      setTickets(
+        data.tickets || []
+      );
+
       setMessage("");
+
     } catch {
-      setMessage("Something went wrong");
+
+      setMessage(
+        "Something went wrong"
+      );
+
     }
   }
 
@@ -35,178 +56,323 @@ export default function AdminSupportPage() {
     fetchTickets();
   }, []);
 
-  async function updateStatus(ticketId: string, status: string) {
-    const res = await fetch("/api/admin/support", {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        ticketId,
-        status,
-      }),
-    });
+  async function resolveTicket(
+    ticketId: string
+  ) {
+    try {
 
-    const data = await res.json();
+      const res =
+        await fetch(
+          `/api/admin/support/${ticketId}/resolve`,
+          {
+            method: "PATCH",
+          }
+        );
 
-    if (!res.ok) {
-      alert(data.message || "Failed to update ticket");
-      return;
+      const data =
+        await res.json();
+
+      if (!res.ok) {
+
+        alert(
+          data.message ||
+            "Failed to resolve ticket"
+        );
+
+        return;
+      }
+
+      setTickets((prev) =>
+        prev.map((ticket) =>
+          ticket.id === ticketId
+            ? {
+                ...ticket,
+                resolved: true,
+              }
+            : ticket
+        )
+      );
+
+      alert(
+        "Ticket resolved"
+      );
+
+    } catch {
+
+      alert(
+        "Failed to resolve ticket"
+      );
+
     }
-
-    fetchTickets();
   }
 
-  if (accessDenied) {
-    return (
-      <main className="min-h-screen bg-slate-950 text-white">
-        <Navbar />
+  const filteredTickets =
+    useMemo(() => {
 
-        <section className="flex items-center justify-center py-24 px-6">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-10 text-center max-w-lg">
-            <h1 className="text-4xl font-bold text-red-500">
-              Access Denied
-            </h1>
+      return tickets.filter(
+        (ticket) => {
 
-            <p className="mt-5 text-slate-400">
-              You do not have permission to view support tickets.
-            </p>
+          const matchesSearch =
+            ticket.subject
+              ?.toLowerCase()
+              .includes(
+                search.toLowerCase()
+              ) ||
+            ticket.email
+              ?.toLowerCase()
+              .includes(
+                search.toLowerCase()
+              ) ||
+            ticket.name
+              ?.toLowerCase()
+              .includes(
+                search.toLowerCase()
+              );
 
-            <a
-              href="/"
-              className="inline-block mt-8 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl font-medium"
-            >
-              Go Home
-            </a>
-          </div>
-        </section>
-      </main>
-    );
-  }
+          const matchesFilter =
+            filter === "ALL"
+              ? true
+              : filter ===
+                "OPEN"
+              ? !ticket.resolved
+              : filter ===
+                "RESOLVED"
+              ? ticket.resolved
+              : true;
+
+          return (
+            matchesSearch &&
+            matchesFilter
+          );
+        }
+      );
+
+    }, [
+      tickets,
+      search,
+      filter,
+    ]);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
+    <main className="min-h-screen bg-[#0f172a] text-white">
       <Navbar />
 
-      <section className="px-8 py-12">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
-          <div>
-            <h1 className="text-4xl font-bold">
-              Support Tickets
-            </h1>
+      <section className="px-4 sm:px-6 lg:px-10 py-8 pb-28">
+        <div className="max-w-7xl mx-auto">
+          {/* hero */}
 
-            <p className="mt-3 text-slate-400">
-              Manage user complaints, bugs, payments, and order issues.
-            </p>
+          <div className="rounded-[2rem] bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 p-8 sm:p-10 shadow-2xl overflow-hidden relative">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(168,85,247,0.25),_transparent_35%)]" />
+
+            <div className="relative">
+              <span className="inline-flex bg-purple-500/10 border border-purple-500/20 text-purple-400 rounded-full px-4 py-2 text-xs font-black">
+                Support Management
+              </span>
+
+              <h1 className="mt-6 text-4xl sm:text-5xl font-black">
+                Admin Support
+              </h1>
+
+              <p className="mt-4 text-slate-400 max-w-2xl leading-7">
+                Review student support requests, track issues,
+                and maintain healthy marketplace operations.
+              </p>
+            </div>
           </div>
 
-          <a
-            href="/admin"
-            className="border border-slate-700 hover:border-slate-500 px-5 py-3 rounded-xl font-medium"
-          >
-            Back to Admin
-          </a>
-        </div>
+          {/* filters */}
 
-        {message && (
-          <p className="mt-8 text-slate-400">
-            {message}
-          </p>
-        )}
+          <div className="mt-8 bg-slate-900 border border-slate-800 rounded-[2rem] p-5 shadow-xl">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4">
+              <input
+                type="text"
 
-        {!message && tickets.length === 0 && (
-          <div className="mt-10 bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center">
-            <h2 className="text-2xl font-semibold">
-              No Tickets
-            </h2>
+                placeholder="Search tickets..."
 
-            <p className="mt-3 text-slate-400">
-              New support requests will appear here.
-            </p>
-          </div>
-        )}
+                value={search}
 
-        <div className="mt-10 space-y-6">
-          {tickets.map((ticket) => (
-            <div
-              key={ticket.id}
-              className="bg-slate-900 border border-slate-800 rounded-2xl p-6"
-            >
-              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
-                <div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h2 className="text-2xl font-bold">
-                      {ticket.subject}
-                    </h2>
+                onChange={(e) =>
+                  setSearch(
+                    e.target.value
+                  )
+                }
 
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        ticket.status === "OPEN"
-                          ? "bg-red-900/40 text-red-300"
-                          : ticket.status === "IN_PROGRESS"
-                          ? "bg-yellow-900/40 text-yellow-300"
-                          : ticket.status === "RESOLVED"
-                          ? "bg-green-900/40 text-green-300"
-                          : "bg-slate-800 text-slate-300"
-                      }`}
-                    >
-                      {ticket.status}
-                    </span>
-                  </div>
+                className="
+                  px-5
+                  py-4
+                  rounded-2xl
+                  bg-slate-800
+                  border
+                  border-slate-700
+                  outline-none
+                  focus:border-purple-500
+                "
+              />
 
-                  <p className="mt-4 text-slate-300 leading-7">
-                    {ticket.message}
-                  </p>
+              <div className="flex flex-wrap gap-3">
+                {[
+                  "ALL",
+                  "OPEN",
+                  "RESOLVED",
+                ].map((item) => (
+                  <button
+                    key={item}
 
-                  <div className="mt-5 text-sm text-slate-400 space-y-2">
-                    <p>Name: {ticket.name}</p>
-
-                    <p>Email: {ticket.email}</p>
-
-                    <p>
-                      Created:{" "}
-                      {new Date(
-                        ticket.createdAt
-                      ).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="w-full lg:w-64">
-                  <label className="block text-sm text-slate-400 mb-2">
-                    Update Status
-                  </label>
-
-                  <select
-                    value={ticket.status}
-                    onChange={(e) =>
-                      updateStatus(
-                        ticket.id,
-                        e.target.value
-                      )
+                    onClick={() =>
+                      setFilter(item)
                     }
-                    className="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 outline-none"
+
+                    className={`
+                      px-5
+                      py-3
+                      rounded-full
+                      text-sm
+                      font-black
+                      border
+                      transition
+
+                      ${
+                        filter === item
+                          ? "bg-purple-600 border-purple-600"
+                          : "bg-slate-800 border-slate-700 hover:border-purple-500"
+                      }
+                    `}
                   >
-                    <option value="OPEN">
-                      OPEN
-                    </option>
-
-                    <option value="IN_PROGRESS">
-                      IN_PROGRESS
-                    </option>
-
-                    <option value="RESOLVED">
-                      RESOLVED
-                    </option>
-
-                    <option value="CLOSED">
-                      CLOSED
-                    </option>
-                  </select>
-                </div>
+                    {item}
+                  </button>
+                ))}
               </div>
             </div>
-          ))}
+          </div>
+
+          {message && (
+            <div className="mt-6 bg-slate-900 border border-slate-800 rounded-3xl p-6">
+              <p className="text-slate-400 font-semibold">
+                {message}
+              </p>
+            </div>
+          )}
+
+          {!message &&
+            filteredTickets.length ===
+              0 && (
+              <div className="mt-6 bg-slate-900 border border-slate-800 rounded-[2rem] p-10 text-center">
+                <div className="text-6xl">
+                  💬
+                </div>
+
+                <h2 className="mt-5 text-3xl font-black">
+                  No Tickets Found
+                </h2>
+
+                <p className="mt-3 text-slate-400">
+                  No support tickets match the selected filters.
+                </p>
+              </div>
+            )}
+
+          {/* tickets */}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-6">
+            {filteredTickets.map(
+              (ticket) => (
+                <div
+                  key={ticket.id}
+
+                  className="
+                    bg-slate-900
+                    border
+                    border-slate-800
+                    rounded-[2rem]
+                    p-6
+                    shadow-2xl
+                  "
+                >
+                  <div className="flex flex-wrap gap-2">
+                    {!ticket.resolved && (
+                      <span className="bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-3 py-1 rounded-full text-[10px] font-black">
+                        OPEN
+                      </span>
+                    )}
+
+                    {ticket.resolved && (
+                      <span className="bg-green-500/10 text-green-400 border border-green-500/20 px-3 py-1 rounded-full text-[10px] font-black">
+                        RESOLVED
+                      </span>
+                    )}
+                  </div>
+
+                  <h2 className="mt-5 text-2xl font-black">
+                    {ticket.subject}
+                  </h2>
+
+                  <div className="mt-5 space-y-2 text-sm">
+                    <p className="text-slate-400">
+                      Name:{" "}
+                      <span className="text-white font-semibold">
+                        {ticket.name}
+                      </span>
+                    </p>
+
+                    <p className="text-slate-400">
+                      Email:{" "}
+                      <span className="text-white font-semibold break-all">
+                        {ticket.email}
+                      </span>
+                    </p>
+                  </div>
+
+                  <div className="mt-5 bg-slate-800 rounded-2xl p-4">
+                    <p className="text-sm text-slate-300 leading-7 whitespace-pre-wrap">
+                      {ticket.message}
+                    </p>
+                  </div>
+
+                  <div className="mt-6 flex flex-wrap gap-3">
+                    {!ticket.resolved && (
+                      <button
+                        onClick={() =>
+                          resolveTicket(
+                            ticket.id
+                          )
+                        }
+
+                        className="
+                          bg-green-600
+                          hover:bg-green-700
+                          px-5
+                          py-3
+                          rounded-full
+                          font-black
+                          text-sm
+                        "
+                      >
+                        Mark Resolved
+                      </button>
+                    )}
+
+                    <a
+                      href={`mailto:${ticket.email}`}
+
+                      className="
+                        border
+                        border-purple-500/30
+                        hover:border-purple-500
+                        text-purple-400
+                        px-5
+                        py-3
+                        rounded-full
+                        font-black
+                        text-sm
+                      "
+                    >
+                      Reply via Email
+                    </a>
+                  </div>
+                </div>
+              )
+            )}
+          </div>
         </div>
       </section>
     </main>
