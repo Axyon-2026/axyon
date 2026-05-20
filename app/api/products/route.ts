@@ -19,14 +19,13 @@ export async function GET() {
             name: true,
             email: true,
             college: true,
+            studentVerified: true,
           },
         },
       },
     });
 
-    return NextResponse.json({
-      products,
-    });
+    return NextResponse.json({ products });
   } catch (error) {
     console.log("PRODUCTS FETCH ERROR:", error);
 
@@ -52,15 +51,20 @@ export async function POST(req: Request) {
     const decoded: any = verifyToken(token);
 
     const user = await prisma.user.findUnique({
-      where: {
-        id: decoded.id,
-      },
+      where: { id: decoded.id },
     });
 
     if (!user) {
       return NextResponse.json(
         { message: "User not found" },
         { status: 404 }
+      );
+    }
+
+    if (user.role === "ADMIN") {
+      return NextResponse.json(
+        { message: "Admins cannot list marketplace products." },
+        { status: 403 }
       );
     }
 
@@ -71,22 +75,14 @@ export async function POST(req: Request) {
       );
     }
 
-   if (user.role === "ADMIN") {
-  return NextResponse.json(
-    { message: "Admins cannot create marketplace listings." },
-    { status: 403 }
-  );
-}
+    if (user.studentVerificationStatus !== "APPROVED") {
+      return NextResponse.json(
+        { message: "Please complete student verification before listing." },
+        { status: 403 }
+      );
+    }
 
-if (user.studentVerificationStatus !== "APPROVED") {
-  return NextResponse.json(
-    {
-      message:
-        "You must complete student verification before listing products.",
-    },
-    { status: 403 }
-  );
-}
+    const body = await req.json();
 
     const {
       title,
@@ -95,37 +91,62 @@ if (user.studentVerificationStatus !== "APPROVED") {
       category,
       condition,
       imageUrls,
-    } = await req.json();
+    } = body;
 
-    if (!title || !description || !price || !category || !condition) {
+    if (!title || title.trim().length < 3) {
       return NextResponse.json(
-        { message: "All required fields must be filled" },
+        { message: "Title must be at least 3 characters." },
+        { status: 400 }
+      );
+    }
+
+    if (!description || description.trim().length < 10) {
+      return NextResponse.json(
+        { message: "Please provide a proper description." },
+        { status: 400 }
+      );
+    }
+
+    if (!price || Number(price) < 1) {
+      return NextResponse.json(
+        { message: "Price must be at least ₹1." },
+        { status: 400 }
+      );
+    }
+
+    if (Number(price) > 500000) {
+      return NextResponse.json(
+        { message: "Price cannot exceed ₹5,00,000." },
+        { status: 400 }
+      );
+    }
+
+    if (!category || !condition) {
+      return NextResponse.json(
+        { message: "Category and condition are required." },
         { status: 400 }
       );
     }
 
     const product = await prisma.product.create({
       data: {
-        title,
-        description,
+        title: title.trim(),
+        description: description.trim(),
         price: Number(price),
         category,
         condition,
         imageUrls: imageUrls || [],
-        sellerId: user.id,
         status: "AVAILABLE",
+        sellerId: user.id,
       },
     });
 
-    return NextResponse.json(
-      {
-        message: "Product listed successfully",
-        product,
-      },
-      { status: 201 }
-    );
+    return NextResponse.json({
+      message: "Product listed successfully",
+      product,
+    });
   } catch (error) {
-    console.log("CREATE PRODUCT ERROR:", error);
+    console.log("PRODUCT CREATE ERROR:", error);
 
     return NextResponse.json(
       { message: "Failed to create product" },
