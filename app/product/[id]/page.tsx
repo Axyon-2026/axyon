@@ -113,10 +113,30 @@ export default function ProductDetailPage() {
           name: "Axyon",
           description: product.title,
           order_id: data.razorpayOrder.id,
-          handler: function () {
-            alert("Payment successful!");
-            window.location.href = "/my-orders";
-          },
+          handler: async function (response: any) {
+  const verifyRes = await fetch("/api/payment/verify", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      orderId: data.order.id,
+      razorpay_order_id: response.razorpay_order_id,
+      razorpay_payment_id: response.razorpay_payment_id,
+      razorpay_signature: response.razorpay_signature,
+    }),
+  });
+
+  const verifyData = await verifyRes.json();
+
+  if (!verifyRes.ok) {
+    alert(verifyData.message || "Payment verification failed");
+    return;
+  }
+
+  alert("Payment successful and verified!");
+  window.location.href = "/my-orders";
+},
           theme: {
             color: "#16a34a",
           },
