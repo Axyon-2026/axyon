@@ -12,8 +12,8 @@ const navItems = [
 
   {
     href: "/marketplace",
-    icon: "🛒",
-    label: "Browse",
+    icon: "🛍️",
+    label: "Market",
   },
 
   {
@@ -23,9 +23,9 @@ const navItems = [
   },
 
   {
-    href: "/chat",
-    icon: "💬",
-    label: "Chat",
+    href: "/notifications",
+    icon: "🔔",
+    label: "Alerts",
   },
 
   {
@@ -36,99 +36,142 @@ const navItems = [
 ];
 
 export default function BottomNav() {
-
-  const pathname =
-    usePathname();
+  const pathname = usePathname();
 
   // hide on admin pages
-  if (
-    pathname.startsWith("/admin")
-  ) {
+  if (pathname.startsWith("/admin")) {
     return null;
   }
 
   return (
-    <nav
-      className="
-      fixed
-      bottom-0
-      left-0
-      right-0
-      z-50
-      bg-[#0f172a]
-      border-t
-      border-white/10
-      backdrop-blur-xl
-    "
-    >
-      <div
+    <div className="lg:hidden">
+      <nav
         className="
-        grid
-        grid-cols-5
-        py-2
-      "
+          fixed
+          bottom-4
+          left-1/2
+          -translate-x-1/2
+          z-50
+          w-[94%]
+          max-w-md
+        "
       >
-        {navItems.map((item) => {
+        <div
+          className="
+            bg-[#071019]/90
+            backdrop-blur-2xl
+            border
+            border-white/10
+            shadow-[0_0_40px_rgba(0,0,0,0.45)]
+            rounded-[2rem]
+            px-2
+            py-2
+          "
+        >
+          <div className="grid grid-cols-5 gap-1">
+            {navItems.map((item) => {
+              const active = pathname === item.href;
 
-          const active =
-            pathname === item.href;
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="
-                flex
-                flex-col
-                items-center
-                justify-center
-                gap-1
-                py-2
-                transition-all
-              "
-            >
-              <span
-                className={`
-                  text-xl
-                  transition-all
-                  ${
-                    active
-                      ? "scale-110"
-                      : "opacity-70"
-                  }
-                `}
-              >
-                {item.icon}
-              </span>
-
-              <span
-                className={`
-                  text-[11px]
-                  font-medium
-                  ${
-                    active
-                      ? "text-green-400"
-                      : "text-slate-400"
-                  }
-                `}
-              >
-                {item.label}
-              </span>
-
-              {active && (
-                <div
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
                   className="
-                  w-1.5
-                  h-1.5
-                  rounded-full
-                  bg-green-400
-                "
-                />
-              )}
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+                    relative
+                    flex
+                    flex-col
+                    items-center
+                    justify-center
+                    gap-1
+                    py-2
+                    rounded-2xl
+                    transition-all
+                    duration-300
+                  "
+                >
+                  {active && (
+                    <div
+                      className="
+                        absolute
+                        inset-0
+                        rounded-2xl
+                        bg-gradient-to-b
+                        from-green-500/20
+                        to-emerald-500/10
+                        border
+                        border-green-500/20
+                      "
+                    />
+                  )}
+
+                  <div
+                    className={`
+                      relative
+                      transition-all
+                      duration-300
+                      ${
+                        active
+                          ? "scale-110"
+                          : "opacity-70"
+                      }
+                    `}
+                  >
+                    <div
+                      className={`
+                        w-11
+                        h-11
+                        rounded-2xl
+                        flex
+                        items-center
+                        justify-center
+                        text-xl
+                        transition-all
+                        ${
+                          active
+                            ? "bg-green-500 text-black shadow-[0_0_25px_rgba(34,197,94,0.45)]"
+                            : "bg-white/[0.04] text-white"
+                        }
+                      `}
+                    >
+                      {item.icon}
+                    </div>
+                  </div>
+
+                  <span
+                    className={`
+                      relative
+                      text-[11px]
+                      font-black
+                      transition-all
+                      ${
+                        active
+                          ? "text-green-400"
+                          : "text-slate-500"
+                      }
+                    `}
+                  >
+                    {item.label}
+                  </span>
+
+                  {active && (
+                    <div
+                      className="
+                        absolute
+                        -top-1
+                        w-1.5
+                        h-1.5
+                        rounded-full
+                        bg-green-400
+                        shadow-[0_0_10px_rgba(34,197,94,0.8)]
+                      "
+                    />
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </nav>
+    </div>
   );
 }
