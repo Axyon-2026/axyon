@@ -11,20 +11,36 @@ export async function POST(req: Request) {
     const cookieStore = await cookies();
     const token = cookieStore.get("axyon_token")?.value;
 
-    let userId: string | null = null;
-
-    if (token) {
-      try {
-        const decoded: any = verifyToken(token);
-        userId = decoded.id;
-      } catch {
-        userId = null;
-      }
+    if (!token) {
+      return NextResponse.json(
+        { message: "Please login first to contact support." },
+        { status: 401 }
+      );
     }
 
-    const { name, email, subject, message } = await req.json();
+    const decoded: any = verifyToken(token);
 
-    if (!name || !email || !subject || !message) {
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { message: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    if (user.isSuspended) {
+      return NextResponse.json(
+        { message: "Your account is suspended." },
+        { status: 403 }
+      );
+    }
+
+    const { subject, message } = await req.json();
+
+    if (!subject || !message) {
       return NextResponse.json(
         { message: "Please fill all fields" },
         { status: 400 }
@@ -33,9 +49,9 @@ export async function POST(req: Request) {
 
     const ticket = await prisma.supportTicket.create({
       data: {
-        userId,
-        name,
-        email,
+        userId: user.id,
+        name: user.name,
+        email: user.email,
         subject,
         message,
       },
@@ -43,19 +59,16 @@ export async function POST(req: Request) {
 
     await resend.emails.send({
       from: "Axyon Support <support@axyon.in>",
-      to: email,
+      to: user.email,
       subject: `Support Ticket Created - ${ticket.id}`,
       html: `
         <div style="font-family: Arial, sans-serif; padding: 24px;">
           <h2>We received your support request</h2>
-          <p>Hi ${name},</p>
+          <p>Hi ${user.name},</p>
           <p>Your support ticket has been created successfully.</p>
-
           <p><strong>Ticket ID:</strong> ${ticket.id}</p>
           <p><strong>Subject:</strong> ${subject}</p>
-
           <p>Our support team will review your issue and respond as soon as possible.</p>
-
           <p style="margin-top: 24px;">Thanks,<br/>Axyon Support Team</p>
         </div>
       `,
@@ -68,19 +81,15 @@ export async function POST(req: Request) {
       html: `
         <div style="font-family: Arial, sans-serif; padding: 24px;">
           <h2>New Support Ticket Received</h2>
-
           <p><strong>Ticket ID:</strong> ${ticket.id}</p>
-          <p><strong>Name:</strong> ${name}</p>
-          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Name:</strong> ${user.name}</p>
+          <p><strong>Email:</strong> ${user.email}</p>
           <p><strong>Subject:</strong> ${subject}</p>
-
           <hr/>
-
           <p><strong>Message:</strong></p>
           <p>${message}</p>
-
           <p style="margin-top: 24px;">
-            Open admin panel: http://localhost:3000/admin/support
+            Open admin panel: https://www.axyon.in/admin/support
           </p>
         </div>
       `,
@@ -88,7 +97,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(
       {
-        message: "Support ticket submitted successfully. Confirmation email sent.",
+        message: "Support ticket submitted successfully.",
         ticket,
       },
       { status: 201 }

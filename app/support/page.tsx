@@ -112,12 +112,9 @@ export default function SupportPage() {
             },
 
             body: JSON.stringify({
-              name,
-              email,
-              subject,
-              message:
-                messageText,
-            }),
+  subject,
+  message: messageText,
+}),
           }
         );
 
@@ -271,28 +268,23 @@ export default function SupportPage() {
                 />
 
                 <input
-                  type="email"
-                  placeholder="Your email"
-                  value={email}
-                  onChange={(e) =>
-                    setEmail(
-                      e.target.value
-                    )
-                  }
-
-                  className="
-                    w-full
-                    px-5
-                    py-4
-                    rounded-2xl
-                    bg-slate-100
-                    border
-                    border-slate-200
-                    outline-none
-                    focus:bg-white
-                    focus:border-green-500
-                  "
-                />
+  type="email"
+  value={email}
+  readOnly
+  disabled
+  className="
+    w-full
+    px-5
+    py-4
+    rounded-2xl
+    bg-slate-200
+    border
+    border-slate-300
+    outline-none
+    text-slate-500
+    cursor-not-allowed
+  "
+/>
 
                 <select
                   value={subject}
