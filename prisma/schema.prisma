@@ -134,6 +134,9 @@ model Message {
 
   text            String
 
+  readByBuyer     Boolean       @default(false)
+  readBySeller    Boolean       @default(false)
+
   createdAt       DateTime      @default(now())
 
   conversation    Conversation  @relation(fields: [conversationId], references: [id])
