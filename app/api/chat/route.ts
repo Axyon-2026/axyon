@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { verifyToken } from "@/lib/auth";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { createNotification } from "@/lib/notifications";
 
 export async function GET() {
   try {
@@ -33,7 +34,62 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({ conversations });
+    const userIds = Array.from(
+      new Set(
+        conversations.flatMap((conversation) => [
+          conversation.buyerId,
+          conversation.sellerId,
+        ])
+      )
+    );
+
+    const productIds = Array.from(
+      new Set(conversations.map((conversation) => conversation.productId))
+    );
+
+    const users = await prisma.user.findMany({
+      where: {
+        id: {
+          in: userIds,
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        college: true,
+        studentVerified: true,
+      },
+    });
+
+    const products = await prisma.product.findMany({
+      where: {
+        id: {
+          in: productIds,
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        price: true,
+        imageUrls: true,
+        status: true,
+      },
+    });
+
+    const userMap = new Map(users.map((user) => [user.id, user]));
+    const productMap = new Map(products.map((product) => [product.id, product]));
+
+    const enrichedConversations = conversations.map((conversation) => ({
+      ...conversation,
+      buyer: userMap.get(conversation.buyerId) || null,
+      seller: userMap.get(conversation.sellerId) || null,
+      product: productMap.get(conversation.productId) || null,
+    }));
+
+    return NextResponse.json({
+      conversations: enrichedConversations,
+    });
   } catch (error) {
     console.log("CHAT FETCH ERROR:", error);
 
@@ -70,6 +126,11 @@ export async function POST(req: Request) {
     const currentUser = await prisma.user.findUnique({
       where: {
         id: decoded.id,
+      },
+      select: {
+        id: true,
+        name: true,
+        isSuspended: true,
       },
     });
 
@@ -143,6 +204,31 @@ export async function POST(req: Request) {
         senderId: decoded.id,
         text: text.trim(),
       },
+    });
+
+    const receiverId =
+      conversation.buyerId === decoded.id
+        ? conversation.sellerId
+        : conversation.buyerId;
+
+    const product = await prisma.product.findUnique({
+      where: {
+        id: conversation.productId,
+      },
+      select: {
+        id: true,
+        title: true,
+      },
+    });
+
+    await createNotification({
+      userId: receiverId,
+      title: "New Message",
+      message: `${currentUser.name} sent you a message${
+        product?.title ? ` about "${product.title}"` : ""
+      }.`,
+      type: "CHAT_MESSAGE",
+      link: "/chat",
     });
 
     const updatedConversation = await prisma.conversation.findUnique({
