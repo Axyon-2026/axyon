@@ -83,20 +83,16 @@ export default function ChatPage() {
   }, [selectedConversation]);
 
   async function sendMessage() {
-    if (!selectedConversation || !message.trim() || sending) {
-      return;
-    }
+    if (!selectedConversation || !message.trim() || sending) return;
 
     setSending(true);
 
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
-
         headers: {
           "Content-Type": "application/json",
         },
-
         body: JSON.stringify({
           conversationId: selectedConversation.id,
           text: message.trim(),
@@ -131,32 +127,32 @@ export default function ChatPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#071019] text-white">
+    <main className="min-h-screen bg-[#071019] text-white overflow-hidden">
       <Navbar />
 
       <section className="h-[calc(100vh-80px)] flex overflow-hidden">
         <div
           className={`${
             selectedConversation ? "hidden md:flex" : "flex"
-          } w-full md:w-[390px] flex-col border-r border-white/10 bg-[#071019]`}
+          } w-full md:w-[380px] flex-col border-r border-white/10 bg-[#071019]`}
         >
-          <div className="p-5 border-b border-white/10 bg-white/[0.03]">
+          <div className="border-b border-white/10 px-4 py-4 bg-white/[0.03]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-400 text-sm font-black">
-                  Campus Chat
+                <p className="text-green-400 text-xs font-black uppercase tracking-wider">
+                  Axyon Chat
                 </p>
 
-                <h1 className="text-3xl font-black mt-1">Messages</h1>
+                <h1 className="text-2xl font-black mt-1">Messages</h1>
               </div>
 
-              <div className="w-12 h-12 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center text-2xl">
+              <div className="w-11 h-11 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center text-xl">
                 💬
               </div>
             </div>
 
             <p className="text-sm text-slate-400 mt-3">
-              Chat with verified buyers and sellers.
+              Chat with campus buyers and sellers.
             </p>
           </div>
 
@@ -169,19 +165,18 @@ export default function ChatPage() {
 
                 <h2 className="mt-5 text-2xl font-black">No chats yet</h2>
 
-                <p className="mt-3 text-slate-400 leading-7">
+                <p className="mt-3 text-slate-400">
                   Start a conversation from any product page.
                 </p>
               </div>
             </div>
           )}
 
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto pb-28 md:pb-6">
             {conversations.map((conversation) => {
+              const otherUser = getOtherUser(conversation);
               const lastMessage =
                 conversation.messages?.[conversation.messages.length - 1];
-
-              const otherUser = getOtherUser(conversation);
               const unreadCount = conversation.unreadCount || 0;
 
               return (
@@ -192,34 +187,30 @@ export default function ChatPage() {
                     selectedConversation?.id === conversation.id
                       ? "bg-green-500/10 border-l-4 border-green-500"
                       : unreadCount > 0
-                      ? "bg-green-500/5"
+                      ? "bg-green-500/[0.04]"
                       : ""
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="relative w-12 h-12 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 flex items-center justify-center font-black shrink-0">
-                      {otherUser?.name?.charAt(0) || "U"}
+                    <div className="relative shrink-0">
+                      <div className="w-12 h-12 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-400 font-black">
+                        {otherUser?.name?.charAt(0) || "U"}
+                      </div>
 
                       <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-400 border-2 border-[#071019]" />
                     </div>
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="font-black truncate text-white">
+                        <h2 className="font-black truncate">
                           {otherUser?.name || "User"}
-                        </p>
+                        </h2>
 
-                        <div className="flex items-center gap-2">
-                          {unreadCount > 0 && (
-                            <div className="min-w-5 h-5 px-1 rounded-full bg-green-500 text-black text-[10px] font-black flex items-center justify-center shadow-[0_0_12px_rgba(34,197,94,0.6)]">
-                              {unreadCount > 9 ? "9+" : unreadCount}
-                            </div>
-                          )}
-
-                          <span className="text-[10px] text-slate-500">
-                            {conversation.messages?.length || 0}
-                          </span>
-                        </div>
+                        {unreadCount > 0 && (
+                          <div className="min-w-5 h-5 px-1 rounded-full bg-green-500 text-black text-[10px] font-black flex items-center justify-center shadow-[0_0_12px_rgba(34,197,94,0.6)]">
+                            {unreadCount > 9 ? "9+" : unreadCount}
+                          </div>
+                        )}
                       </div>
 
                       <p className="text-xs text-green-400 font-bold mt-1 truncate">
@@ -227,13 +218,13 @@ export default function ChatPage() {
                       </p>
 
                       <p
-                        className={`text-sm mt-1 truncate ${
+                        className={`text-sm truncate mt-1 ${
                           unreadCount > 0
-                            ? "text-white font-bold"
+                            ? "text-white font-semibold"
                             : "text-slate-500"
                         }`}
                       >
-                        {lastMessage?.text || "No messages"}
+                        {lastMessage?.text || "No messages yet"}
                       </p>
                     </div>
                   </div>
@@ -244,42 +235,46 @@ export default function ChatPage() {
         </div>
 
         <div
-          className={`flex-1 flex flex-col bg-[#071019] ${
+          className={`flex-1 flex flex-col bg-[#020817] ${
             !selectedConversation ? "hidden md:flex" : "flex"
           }`}
         >
           {!selectedConversation ? (
-            <div className="flex-1 flex items-center justify-center text-slate-500">
-              <div className="text-center">
+            <div className="flex-1 flex items-center justify-center p-10">
+              <div className="text-center max-w-md">
                 <div className="text-7xl">💬</div>
 
-                <h2 className="mt-5 text-3xl font-black text-white">
-                  Select a conversation
+                <h2 className="mt-6 text-3xl font-black">
+                  Your Conversations
                 </h2>
 
-                <p className="mt-3 text-slate-400">
-                  Your campus messages will appear here.
+                <p className="mt-4 text-slate-400 leading-7">
+                  Buy, sell, negotiate, and connect safely with students from
+                  your campus.
                 </p>
               </div>
             </div>
           ) : (
             <>
-              <div className="bg-white/[0.03] border-b border-white/10 px-4 py-4 flex items-center gap-3">
+              <div className="border-b border-white/10 bg-[#071019]/95 backdrop-blur-xl px-4 py-4 flex items-center gap-3">
                 <button
                   onClick={() => setSelectedConversation(null)}
-                  className="md:hidden text-2xl"
+                  className="md:hidden text-2xl mr-1"
                 >
                   ←
                 </button>
 
-                <div className="relative w-12 h-12 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 flex items-center justify-center font-black">
-                  {getOtherUser(selectedConversation)?.name?.charAt(0) || "U"}
+                <div className="relative shrink-0">
+                  <div className="w-11 h-11 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-400 font-black">
+                    {getOtherUser(selectedConversation)?.name?.charAt(0) ||
+                      "U"}
+                  </div>
 
                   <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-400 border-2 border-[#071019]" />
                 </div>
 
-                <div className="min-w-0">
-                  <h2 className="font-black truncate text-white">
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-black truncate text-white text-lg">
                     {getOtherUser(selectedConversation)?.name || "User"}
                   </h2>
 
@@ -287,9 +282,13 @@ export default function ChatPage() {
                     {selectedConversation.product?.title || "Product Chat"}
                   </p>
                 </div>
+
+                <button className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center hover:bg-white/[0.08] transition">
+                  🚩
+                </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto px-4 py-5 space-y-4">
+              <div className="flex-1 overflow-y-auto px-3 md:px-6 py-5 space-y-4 pb-28 md:pb-8">
                 {selectedConversation.messages?.map((msg: any) => {
                   const isMine = msg.senderId === currentUser?.id;
 
@@ -301,24 +300,34 @@ export default function ChatPage() {
                       }`}
                     >
                       <div
-                        className={`max-w-[85%] sm:max-w-[70%] px-4 py-3 rounded-[1.5rem] shadow-sm ${
+                        className={`max-w-[88%] sm:max-w-[75%] lg:max-w-[60%] px-4 py-3 rounded-[1.5rem] shadow-sm ${
                           isMine
                             ? "bg-green-500 text-black rounded-br-md"
                             : "bg-white/[0.06] border border-white/10 text-white rounded-bl-md"
                         }`}
                       >
-                        <p className="leading-7 break-words">{msg.text}</p>
-
-                        <p
-                          className={`text-[10px] mt-2 ${
-                            isMine ? "text-black/60" : "text-slate-500"
-                          }`}
-                        >
-                          {new Date(msg.createdAt).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                        <p className="leading-7 break-words text-[15px]">
+                          {msg.text}
                         </p>
+
+                        <div className="flex items-center justify-end gap-2 mt-2">
+                          <p
+                            className={`text-[10px] ${
+                              isMine ? "text-black/60" : "text-slate-500"
+                            }`}
+                          >
+                            {new Date(msg.createdAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+
+                          {isMine && (
+                            <span className="text-[10px] text-black/60">
+                              ✓✓
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
@@ -327,7 +336,7 @@ export default function ChatPage() {
                 <div ref={messagesEndRef} />
               </div>
 
-              <div className="bg-white/[0.03] border-t border-white/10 p-3">
+              <div className="border-t border-white/10 bg-[#071019]/95 backdrop-blur-xl px-3 py-3 md:px-5 md:py-4">
                 <div className="flex items-center gap-3">
                   <input
                     type="text"
@@ -339,13 +348,13 @@ export default function ChatPage() {
                         sendMessage();
                       }
                     }}
-                    className="flex-1 px-5 py-4 rounded-full bg-white/[0.06] border border-white/10 outline-none focus:border-green-500 text-white placeholder:text-slate-500"
+                    className="flex-1 h-14 px-5 rounded-full bg-white/[0.06] border border-white/10 outline-none text-white placeholder:text-slate-500 focus:border-green-500"
                   />
 
                   <button
                     onClick={sendMessage}
                     disabled={sending}
-                    className="bg-green-500 hover:bg-green-400 text-black px-6 py-4 rounded-full font-black disabled:opacity-60 shadow-[0_0_25px_rgba(34,197,94,0.25)]"
+                    className="h-14 px-6 rounded-full bg-green-500 hover:bg-green-400 text-black font-black transition disabled:opacity-60 shadow-[0_0_25px_rgba(34,197,94,0.25)]"
                   >
                     {sending ? "..." : "Send"}
                   </button>
