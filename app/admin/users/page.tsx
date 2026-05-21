@@ -54,69 +54,73 @@ export default function AdminUsersPage() {
     fetchUsers();
   }, []);
 
-  async function updateVerification(
-    userId: string,
-    status: string
-  ) {
-    try {
+ async function updateVerification(
+  userId: string,
+  status: string
+) {
+  try {
 
-      const res =
-        await fetch(
-          `/api/admin/users/${userId}/verification`,
-          {
-            method: "PATCH",
+    const action =
+      status === "APPROVED"
+        ? "APPROVE"
+        : "REJECT";
 
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
+    const res = await fetch(
+      "/api/admin/users/verify-student",
+      {
+        method: "POST",
 
-            body: JSON.stringify({
-              status,
-            }),
-          }
-        );
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
 
-      const data =
-        await res.json();
-
-      if (!res.ok) {
-
-        alert(
-          data.message ||
-            "Failed to update verification"
-        );
-
-        return;
+        body: JSON.stringify({
+          userId,
+          action,
+        }),
       }
+    );
 
-      setUsers((prev) =>
-        prev.map((user) =>
-          user.id === userId
-            ? {
-                ...user,
-                studentVerificationStatus:
-                  status,
-                studentVerified:
-                  status ===
-                  "APPROVED",
-              }
-            : user
-        )
-      );
+    const data = await res.json();
 
+    if (!res.ok) {
       alert(
-        `Verification ${status.toLowerCase()}`
+        data.message ||
+          "Failed to update verification"
       );
 
-    } catch {
-
-      alert(
-        "Failed to update verification"
-      );
-
+      return;
     }
+
+    setUsers((prev) =>
+      prev.map((user) =>
+        user.id === userId
+          ? {
+              ...user,
+
+              studentVerificationStatus:
+                status,
+
+              studentVerified:
+                status === "APPROVED",
+            }
+          : user
+      )
+    );
+
+    alert(
+      data.message ||
+        `Verification ${status.toLowerCase()}`
+    );
+
+  } catch {
+
+    alert(
+      "Failed to update verification"
+    );
   }
+}
 
   async function suspendUser(
     userId: string
