@@ -176,6 +176,57 @@ export default function AdminUsersPage() {
     );
   }
 }
+async function unsuspendUser(userId: string) {
+  try {
+    const res = await fetch(
+      "/api/admin/users/action",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+
+        body: JSON.stringify({
+          userId,
+          action: "UNSUSPEND",
+        }),
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(
+        data.message ||
+          "Failed to unsuspend user"
+      );
+
+      return;
+    }
+
+    setUsers((prev) =>
+      prev.map((user) =>
+        user.id === userId
+          ? {
+              ...user,
+              isSuspended: false,
+            }
+          : user
+      )
+    );
+
+    alert(
+      data.message ||
+        "User unsuspended successfully"
+    );
+  } catch {
+    alert(
+      "Failed to unsuspend user"
+    );
+  }
+}
 
   const filteredUsers =
     useMemo(() => {
@@ -491,32 +542,36 @@ export default function AdminUsersPage() {
                         </div>
                       )}
 
-                      {user.role !==
-                        "ADMIN" && (
-                        <div className="mt-5">
-                          <button
-                            onClick={() =>
-                              suspendUser(
-                                user.id
-                              )
-                            }
+                     {user.role !== "ADMIN" && (
+  <div className="mt-5">
+    <button
+      onClick={() =>
+        user.isSuspended
+          ? unsuspendUser(user.id)
+          : suspendUser(user.id)
+      }
+      className={`
+        border
+        px-5
+        py-3
+        rounded-full
+        font-black
+        text-sm
+        transition-all
 
-                            className="
-                              border
-                              border-orange-500/30
-                              hover:border-orange-500
-                              text-orange-400
-                              px-5
-                              py-3
-                              rounded-full
-                              font-black
-                              text-sm
-                            "
-                          >
-                            Suspend User
-                          </button>
-                        </div>
-                      )}
+        ${
+          user.isSuspended
+            ? "border-green-500/30 hover:border-green-500 text-green-400"
+            : "border-orange-500/30 hover:border-orange-500 text-orange-400"
+        }
+      `}
+    >
+      {user.isSuspended
+        ? "Unsuspend User"
+        : "Suspend User"}
+    </button>
+  </div>
+)}
                     </div>
                   </div>
                 </div>
