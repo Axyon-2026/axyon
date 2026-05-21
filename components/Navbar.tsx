@@ -6,6 +6,7 @@ export default function Navbar() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     async function checkUser() {
@@ -28,6 +29,36 @@ export default function Navbar() {
     checkUser();
   }, []);
 
+  async function fetchUnreadNotifications() {
+    try {
+      const res = await fetch("/api/notifications");
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      const unread = (data.notifications || []).filter(
+        (item: any) => !item.isRead
+      ).length;
+
+      setUnreadCount(unread);
+    } catch {
+      setUnreadCount(0);
+    }
+  }
+
+  useEffect(() => {
+    if (!user) return;
+
+    fetchUnreadNotifications();
+
+    const interval = setInterval(() => {
+      fetchUnreadNotifications();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [user]);
+
   async function handleLogout() {
     await fetch("/api/auth/logout", {
       method: "POST",
@@ -45,7 +76,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="h-20 flex items-center justify-between">
           <a href="/" className="flex items-center gap-4 shrink-0">
-           <div className="w-14 h-14 rounded-full overflow-hidden bg-white shadow-[0_0_20px_rgba(139,92,246,0.35)] flex items-center justify-center p-1">
+            <div className="w-14 h-14 rounded-full overflow-hidden bg-white shadow-[0_0_20px_rgba(139,92,246,0.35)] flex items-center justify-center p-1">
               <img
                 src="/logo.png"
                 alt="Axyon Logo"
@@ -55,7 +86,6 @@ export default function Navbar() {
 
             <div>
               <h1 className="text-2xl font-black tracking-tight">Axyon</h1>
-
               <p className="text-xs text-slate-400 hidden sm:block">
                 India’s Smart Student Ecosystem
               </p>
@@ -108,6 +138,21 @@ export default function Navbar() {
               </>
             )}
 
+            {!loading && isLoggedIn && (
+              <a
+                href="/notifications"
+                className="relative w-11 h-11 rounded-full border border-white/10 hover:border-green-500 flex items-center justify-center text-lg transition"
+              >
+                🔔
+
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-green-400 text-black text-[10px] font-black flex items-center justify-center shadow-[0_0_12px_rgba(34,197,94,0.8)]">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </a>
+            )}
+
             {!loading && isLoggedIn && !isAdmin && (
               <>
                 <a
@@ -116,27 +161,7 @@ export default function Navbar() {
                 >
                   Sell Now
                 </a>
-                <a
-  href="/notifications"
-  className="
-    relative
-    w-11
-    h-11
-    rounded-full
-    border
-    border-white/10
-    hover:border-green-500
-    flex
-    items-center
-    justify-center
-    text-lg
-    transition
-  "
->
-  🔔
 
-  <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-green-400" />
-</a>
                 <a
                   href="/dashboard"
                   className="px-5 py-2.5 rounded-full border border-white/10 hover:border-green-500 transition text-sm font-semibold"
@@ -178,13 +203,25 @@ export default function Navbar() {
             <div className="bg-[#0f172a] border border-white/10 rounded-[2rem] p-5 space-y-3 shadow-2xl">
               <MobileLink href="/" label="Home" />
 
-              {!isAdmin && <MobileLink href="/marketplace" label="Marketplace" />}
+              {!isAdmin && (
+                <MobileLink href="/marketplace" label="Marketplace" />
+              )}
+
+              {isLoggedIn && (
+                <MobileLink
+                  href="/notifications"
+                  label={
+                    unreadCount > 0
+                      ? `Notifications (${unreadCount > 9 ? "9+" : unreadCount})`
+                      : "Notifications"
+                  }
+                />
+              )}
 
               {isLoggedIn && !isAdmin && (
                 <>
                   <MobileLink href="/chat" label="Chat" />
                   <MobileLink href="/support" label="Support" />
-                  <MobileLink href="/notifications" label="Notifications"/>
                   <MobileLink href="/dashboard" label="Dashboard" />
                   <MobileLink href="/create-product" label="Sell Product" />
                 </>
