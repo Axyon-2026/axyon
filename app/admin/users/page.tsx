@@ -122,53 +122,60 @@ export default function AdminUsersPage() {
   }
 }
 
-  async function suspendUser(
-    userId: string
-  ) {
-    const confirmed =
-      confirm(
-        "Suspend this user?"
-      );
+ async function suspendUser(userId: string) {
+  try {
 
-    if (!confirmed) return;
+    const res = await fetch(
+      "/api/admin/users/action",
+      {
+        method: "POST",
 
-    try {
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
 
-      const res =
-        await fetch(
-          `/api/admin/users/${userId}/suspend`,
-          {
-            method: "PATCH",
-          }
-        );
-
-      const data =
-        await res.json();
-
-      if (!res.ok) {
-
-        alert(
-          data.message ||
-            "Failed to suspend user"
-        );
-
-        return;
+        body: JSON.stringify({
+          userId,
+          action: "SUSPEND",
+        }),
       }
+    );
 
+    const data = await res.json();
+
+    if (!res.ok) {
       alert(
-        "User suspended"
+        data.message ||
+          "Failed to suspend user"
       );
 
-      fetchUsers();
-
-    } catch {
-
-      alert(
-        "Failed to suspend user"
-      );
-
+      return;
     }
+
+    setUsers((prev) =>
+      prev.map((user) =>
+        user.id === userId
+          ? {
+              ...user,
+              isSuspended: true,
+            }
+          : user
+      )
+    );
+
+    alert(
+      data.message ||
+        "User suspended successfully"
+    );
+
+  } catch {
+
+    alert(
+      "Failed to suspend user"
+    );
   }
+}
 
   const filteredUsers =
     useMemo(() => {
