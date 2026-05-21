@@ -1,3 +1,4 @@
+import { createNotification } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import crypto from "crypto";
@@ -14,17 +15,26 @@ export async function POST(req: Request) {
       razorpay_signature,
     } = await req.json();
 
-    if (!orderId || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    if (
+      !orderId ||
+      !razorpay_order_id ||
+      !razorpay_payment_id ||
+      !razorpay_signature
+    ) {
       return NextResponse.json(
         { message: "Payment verification data missing" },
         { status: 400 }
       );
     }
 
-    const body = razorpay_order_id + "|" + razorpay_payment_id;
+    const body =
+      razorpay_order_id + "|" + razorpay_payment_id;
 
     const expectedSignature = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
+      .createHmac(
+        "sha256",
+        process.env.RAZORPAY_KEY_SECRET!
+      )
       .update(body)
       .digest("hex");
 
@@ -36,7 +46,9 @@ export async function POST(req: Request) {
     }
 
     const existingOrder = await prisma.order.findUnique({
-      where: { id: orderId },
+      where: {
+        id: orderId,
+      },
     });
 
     if (!existingOrder) {
@@ -53,8 +65,37 @@ export async function POST(req: Request) {
       });
     }
 
+    const existingProduct = await prisma.product.findUnique({
+      where: {
+        id: existingOrder.productId,
+      },
+    });
+
+    if (!existingProduct) {
+      return NextResponse.json(
+        { message: "Product not found" },
+        { status: 404 }
+      );
+    }
+
+    if (existingProduct.status === "REMOVED") {
+      return NextResponse.json(
+        { message: "Removed products cannot be sold" },
+        { status: 400 }
+      );
+    }
+
+    if (existingProduct.status === "SOLD") {
+      return NextResponse.json(
+        { message: "Product is already sold" },
+        { status: 400 }
+      );
+    }
+
     const order = await prisma.order.update({
-      where: { id: orderId },
+      where: {
+        id: orderId,
+      },
       data: {
         razorpayOrderId: razorpay_order_id,
         razorpayPaymentId: razorpay_payment_id,
@@ -63,7 +104,9 @@ export async function POST(req: Request) {
     });
 
     const product = await prisma.product.update({
-      where: { id: order.productId },
+      where: {
+        id: order.productId,
+      },
       data: {
         status: "SOLD",
       },
@@ -78,11 +121,29 @@ export async function POST(req: Request) {
     });
 
     const buyer = await prisma.user.findUnique({
-      where: { id: order.buyerId },
+      where: {
+        id: order.buyerId,
+      },
       select: {
         name: true,
         email: true,
       },
+    });
+
+    await createNotification({
+      userId: order.buyerId,
+      title: "Payment Successful",
+      message: `Your payment for "${product.title}" was completed successfully.`,
+      type: "ORDER_SUCCESS",
+      link: "/my-orders",
+    });
+
+    await createNotification({
+      userId: order.sellerId,
+      title: "Product Sold",
+      message: `"${product.title}" has been purchased successfully.`,
+      type: "PRODUCT_SOLD",
+      link: `/product/${product.id}`,
     });
 
     if (buyer?.email) {
