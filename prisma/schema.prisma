@@ -47,6 +47,7 @@ model User {
 
   collegeIdNumber String?
   collegeIdImageUrl String?
+  selfieImageUrl String?
   studentVerified Boolean @default(false)
   studentVerificationStatus String @default("NOT_SUBMITTED")
 }
