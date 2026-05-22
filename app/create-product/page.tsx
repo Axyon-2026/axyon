@@ -425,7 +425,7 @@ export default function CreateProductPage() {
                     </p>
 
                     <p className="mt-2 text-sm text-slate-500">
-                      PNG, JPG, WEBP supported
+                      PNG, JPG, WEBP supported. Max 5MB per image.
                     </p>
 
                     <input
@@ -435,14 +435,44 @@ export default function CreateProductPage() {
 
                       accept="image/*"
 
-                      onChange={(e) =>
-                        setImages(
-                          Array.from(
-                            e.target
-                              .files || []
-                          )
-                        )
-                      }
+                      onChange={(e) => {
+
+  const selectedFiles =
+    Array.from(
+      e.target.files || []
+    );
+
+  const validFiles =
+    selectedFiles.filter(
+      (file) => {
+
+        const isImage =
+          file.type.startsWith(
+            "image/"
+          );
+
+        const isUnderLimit =
+          file.size <=
+          5 * 1024 * 1024;
+
+        return (
+          isImage &&
+          isUnderLimit
+        );
+      }
+    );
+
+  if (
+    validFiles.length !==
+    selectedFiles.length
+  ) {
+    setMessage(
+      "Some images were too large. Please upload images under 5MB."
+    );
+  }
+
+  setImages(validFiles);
+}}
 
                       className="
                         mt-5
