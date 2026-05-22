@@ -1,7 +1,32 @@
+import cloudinary from "@/lib/cloudinary";
 import { prisma } from "@/lib/prisma";
 import { verifyToken } from "@/lib/auth";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+
+async function uploadToCloudinary(file: File) {
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+
+  return new Promise<string>((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: "axyon/products",
+        resource_type: "image",
+      },
+      (error, result) => {
+        if (error || !result) {
+          reject(error);
+          return;
+        }
+
+        resolve(result.secure_url);
+      }
+    );
+
+    uploadStream.end(buffer);
+  });
+}
 
 export async function GET() {
   try {
@@ -82,16 +107,43 @@ export async function POST(req: Request) {
       );
     }
 
-    const body = await req.json();
+    const contentType = req.headers.get("content-type") || "";
 
-    const {
-      title,
-      description,
-      price,
-      category,
-      condition,
-      imageUrls,
-    } = body;
+    let title = "";
+    let description = "";
+    let price: any = "";
+    let category = "";
+    let condition = "";
+    let imageUrls: string[] = [];
+
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await req.formData();
+
+      title = String(formData.get("title") || "");
+      description = String(formData.get("description") || "");
+      price = formData.get("price") || "";
+      category = String(formData.get("category") || "");
+      condition = String(formData.get("condition") || "");
+
+      const files = formData.getAll("images") as File[];
+
+      const validFiles = files.filter(
+        (file) => file && file.name && file.size > 0
+      );
+
+      imageUrls = await Promise.all(
+        validFiles.map((file) => uploadToCloudinary(file))
+      );
+    } else {
+      const body = await req.json();
+
+      title = body.title || "";
+      description = body.description || "";
+      price = body.price;
+      category = body.category || "";
+      condition = body.condition || "";
+      imageUrls = body.imageUrls || [];
+    }
 
     if (!title || title.trim().length < 3) {
       return NextResponse.json(
@@ -135,7 +187,7 @@ export async function POST(req: Request) {
         price: Number(price),
         category,
         condition,
-        imageUrls: imageUrls || [],
+        imageUrls,
         status: "AVAILABLE",
         sellerId: user.id,
       },
