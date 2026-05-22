@@ -40,6 +40,7 @@ export async function POST(req: Request) {
       data: {
         collegeIdNumber: `ID-${Date.now()}`,
         collegeIdImageUrl,
+        selfieImageUrl,
 
         studentVerified: false,
         studentVerificationStatus: "PENDING",
