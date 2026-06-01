@@ -202,6 +202,29 @@ export default function AdminDashboardPage() {
                 >
                   Moderate Listings
                 </a>
+                <a
+  href="/admin/ads"
+  className="
+    rounded-[2rem]
+    border
+    border-white/10
+    bg-white/[0.04]
+    p-6
+    hover:border-green-500
+    transition-all
+    block
+  "
+>
+  <div className="text-4xl">📢</div>
+
+  <h2 className="mt-4 text-2xl font-black">
+    Ad Banners
+  </h2>
+
+  <p className="mt-2 text-slate-400">
+    Create and manage homepage floating ads.
+  </p>
+</a>
               </div>
             </div>
           </div>
