@@ -198,3 +198,19 @@ model Notification {
 
   createdAt DateTime @default(now())
 }
+model AdBanner {
+  id          String   @id @default(cuid())
+
+  title       String
+  description String
+  buttonText  String?
+  buttonLink  String?
+
+  badge       String?
+  emoji       String?
+
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

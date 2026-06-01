@@ -1,6 +1,6 @@
 "use client";
-
 import Navbar from "@/components/Navbar";
+import HomeAdBanner from "@/components/HomeAdBanner";
 import { useEffect, useState } from "react";
 
 const categories = [
@@ -364,6 +364,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      <HomeAdBanner />
     </main>
   );
 }
