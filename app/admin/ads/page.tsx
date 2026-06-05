@@ -9,8 +9,8 @@ export default function AdminAdsPage() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [buttonText, setButtonText] = useState("Advertise Now");
-  const [buttonLink, setButtonLink] = useState("/support");
+  const [buttonText, setButtonText] = useState("");
+  const [buttonLink, setButtonLink] = useState("");
   const [badge, setBadge] = useState("SPONSORED");
   const [emoji, setEmoji] = useState("✨");
   const [image, setImage] = useState<File | null>(null);
@@ -75,8 +75,8 @@ export default function AdminAdsPage() {
 
       setTitle("");
       setDescription("");
-      setButtonText("Advertise Now");
-      setButtonLink("/support");
+      setButtonText("");
+      setButtonLink("");
       setBadge("SPONSORED");
       setEmoji("✨");
       setImage(null);

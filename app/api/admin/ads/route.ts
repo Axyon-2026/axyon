@@ -137,8 +137,8 @@ export async function POST(req: Request) {
       data: {
         title: title.trim(),
         description: description.trim(),
-        buttonText: buttonText || "Learn More",
-        buttonLink: buttonLink || "/support",
+        buttonText: buttonText || null,
+        buttonLink: buttonLink || null,
         badge: badge || "SPONSORED",
         emoji: emoji || "✨",
         imageUrl,
