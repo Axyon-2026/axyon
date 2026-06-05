@@ -63,25 +63,31 @@ export default function HomeAdBanner() {
         </button>
 
         {ad.imageUrl && (
-          <div className="relative h-44 w-full overflow-hidden">
-            <img
-              src={ad.imageUrl}
-              alt={ad.title}
-              className="h-full w-full object-cover"
-            />
+  <div className="relative w-full overflow-hidden bg-black">
 
-            <div
-              className="
-                absolute
-                inset-0
-                bg-gradient-to-t
-                from-[#071019]
-                via-[#071019]/20
-                to-transparent
-              "
-            />
-          </div>
-        )}
+    <img
+      src={ad.imageUrl}
+      alt={ad.title}
+      className="
+        w-full
+        max-h-[260px]
+        object-contain
+      "
+    />
+
+    <div
+      className="
+        absolute
+        inset-0
+        bg-gradient-to-t
+        from-[#071019]/90
+        via-transparent
+        to-transparent
+      "
+    />
+
+  </div>
+)}
 
         <div className="relative p-5">
 
