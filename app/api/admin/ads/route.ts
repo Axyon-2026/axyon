@@ -1,6 +1,31 @@
+import cloudinary from "@/lib/cloudinary";
 import { prisma } from "@/lib/prisma";
 import { getAdminUser, logAdminAction } from "@/lib/admin";
 import { NextResponse } from "next/server";
+
+async function uploadToCloudinary(file: File) {
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+
+  return new Promise<string>((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: "axyon/ads",
+        resource_type: "image",
+      },
+      (error, result) => {
+        if (error || !result) {
+          reject(error);
+          return;
+        }
+
+        resolve(result.secure_url);
+      }
+    );
+
+    uploadStream.end(buffer);
+  });
+}
 
 export async function GET() {
   try {
@@ -41,14 +66,56 @@ export async function POST(req: Request) {
       );
     }
 
-    const {
-      title,
-      description,
-      buttonText,
-      buttonLink,
-      badge,
-      emoji,
-    } = await req.json();
+    const contentType = req.headers.get("content-type") || "";
+
+    let title = "";
+    let description = "";
+    let buttonText = "";
+    let buttonLink = "";
+    let badge = "";
+    let emoji = "";
+    let imageUrl = "";
+
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await req.formData();
+
+      title = String(formData.get("title") || "");
+      description = String(formData.get("description") || "");
+      buttonText = String(formData.get("buttonText") || "");
+      buttonLink = String(formData.get("buttonLink") || "");
+      badge = String(formData.get("badge") || "");
+      emoji = String(formData.get("emoji") || "");
+
+      const image = formData.get("image") as File | null;
+
+      if (image && image.name && image.size > 0) {
+        if (!image.type.startsWith("image/")) {
+          return NextResponse.json(
+            { message: "Only image files are allowed" },
+            { status: 400 }
+          );
+        }
+
+        if (image.size > 5 * 1024 * 1024) {
+          return NextResponse.json(
+            { message: "Ad image must be under 5MB" },
+            { status: 400 }
+          );
+        }
+
+        imageUrl = await uploadToCloudinary(image);
+      }
+    } else {
+      const body = await req.json();
+
+      title = body.title || "";
+      description = body.description || "";
+      buttonText = body.buttonText || "";
+      buttonLink = body.buttonLink || "";
+      badge = body.badge || "";
+      emoji = body.emoji || "";
+      imageUrl = body.imageUrl || "";
+    }
 
     if (!title || !description) {
       return NextResponse.json(
@@ -68,12 +135,13 @@ export async function POST(req: Request) {
 
     const ad = await prisma.adBanner.create({
       data: {
-        title,
-        description,
+        title: title.trim(),
+        description: description.trim(),
         buttonText: buttonText || "Learn More",
         buttonLink: buttonLink || "/support",
         badge: badge || "SPONSORED",
         emoji: emoji || "✨",
+        imageUrl,
         isActive: true,
       },
     });

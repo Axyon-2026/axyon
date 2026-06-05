@@ -208,6 +208,7 @@ model AdBanner {
 
   badge       String?
   emoji       String?
+  imageUrl    String?
 
   isActive    Boolean  @default(true)
 
