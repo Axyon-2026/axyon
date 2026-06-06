@@ -171,61 +171,129 @@ export default function AdminDashboardPage() {
                 support tickets, and overall marketplace activity.
               </p>
 
-              <div className="mt-8 flex flex-wrap gap-3">
-                <a
-                  href="/marketplace"
+   <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-5">
 
-                  className="
-                    bg-green-600
-                    hover:bg-green-700
-                    px-6
-                    py-3
-                    rounded-full
-                    font-black
-                  "
-                >
-                  Open Marketplace
-                </a>
+  <a
+    href="/marketplace"
+    className="
+      group
+      relative
+      overflow-hidden
+      rounded-[2rem]
+      border
+      border-green-500/20
+      bg-gradient-to-br
+      from-green-500/10
+      to-emerald-500/5
+      p-6
+      transition-all
+      hover:-translate-y-1
+      hover:border-green-500
+    "
+  >
+    <div className="absolute right-0 top-0 h-28 w-28 rounded-full bg-green-500/10 blur-3xl" />
 
-                <a
-                  href="/admin/listings"
+    <div className="relative z-10">
+      <div className="text-5xl">
+        🛍️
+      </div>
 
-                  className="
-                    border
-                    border-slate-600
-                    hover:border-green-500
-                    px-6
-                    py-3
-                    rounded-full
-                    font-black
-                  "
-                >
-                  Moderate Listings
-                </a>
-                <a
-  href="/admin/ads"
-  className="
-    rounded-[2rem]
-    border
-    border-white/10
-    bg-white/[0.04]
-    p-6
-    hover:border-green-500
-    transition-all
-    block
-  "
->
-  <div className="text-4xl">📢</div>
+      <h2 className="mt-5 text-2xl font-black">
+        Open Marketplace
+      </h2>
 
-  <h2 className="mt-4 text-2xl font-black">
-    Ad Banners
-  </h2>
+      <p className="mt-3 text-slate-400 leading-7">
+        View live marketplace listings,
+        products, rentals and barter posts.
+      </p>
 
-  <p className="mt-2 text-slate-400">
-    Create and manage homepage floating ads.
-  </p>
-</a>
-              </div>
+      <div className="mt-5 text-green-400 font-black">
+        Open →
+      </div>
+    </div>
+  </a>
+
+  <a
+    href="/admin/listings"
+    className="
+      group
+      relative
+      overflow-hidden
+      rounded-[2rem]
+      border
+      border-blue-500/20
+      bg-gradient-to-br
+      from-blue-500/10
+      to-cyan-500/5
+      p-6
+      transition-all
+      hover:-translate-y-1
+      hover:border-blue-500
+    "
+  >
+    <div className="absolute right-0 top-0 h-28 w-28 rounded-full bg-blue-500/10 blur-3xl" />
+
+    <div className="relative z-10">
+      <div className="text-5xl">
+        🛡️
+      </div>
+
+      <h2 className="mt-5 text-2xl font-black">
+        Moderate Listings
+      </h2>
+
+      <p className="mt-3 text-slate-400 leading-7">
+        Remove suspicious products,
+        monitor reports and manage sellers.
+      </p>
+
+      <div className="mt-5 text-blue-400 font-black">
+        Moderate →
+      </div>
+    </div>
+  </a>
+
+  <a
+    href="/admin/ads"
+    className="
+      group
+      relative
+      overflow-hidden
+      rounded-[2rem]
+      border
+      border-pink-500/20
+      bg-gradient-to-br
+      from-pink-500/10
+      to-purple-500/5
+      p-6
+      transition-all
+      hover:-translate-y-1
+      hover:border-pink-500
+    "
+  >
+    <div className="absolute right-0 top-0 h-28 w-28 rounded-full bg-pink-500/10 blur-3xl" />
+
+    <div className="relative z-10">
+      <div className="text-5xl">
+        📢
+      </div>
+
+      <h2 className="mt-5 text-2xl font-black">
+        Ad Banners
+      </h2>
+
+      <p className="mt-3 text-slate-400 leading-7">
+        Create sponsored homepage ads,
+        promotions and monetized campaigns.
+      </p>
+
+      <div className="mt-5 text-pink-400 font-black">
+        Manage Ads →
+      </div>
+    </div>
+  </a>
+
+</div>
             </div>
           </div>
 

@@ -19,72 +19,52 @@ export async function GET() {
     const tickets = await prisma.supportTicket.findMany();
     const reports = await prisma.report.findMany();
 
-    const categoryStats: Record<string, number> = {};
+    const totalUsers = users.length;
+    const totalProducts = products.length;
+    const totalOrders = orders.length;
+    const totalSupportTickets = tickets.length;
+    const totalReports = reports.length;
 
-    let verifiedStudents = 0;
-    let pendingStudentVerifications = 0;
-    let suspendedUsers = 0;
+    const verifiedUsers = users.filter(
+      (user) =>
+        user.studentVerified ||
+        user.studentVerificationStatus === "APPROVED"
+    ).length;
 
-    let activeListings = 0;
-    let removedListings = 0;
+    const totalAdmins = users.filter(
+      (user) => user.role === "ADMIN"
+    ).length;
 
-    let pendingOrders = 0;
-    let successfulOrders = 0;
-    let cancelledOrders = 0;
+    const openReports = reports.filter(
+      (report) => report.status === "OPEN"
+    ).length;
 
-    let openTickets = 0;
-    let openReports = 0;
-
-    for (const user of users) {
-      if (user.studentVerified) verifiedStudents++;
-      if (user.studentVerificationStatus === "PENDING") {
-        pendingStudentVerifications++;
-      }
-      if (user.isSuspended) suspendedUsers++;
-    }
-
-    for (const product of products) {
-      const category = product.category || "Uncategorized";
-      categoryStats[category] = (categoryStats[category] || 0) + 1;
-
-      if (product.status === "AVAILABLE") activeListings++;
-      if (product.status === "REMOVED") removedListings++;
-    }
-
-    for (const order of orders) {
-      if (order.paymentStatus === "PENDING") pendingOrders++;
-      if (order.paymentStatus === "SUCCESS") successfulOrders++;
-      if (order.paymentStatus === "CANCELLED") cancelledOrders++;
-    }
-
-    for (const ticket of tickets) {
-      if (ticket.status === "OPEN") openTickets++;
-    }
-
-    for (const report of reports) {
-      if (report.status === "OPEN") openReports++;
-    }
+    const openSupportTickets = tickets.filter(
+      (ticket) => ticket.status === "OPEN"
+    ).length;
 
     return NextResponse.json({
+      totalUsers,
+      totalProducts,
+      totalOrders,
+      totalSupportTickets,
+      totalReports,
+      verifiedUsers,
+      totalAdmins,
+      openReports,
+      openSupportTickets,
+
       stats: {
-        totalUsers: users.length,
-        verifiedStudents,
-        pendingStudentVerifications,
-        suspendedUsers,
-
-        totalListings: products.length,
-        activeListings,
-        removedListings,
-
-        totalOrders: orders.length,
-        pendingOrders,
-        successfulOrders,
-        cancelledOrders,
-
-        openTickets,
+        totalUsers,
+        totalProducts,
+        totalOrders,
+        totalSupportTickets,
+        totalReports,
+        verifiedUsers,
+        totalAdmins,
         openReports,
+        openSupportTickets,
       },
-      categoryStats,
     });
   } catch (error) {
     console.log("ADMIN ANALYTICS ERROR:", error);
