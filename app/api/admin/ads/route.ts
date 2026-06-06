@@ -124,14 +124,7 @@ export async function POST(req: Request) {
       );
     }
 
-    await prisma.adBanner.updateMany({
-      where: {
-        isActive: true,
-      },
-      data: {
-        isActive: false,
-      },
-    });
+    
 
     const ad = await prisma.adBanner.create({
       data: {
@@ -247,7 +240,26 @@ export async function PATCH(req: Request) {
         ad,
       });
     }
+    if (action === "DELETE") {
+  const ad = await prisma.adBanner.delete({
+    where: {
+      id: adId,
+    },
+  });
 
+  await logAdminAction({
+    adminId: admin.id,
+    adminEmail: admin.email,
+    action: "DELETE_AD_BANNER",
+    targetType: "AD",
+    targetId: adId,
+    details: `Deleted ad banner "${ad.title}"`,
+  });
+
+  return NextResponse.json({
+    message: "Ad banner deleted permanently",
+  });
+}
     return NextResponse.json(
       { message: "Invalid action" },
       { status: 400 }
