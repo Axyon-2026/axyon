@@ -40,8 +40,11 @@ export default function HomeAdBanner() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {ads.map((ad) => (
             <a
+             
               key={ad.id}
               href={ad.buttonLink || "#"}
+              target="_blank"
+              rel="noopener noreferrer"
               className="group overflow-hidden rounded-[2rem] bg-white border border-slate-200 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all"
             >
               {ad.imageUrl && (

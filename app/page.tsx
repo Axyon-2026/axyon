@@ -251,7 +251,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
+      <HomeAdBanner />
       <section className="px-4 sm:px-6 lg:px-10 py-14 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-end justify-between gap-4">
@@ -259,12 +259,12 @@ export default function HomePage() {
               <p className="text-green-600 font-black text-sm">
                 Axyon Ecosystem
               </p>
-
+              
               <h2 className="text-3xl sm:text-4xl font-black mt-2">
                 More than buying and selling.
               </h2>
             </div>
-
+            
             <a
               href="/marketplace"
               className="hidden sm:block text-green-600 font-black"
@@ -364,7 +364,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      <HomeAdBanner />
+      
     </main>
   );
 }
