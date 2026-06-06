@@ -42,9 +42,8 @@ export default function HomeAdBanner() {
             <a
              
               key={ad.id}
-              href={ad.buttonLink || "#"}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={`/ads/${ad.id}`}
+              
               className="group overflow-hidden rounded-[2rem] bg-white border border-slate-200 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all"
             >
               {ad.imageUrl && (
