@@ -20,10 +20,10 @@ export default function ProfilePage() {
       const res = await fetch("/api/auth/me");
       const data = await res.json();
 
-      if (!res.ok) {
-        setMessage("Please login to manage profile");
-        return;
-      }
+     if (!res.ok) {
+  window.location.href = "/login";
+  return;
+}
 
       setUser(data.user);
       setName(data.user.name || "");
@@ -98,17 +98,15 @@ export default function ProfilePage() {
   const isAdmin = user?.role === "ADMIN";
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
+    <main className="min-h-screen bg-[#071019] text-white">
       <Navbar />
 
       <section className="flex items-center justify-center py-16 px-6">
         <div
-          className={`w-full max-w-2xl rounded-2xl p-8 border ${
-            isAdmin
-              ? "bg-purple-950/30 border-purple-600"
-              : "bg-slate-900 border-slate-800"
-          }`}
+          
+            className="relative overflow-hidden w-full max-w-3xl rounded-[2.5rem] p-8 sm:p-10 border bg-[#0d1721] border-white/10 backdrop-blur-xl shadow-2xl"
         >
+          <div className="absolute top-0 right-0 h-56 w-56 rounded-full bg-green-500/10 blur-3xl" />
           <div className="flex items-center justify-between gap-4 mb-8">
             <div>
               <h1 className="text-3xl font-bold">Manage Profile</h1>
@@ -127,7 +125,7 @@ export default function ProfilePage() {
           {user && (
             <div className="mb-8 bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
               <div className="flex items-center gap-5">
-                <div className="w-24 h-24 rounded-full bg-slate-800 overflow-hidden border border-slate-700 flex items-center justify-center">
+                <div className="w-28 h-28 rounded-[2rem] bg-slate-800 overflow-hidden border border-slate-700 flex items-center justify-center">
                   {profileImageUrl ? (
                     <img
                       src={profileImageUrl}
@@ -190,7 +188,7 @@ export default function ProfilePage() {
               placeholder="Full Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 outline-none"
+              className="w-full px-4 py-3 rounded-2xl bg-[#111c27] border border-white/10 focus:border-green-500 transition-all"
             />
 
             <input
@@ -198,7 +196,7 @@ export default function ProfilePage() {
               placeholder="Phone Number"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 outline-none"
+              className="w-full px-4 py-3 rounded-2xl bg-[#111c27] border border-white/10 focus:border-green-500 transition-all"
             />
 
             <input
@@ -206,12 +204,12 @@ export default function ProfilePage() {
               placeholder="College Name"
               value={college}
               onChange={(e) => setCollege(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 outline-none"
+              className="w-full px-4 py-3 rounded-2xl bg-[#111c27] border border-white/10 focus:border-green-500 transition-all"
             />
 
             <button
               disabled={uploading}
-              className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-medium disabled:opacity-60"
+              className="w-full bg-green-500 hover:bg-green-400 text-black py-4 rounded-2xl font-black shadow-[0_0_30px_rgba(34,197,94,0.35)] transition-all disabled:opacity-60"
             >
               {uploading ? "Uploading..." : "Update Profile"}
             </button>

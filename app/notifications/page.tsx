@@ -41,6 +41,9 @@ export default function NotificationsPage() {
         );
 
         setMessage("");
+        await fetch("/api/notifications", {
+            method: "PATCH",
+          });
       } catch {
         setMessage(
           "Something went wrong"

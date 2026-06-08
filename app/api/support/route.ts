@@ -111,3 +111,62 @@ export async function POST(req: Request) {
     );
   }
 }
+export async function PATCH(req: Request) {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("axyon_token")?.value;
+
+    if (!token) {
+      return NextResponse.json(
+        { message: "Please login first" },
+        { status: 401 }
+      );
+    }
+
+    const decoded: any = verifyToken(token);
+
+    const admin = await prisma.user.findUnique({
+      where: { id: decoded.id },
+    });
+
+    if (!admin || admin.role !== "ADMIN") {
+      return NextResponse.json(
+        { message: "Admin access only" },
+        { status: 403 }
+      );
+    }
+
+    const { ticketId } = await req.json();
+
+    if (!ticketId) {
+      return NextResponse.json(
+        { message: "Ticket ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const ticket = await prisma.supportTicket.update({
+      where: { id: ticketId },
+      data: {
+        status: "RESOLVED",
+      },
+    });
+
+    return NextResponse.json({
+      message: "Ticket marked as resolved",
+      ticket,
+    });
+
+  } catch (error) {
+
+    console.log(
+      "SUPPORT RESOLVE ERROR:",
+      error
+    );
+
+    return NextResponse.json(
+      { message: "Failed to resolve ticket" },
+      { status: 500 }
+    );
+  }
+}

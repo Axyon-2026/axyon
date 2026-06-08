@@ -1,13 +1,26 @@
 "use client";
 
 import Navbar from "@/components/Navbar";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
+  useEffect(() => {
+  async function checkUser() {
+    try {
+      const res = await fetch("/api/auth/me");
+
+      if (res.ok) {
+        window.location.href = "/profile";
+      }
+    } catch {}
+  }
+
+  checkUser();
+}, []);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();

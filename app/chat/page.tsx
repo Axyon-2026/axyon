@@ -127,16 +127,16 @@ export default function ChatPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#071019] text-white overflow-hidden">
+    <main className="min-h-screen bg-[#071019] text-white">
       <Navbar />
 
-      <section className="h-[calc(100vh-80px)] flex overflow-hidden">
+      <section className="h-[calc(100vh-140px)] md:h-[calc(100vh-80px)] flex overflow-hidden pb-24 md:pb-0">
         <div
           className={`${
             selectedConversation ? "hidden md:flex" : "flex"
           } w-full md:w-[380px] flex-col border-r border-white/10 bg-[#071019]`}
         >
-          <div className="border-b border-white/10 px-4 py-4 bg-white/[0.03]">
+          <div className="border-b border-white/10 px-4 py-4 bg-[#0d1721]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-green-400 text-xs font-black uppercase tracking-wider">
@@ -301,9 +301,9 @@ export default function ChatPage() {
                     >
                       <div
                         className={`max-w-[88%] sm:max-w-[75%] lg:max-w-[60%] px-4 py-3 rounded-[1.5rem] shadow-sm ${
-                          isMine
-                            ? "bg-green-500 text-black rounded-br-md"
-                            : "bg-white/[0.06] border border-white/10 text-white rounded-bl-md"
+                         isMine
+                         ? "bg-green-500 text-black rounded-[1.8rem] rounded-br-md shadow-lg"
+                         : "bg-[#16202b] border border-white/5 text-white rounded-[1.8rem] rounded-bl-md"
                         }`}
                       >
                         <p className="leading-7 break-words text-[15px]">

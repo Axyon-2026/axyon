@@ -419,7 +419,22 @@ export async function POST(req: Request) {
       conversation.buyerId ===
       decoded.id;
 
-    const createdMessage =
+    
+     
+
+if (
+  !conversation ||
+  (
+    conversation.buyerId !== decoded.id &&
+    conversation.sellerId !== decoded.id
+  )
+) {
+  return NextResponse.json(
+    { message: "Unauthorized chat access" },
+    { status: 403 }
+  );
+}
+      const createdMessage =
       await prisma.message.create({
         data: {
           conversationId:

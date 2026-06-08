@@ -54,3 +54,39 @@ export async function GET() {
     );
   }
 }
+export async function PATCH() {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("axyon_token")?.value;
+
+    if (!token) {
+      return NextResponse.json(
+        { message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const decoded: any = verifyToken(token);
+
+    await prisma.notification.updateMany({
+      where: {
+        userId: decoded.id,
+        isRead: false,
+      },
+      data: {
+        isRead: true,
+      },
+    });
+
+    return NextResponse.json({
+      message: "Notifications marked as read",
+    });
+  } catch (error) {
+    console.log("NOTIFICATIONS READ ERROR:", error);
+
+    return NextResponse.json(
+      { message: "Failed to mark notifications as read" },
+      { status: 500 }
+    );
+  }
+}
