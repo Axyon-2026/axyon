@@ -62,12 +62,15 @@ export default function AdminSupportPage() {
     try {
 
       const res =
-        await fetch(
-          `/api/admin/support/${ticketId}/resolve`,
-          {
-            method: "PATCH",
-          }
-        );
+        await fetch("/api/support", {
+  method: "PATCH",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    ticketId,
+  }),
+});
 
       const data =
         await res.json();
