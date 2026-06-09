@@ -80,11 +80,11 @@ export default function AdminDashboardPage() {
       }
 
       if (!res.ok) {
-        setMessage(
-          dashboardData.message ||
-            "Failed to load dashboard"
-        );
-
+      
+        setTimeout(() => {
+          window.location.reload();
+        }, 800);
+      
         return;
       }
 
@@ -104,7 +104,6 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     fetchDashboard();
   }, []);
-
   if (accessDenied) {
     return (
       <main className="min-h-screen bg-[#0f172a] text-white">
@@ -527,4 +526,4 @@ export default function AdminDashboardPage() {
       </section>
     </main>
   );
-}
+} 
