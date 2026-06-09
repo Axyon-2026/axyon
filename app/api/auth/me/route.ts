@@ -60,6 +60,12 @@ export async function GET() {
 
         college:
           user.college,
+          
+        phone:
+          user.phone,
+      
+        profileImageUrl:
+          user.profileImageUrl,
 
         collegeIdNumber:
           user.collegeIdNumber,
