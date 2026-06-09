@@ -4,7 +4,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Axyon | Campus Marketplace",
-  description: "Buy, sell and connect within your campus using Axyon.",
+  description: "Buy, sell and connect within your campus using Axyon. The student network built for real campus life",
+  icons: {
+    icon: "/icon.png",
+  }
 };
 
 export default function RootLayout({
