@@ -224,10 +224,21 @@ export default function ProductDetailPage() {
                       </button>
 
                       <button
-                        className="w-full border border-green-200 hover:border-green-500 text-green-700 py-4 rounded-full font-black bg-green-50"
-                      >
-                        Pay via Meet
-                      </button>
+                      onClick={() => {
+                        document
+                          .getElementById("message-box")
+                          ?.scrollIntoView({
+                            behavior: "smooth",
+                          });
+                    
+                        setChatMessage(
+                          `Hi, I am interested in "${product.title}". Can we meet on campus for payment and pickup?`
+                        );
+                      }}
+                      className="w-full border border-green-200 hover:border-green-500 text-green-700 py-4 rounded-full font-black bg-green-50"
+                    >
+                      Pay via Meet
+                    </button>
 
                     </div>
 

@@ -8,6 +8,14 @@ export default function ChatPage() {
   const [conversations, setConversations] = useState<any[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<any>(null);
   const [message, setMessage] = useState("");
+  const quickReplies = [
+  "📍 Meet at college gate?",
+  "☕ Meet at canteen?",
+  "🕒 Is this still available?",
+  "🚶 Can you come to hostel?",
+  "💰 Final price?",
+  "📦 Available today?",
+];
   const [status, setStatus] = useState("Loading chats...");
   const [sending, setSending] = useState(false);
 
@@ -337,29 +345,87 @@ export default function ChatPage() {
               </div>
 
               <div className="border-t border-white/10 bg-[#071019]/95 backdrop-blur-xl px-3 py-3 md:px-5 md:py-4">
-                <div className="flex items-center gap-3">
-                  <input
-                    type="text"
-                    placeholder="Type your message..."
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        sendMessage();
-                      }
-                    }}
-                    className="flex-1 h-14 px-5 rounded-full bg-white/[0.06] border border-white/10 outline-none text-white placeholder:text-slate-500 focus:border-green-500"
-                  />
+                <div className="flex flex-col gap-3">
+                  <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                   {quickReplies.map((reply) => (
+                     <button
+                       key={reply}
+                       onClick={() => setMessage(reply)}
+                       className="
+                         shrink-0
+                         px-4
+                         py-2.5
+                         rounded-full
+                         bg-[#0f1a24]
+                         border
+                         border-white/10
+                         text-[13px]
+                         text-slate-300
+                         hover:border-green-500
+                         hover:text-green-400
+                         active:scale-95
+                         transition-all
+                       "
+                     >
+                       {reply}
+                     </button>
+                   ))}
+                 </div>
 
-                  <button
-                    onClick={sendMessage}
-                    disabled={sending}
-                    className="h-14 px-6 rounded-full bg-green-500 hover:bg-green-400 text-black font-black transition disabled:opacity-60 shadow-[0_0_25px_rgba(34,197,94,0.25)]"
-                  >
-                    {sending ? "..." : "Send"}
-                  </button>
-                </div>
-              </div>
+                  <div className="flex items-center gap-3">
+
+  <input
+    type="text"
+    placeholder="Type your message..."
+    value={message}
+    onChange={(e) => setMessage(e.target.value)}
+    onKeyDown={(e) => {
+      if (e.key === "Enter") {
+        sendMessage();
+      }
+    }}
+    className="
+      flex-1
+      h-14
+      px-5
+      rounded-full
+      bg-[#0f1a24]
+      border
+      border-white/10
+      outline-none
+      text-white
+      placeholder:text-slate-500
+      focus:border-green-500
+    "
+  />
+
+  <button
+    onClick={sendMessage}
+    disabled={sending}
+    className="
+      h-14
+      min-w-[90px]
+      px-6
+      rounded-full
+      bg-green-500
+      hover:bg-green-400
+      active:scale-95
+      text-black
+      font-black
+      transition-all
+      disabled:opacity-60
+      shadow-[0_0_25px_rgba(34,197,94,0.25)]
+    "
+  >
+    {sending ? "..." : "Send"}
+    </button>
+
+</div>
+
+</div>
+
+</div>
+
             </>
           )}
         </div>
