@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { verifyToken } from "@/lib/auth";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { Resend } from "resend";
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: Request) {
   try {
@@ -76,7 +78,53 @@ export async function POST(req: Request) {
     link: "/student-verification",
   },
 });
+await resend.emails.send({
+  from: "Axyon Verification <support@axyon.in>",
+  to: "asa.axyon@gmail.com",
 
+  subject: "New Student Verification Request",
+
+  html: `
+    <div style="font-family: Arial, sans-serif; padding: 24px;">
+
+      <h2>New Student Verification Submitted</h2>
+
+      <p>
+        A new student verification request has been submitted on Axyon.
+      </p>
+
+      <hr />
+
+      <p><strong>Name:</strong> ${updatedUser.name}</p>
+
+      <p><strong>Email:</strong> ${updatedUser.email}</p>
+
+      <p><strong>College:</strong> ${updatedUser.college || "Not added"}</p>
+
+      <p><strong>User ID:</strong> ${updatedUser.id}</p>
+
+      <p style="margin-top: 24px;">
+        Review request in admin panel:
+      </p>
+
+      <a
+        href="https://www.axyon.in/admin/users"
+        style="
+          display:inline-block;
+          padding:12px 20px;
+          background:#16a34a;
+          color:white;
+          border-radius:12px;
+          text-decoration:none;
+          font-weight:bold;
+        "
+      >
+        Open Admin Verification Panel
+      </a>
+
+    </div>
+  `,
+});
     console.log(`
 NEW VERIFICATION REQUEST
 

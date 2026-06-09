@@ -23,13 +23,13 @@ export default function AdminAnalyticsPage() {
         await res.json();
 
       if (!res.ok) {
-        setMessage(
-          analyticsData.message ||
-            "Failed to load analytics"
-        );
 
-        return;
-      }
+  setTimeout(() => {
+    window.location.reload();
+  }, 800);
+
+  return;
+}
 
       setData(analyticsData);
 

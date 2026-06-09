@@ -75,15 +75,14 @@ export default function AdminSupportPage() {
       const data =
         await res.json();
 
-      if (!res.ok) {
+     if (!res.ok) {
 
-        alert(
-          data.message ||
-            "Failed to resolve ticket"
-        );
+  setTimeout(() => {
+    window.location.reload();
+  }, 800);
 
-        return;
-      }
+  return;
+}
 
       setTickets((prev) =>
         prev.map((ticket) =>

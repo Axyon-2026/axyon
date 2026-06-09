@@ -492,7 +492,47 @@ async function unsuspendUser(userId: string) {
                           </span>
                         </p>
                       </div>
+                      {user.studentVerificationStatus === "PENDING" && (
+  <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
 
+    <div>
+      <p className="text-sm font-black text-slate-400 mb-3">
+        College ID
+      </p>
+
+      {user.collegeIdImageUrl ? (
+        <img
+          src={user.collegeIdImageUrl}
+          alt="College ID"
+          className="w-full h-52 object-cover rounded-2xl border border-slate-700"
+        />
+      ) : (
+        <div className="h-52 rounded-2xl border border-slate-700 bg-slate-800 flex items-center justify-center text-slate-500">
+          No ID uploaded
+        </div>
+      )}
+    </div>
+
+    <div>
+      <p className="text-sm font-black text-slate-400 mb-3">
+        Selfie Verification
+      </p>
+
+      {user.selfieImageUrl ? (
+        <img
+          src={user.selfieImageUrl}
+          alt="Selfie"
+          className="w-full h-52 object-cover rounded-2xl border border-slate-700"
+        />
+      ) : (
+        <div className="h-52 rounded-2xl border border-slate-700 bg-slate-800 flex items-center justify-center text-slate-500">
+          No selfie uploaded
+        </div>
+      )}
+    </div>
+
+  </div>
+)}
                       {user.studentVerificationStatus ===
                         "PENDING" && (
                         <div className="mt-6 flex flex-wrap gap-3">

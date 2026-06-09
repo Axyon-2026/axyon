@@ -35,6 +35,7 @@ export async function GET() {
 
         collegeIdNumber: true,
         collegeIdImageUrl: true,
+        selfieImageUrl: true,
         studentVerified: true,
         studentVerificationStatus: true,
       },

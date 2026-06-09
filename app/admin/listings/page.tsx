@@ -89,15 +89,14 @@ export default function AdminListingsPage() {
       const data =
         await res.json();
 
-      if (!res.ok) {
+     if (!res.ok) {
 
-        alert(
-          data.message ||
-            "Failed to remove listing"
-        );
+  setTimeout(() => {
+    window.location.reload();
+  }, 800);
 
-        return;
-      }
+  return;
+}
 
       setProducts((prev) =>
         prev.map((product) =>
