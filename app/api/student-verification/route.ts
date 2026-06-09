@@ -3,6 +3,7 @@ import { verifyToken } from "@/lib/auth";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: Request) {
@@ -41,11 +42,31 @@ export async function POST(req: Request) {
       );
     }
 
-    const collegeIdImageUrl =
-      collegeId.name;
+    const collegeIdBuffer = Buffer.from(
+  await collegeId.arrayBuffer()
+);
 
-    const selfieImageUrl =
-      selfie.name;
+const selfieBuffer = Buffer.from(
+  await selfie.arrayBuffer()
+);
+
+const collegeIdUpload =
+  await uploadToCloudinary(
+    collegeIdBuffer,
+    "axyon/student-verification"
+  );
+
+const selfieUpload =
+  await uploadToCloudinary(
+    selfieBuffer,
+    "axyon/student-verification"
+  );
+
+const collegeIdImageUrl =
+  collegeIdUpload.secure_url;
+
+const selfieImageUrl =
+  selfieUpload.secure_url;
 
     const updatedUser =
       await prisma.user.update({
