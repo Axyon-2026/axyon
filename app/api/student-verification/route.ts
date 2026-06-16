@@ -41,6 +41,27 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    // College ID max 15MB
+if (collegeId.size > 15 * 1024 * 1024) {
+  return NextResponse.json(
+    {
+      message:
+        "College ID image must be smaller than 15MB",
+    },
+    { status: 400 }
+  );
+}
+
+// Selfie max 10MB
+if (selfie.size > 10 * 1024 * 1024) {
+  return NextResponse.json(
+    {
+      message:
+        "Selfie image must be smaller than 10MB",
+    },
+    { status: 400 }
+  );
+}
 
     const collegeIdBuffer = Buffer.from(
   await collegeId.arrayBuffer()
@@ -164,10 +185,10 @@ Time: ${new Date().toISOString()}
 
   } catch (error) {
 
-    console.log(
-      "STUDENT VERIFICATION ERROR:",
-      error
-    );
+    console.error(
+  "STUDENT VERIFICATION ERROR:",
+  error
+);
 
     return NextResponse.json(
       {

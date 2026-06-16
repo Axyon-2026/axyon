@@ -46,21 +46,37 @@ export default function StudentVerificationPage() {
     e.preventDefault();
 
     if (
-      !collegeId ||
-      !selfie
-    ) {
-      setMessage(
-        "Please upload required documents"
-      );
+  !collegeId ||
+  !selfie
+) {
+  setMessage(
+    "Please upload required documents"
+  );
 
-      return;
-    }
+  return;
+}
 
-    setLoading(true);
+// College ID max 15MB
+if (collegeId.size > 15 * 1024 * 1024) {
+  setMessage(
+    "College ID image must be smaller than 15MB"
+  );
+  return;
+}
 
-    setMessage(
-      "Submitting verification..."
-    );
+// Selfie max 10MB
+if (selfie.size > 10 * 1024 * 1024) {
+  setMessage(
+    "Selfie image must be smaller than 10MB"
+  );
+  return;
+}
+
+setLoading(true);
+
+setMessage(
+  "Submitting verification..."
+);
 
     try {
 
@@ -107,13 +123,15 @@ export default function StudentVerificationPage() {
 
       fetchUser();
 
-    } catch {
+    } catch (error) {
 
-      setMessage(
-        "Something went wrong"
-      );
+  console.error(error);
 
-    }
+  setMessage(
+    "Upload failed. Check terminal."
+  );
+
+}
 
     setLoading(false);
   }
@@ -229,7 +247,7 @@ export default function StudentVerificationPage() {
                       </p>
 
                       <p className="mt-2 text-sm text-slate-500">
-                        JPG, PNG or WEBP
+                        JPG, PNG or WEBP (Max 15MB)
                       </p>
 
                       <input
@@ -282,7 +300,7 @@ export default function StudentVerificationPage() {
                       </p>
 
                       <p className="mt-2 text-sm text-slate-500">
-                        Match your college ID photo
+                        Match your college ID photo (Max 10MB)
                       </p>
 
                       <input
