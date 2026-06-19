@@ -62,7 +62,8 @@ if (selfie.size > 10 * 1024 * 1024) {
     { status: 400 }
   );
 }
-
+console.log("College ID Size:", collegeId.size);
+console.log("Selfie Size:", selfie.size);
     const collegeIdBuffer = Buffer.from(
   await collegeId.arrayBuffer()
 );
