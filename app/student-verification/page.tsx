@@ -2,6 +2,7 @@
 
 import Navbar from "@/components/Navbar";
 import { useEffect, useState } from "react";
+import imageCompression from "browser-image-compression";
 
 export default function StudentVerificationPage() {
   const [user, setUser] =
@@ -80,18 +81,37 @@ setMessage(
 
     try {
 
-      const formData =
-        new FormData();
+      const formData = new FormData();
 
-      formData.append(
-        "collegeId",
-        collegeId
-      );
+const compressedCollegeId =
+  await imageCompression(
+    collegeId,
+    {
+      maxSizeMB: 1.5,
+      maxWidthOrHeight: 1800,
+      useWebWorker: true,
+    }
+  );
 
-      formData.append(
-        "selfie",
-        selfie
-      );
+const compressedSelfie =
+  await imageCompression(
+    selfie,
+    {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1600,
+      useWebWorker: true,
+    }
+  );
+
+formData.append(
+  "collegeId",
+  compressedCollegeId
+);
+
+formData.append(
+  "selfie",
+  compressedSelfie
+);
 
       const res =
         await fetch(
@@ -123,12 +143,12 @@ setMessage(
 
       fetchUser();
 
-    } catch (error) {
+    } catch (error: any) {
 
   console.error(error);
 
   setMessage(
-    "Upload failed. Check terminal."
+    error?.message || "Upload failed"
   );
 
 }
