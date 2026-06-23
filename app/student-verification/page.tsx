@@ -76,7 +76,7 @@ if (selfie.size > 10 * 1024 * 1024) {
 setLoading(true);
 
 setMessage(
-  "Submitting verification..."
+  "📸 Compressing images..."
 );
 
     try {
@@ -112,7 +112,9 @@ formData.append(
   "selfie",
   compressedSelfie
 );
-
+setMessage(
+  "☁ Uploading documents..."
+);
       const res =
         await fetch(
           "/api/student-verification",
@@ -137,9 +139,9 @@ formData.append(
         return;
       }
 
-      setMessage(
-        "Verification submitted successfully!"
-      );
+     setMessage(
+  "✅ Verification submitted successfully!"
+);
 
       fetchUser();
 
@@ -287,10 +289,18 @@ formData.append(
                       />
 
                       {collegeId && (
-                        <p className="mt-4 text-sm font-semibold text-green-700">
-                          {collegeId.name}
-                        </p>
-                      )}
+  <>
+    <img
+      src={URL.createObjectURL(collegeId)}
+      alt="College ID Preview"
+      className="mt-4 w-full max-h-64 object-contain rounded-2xl border"
+    />
+
+    <p className="mt-3 text-sm font-semibold text-green-700">
+      {collegeId.name}
+    </p>
+  </>
+)}
                     </div>
                   </div>
 
@@ -341,11 +351,20 @@ formData.append(
                         className="mt-5 block w-full text-sm text-slate-500"
                       />
 
-                      {selfie && (
-                        <p className="mt-4 text-sm font-semibold text-green-700">
-                          {selfie.name}
-                        </p>
-                      )}
+                      
+                        {selfie && (
+  <>
+    <img
+      src={URL.createObjectURL(selfie)}
+      alt="Selfie Preview"
+      className="mt-4 w-full max-h-64 object-contain rounded-2xl border"
+    />
+
+    <p className="mt-3 text-sm font-semibold text-green-700">
+      {selfie.name}
+    </p>
+  </>
+)}
                     </div>
                   </div>
 
