@@ -7,6 +7,7 @@ const categories = [
   "Books",
   "Notes",
   "Electronics",
+  "Medical Equipment",
   "Furniture",
   "Hostel Items",
   "Vehicles",
