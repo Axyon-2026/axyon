@@ -9,7 +9,7 @@ const categories = [
   "Electronics",
   "Medical Equipment",
   "Furniture",
-  "Hostel Items",
+  "Stationary",
   "Vehicles",
   "Others",
 ];

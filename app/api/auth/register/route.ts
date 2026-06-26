@@ -30,12 +30,28 @@ export async function POST(req: Request) {
       );
     }
 
-    if (phone.length < 10) {
-      return NextResponse.json(
-        { message: "Phone number must be at least 10 digits" },
-        { status: 400 }
-      );
+    if (!/^[6-9]\d{9}$/.test(phone)) {
+  return NextResponse.json(
+    {
+      message:
+        "Please enter a valid Indian mobile number",
+    },
+    {
+      status: 400,
     }
+  );
+}
+if (/^(\d)\1+$/.test(phone)) {
+  return NextResponse.json(
+    {
+      message:
+        "Invalid phone number",
+    },
+    {
+      status: 400,
+    }
+  );
+}
 
     if (password.length < 6) {
       return NextResponse.json(
