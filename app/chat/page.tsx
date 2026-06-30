@@ -2,6 +2,9 @@
 
 import Navbar from "@/components/Navbar";
 import { useEffect, useRef, useState } from "react";
+import MessageList from "@/components/chat/MessageList";
+import ProductCard from "@/components/chat/ProductCard";
+import ChatHeader from "@/components/chat/ChatHeader";
 
 export default function ChatPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -77,19 +80,20 @@ export default function ChatPage() {
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetchChats(selectedConversation?.id);
-    }, 2000);
+  const interval = setInterval(() => {
+    fetchChats(selectedConversation?.id);
+  }, 5000);
 
-    return () => clearInterval(interval);
-  }, [selectedConversation]);
+  return () => clearInterval(interval);
+}, [selectedConversation]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-    });
-  }, [selectedConversation]);
+  if (!selectedConversation) return;
 
+  messagesEndRef.current?.scrollIntoView({
+    behavior: "auto",
+  });
+}, [selectedConversation?.messages?.length]);
   async function sendMessage() {
     if (!selectedConversation || !message.trim() || sending) return;
 
@@ -138,7 +142,7 @@ export default function ChatPage() {
     <main className="min-h-screen bg-[#071019] text-white">
       <Navbar />
 
-      <section className="h-[calc(100vh-140px)] md:h-[calc(100vh-80px)] flex overflow-hidden pb-24 md:pb-0">
+      <section className="h-[calc(100dvh-80px)] flex overflow-hidden">
         <div
           className={`${
             selectedConversation ? "hidden md:flex" : "flex"
@@ -263,88 +267,31 @@ export default function ChatPage() {
               </div>
             </div>
           ) : (
-            <>
-              <div className="border-b border-white/10 bg-[#071019]/95 backdrop-blur-xl px-4 py-4 flex items-center gap-3">
-                <button
-                  onClick={() => setSelectedConversation(null)}
-                  className="md:hidden text-2xl mr-1"
+            <><ChatHeader
+              conversation={selectedConversation}
+              currentUser={currentUser}
+              onBack={() => setSelectedConversation(null)}
+              />
+
+              <div
+                  className="flex-1 overflow-y-auto px-3 md:px-6 py-5 space-y-6"
+                  style={{
+                    overscrollBehavior: "contain",
+                    WebkitOverflowScrolling: "touch",
+                  }}
                 >
-                  ←
-                </button>
-
-                <div className="relative shrink-0">
-                  <div className="w-11 h-11 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-400 font-black">
-                    {getOtherUser(selectedConversation)?.name?.charAt(0) ||
-                      "U"}
-                  </div>
-
-                  <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-400 border-2 border-[#071019]" />
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <h2 className="font-black truncate text-white text-lg">
-                    {getOtherUser(selectedConversation)?.name || "User"}
-                  </h2>
-
-                  <p className="text-sm text-slate-400 truncate">
-                    {selectedConversation.product?.title || "Product Chat"}
-                  </p>
-                </div>
-
-                <button className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center hover:bg-white/[0.08] transition">
-                  🚩
-                </button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto px-3 md:px-6 py-5 space-y-4 pb-28 md:pb-8">
-                {selectedConversation.messages?.map((msg: any) => {
-                  const isMine = msg.senderId === currentUser?.id;
-
-                  return (
-                    <div
-                      key={msg.id}
-                      className={`flex ${
-                        isMine ? "justify-end" : "justify-start"
-                      }`}
-                    >
-                      <div
-                        className={`max-w-[88%] sm:max-w-[75%] lg:max-w-[60%] px-4 py-3 rounded-[1.5rem] shadow-sm ${
-                         isMine
-                         ? "bg-green-500 text-black rounded-[1.8rem] rounded-br-md shadow-lg"
-                         : "bg-[#16202b] border border-white/5 text-white rounded-[1.8rem] rounded-bl-md"
-                        }`}
-                      >
-                        <p className="leading-7 break-words text-[15px]">
-                          {msg.text}
-                        </p>
-
-                        <div className="flex items-center justify-end gap-2 mt-2">
-                          <p
-                            className={`text-[10px] ${
-                              isMine ? "text-black/60" : "text-slate-500"
-                            }`}
-                          >
-                            {new Date(msg.createdAt).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </p>
-
-                          {isMine && (
-                            <span className="text-[10px] text-black/60">
-                              ✓✓
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                  <ProductCard
+                   product={selectedConversation.product}
+                 />
+             <MessageList
+                messages={selectedConversation.messages || []}
+                currentUserId={currentUser?.id}
+              />
 
                 <div ref={messagesEndRef} />
               </div>
 
-              <div className="border-t border-white/10 bg-[#071019]/95 backdrop-blur-xl px-3 py-3 md:px-5 md:py-4">
+             <div className="sticky bottom-0 border-t border-white/10 bg-[#071019]/95 backdrop-blur-xl px-3 py-3 md:px-5 md:py-4">
                 <div className="flex flex-col gap-3">
                   <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                    {quickReplies.map((reply) => (
@@ -374,51 +321,51 @@ export default function ChatPage() {
 
                   <div className="flex items-center gap-3">
 
-  <input
-    type="text"
-    placeholder="Type your message..."
-    value={message}
-    onChange={(e) => setMessage(e.target.value)}
-    onKeyDown={(e) => {
-      if (e.key === "Enter") {
-        sendMessage();
-      }
-    }}
-    className="
-      flex-1
-      h-14
-      px-5
-      rounded-full
-      bg-[#0f1a24]
-      border
-      border-white/10
-      outline-none
-      text-white
-      placeholder:text-slate-500
-      focus:border-green-500
-    "
-  />
-
-  <button
-    onClick={sendMessage}
-    disabled={sending}
-    className="
-      h-14
-      min-w-[90px]
-      px-6
-      rounded-full
-      bg-green-500
-      hover:bg-green-400
-      active:scale-95
-      text-black
-      font-black
-      transition-all
-      disabled:opacity-60
-      shadow-[0_0_25px_rgba(34,197,94,0.25)]
-    "
-  >
-    {sending ? "..." : "Send"}
-    </button>
+                  <input
+                    type="text"
+                    placeholder="Type your message..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        sendMessage();
+                      }
+                    }}
+                    className="
+                      flex-1
+                      h-14
+                      px-5
+                      rounded-full
+                      bg-[#0f1a24]
+                      border
+                      border-white/10
+                      outline-none
+                      text-white
+                      placeholder:text-slate-500
+                      focus:border-green-500
+                    "
+                  />
+                
+                  <button
+                    onClick={sendMessage}
+                    disabled={sending}
+                    className="
+                      h-14
+                      min-w-[90px]
+                      px-6
+                      rounded-full
+                      bg-green-500
+                      hover:bg-green-400
+                      active:scale-95
+                      text-black
+                      font-black
+                      transition-all
+                      disabled:opacity-60
+                      shadow-[0_0_25px_rgba(34,197,94,0.25)]
+                    "
+                  >
+                    {sending ? "..." : "Send"}
+                    </button>
 
 </div>
 

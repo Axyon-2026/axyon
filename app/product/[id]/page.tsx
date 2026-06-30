@@ -13,6 +13,13 @@ export default function ProductDetailPage() {
   const [chatMessage, setChatMessage] = useState("");
   const [sending, setSending] = useState(false);
 
+  const [showDealModal, setShowDealModal] = useState(false);
+
+const [finalPrice, setFinalPrice] = useState("");
+
+const [paymentMethod, setPaymentMethod] =
+  useState("Pay via Meet");
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -277,17 +284,24 @@ export default function ProductDetailPage() {
                 )}
 
                 {isSeller && (
-                  <div className="mt-8">
+  <div className="mt-8 space-y-4">
 
-                    <a
-                      href={`/edit-product/${product.id}`}
-                      className="block text-center bg-slate-950 hover:bg-slate-800 text-white py-4 rounded-full font-black"
-                    >
-                      Edit Listing
-                    </a>
+    <a
+      href={`/edit-product/${product.id}`}
+      className="block text-center bg-slate-950 hover:bg-slate-800 text-white py-4 rounded-full font-black"
+    >
+      Edit Listing
+    </a>
 
-                  </div>
-                )}
+    <button
+  onClick={() => setShowDealModal(true)}
+  className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-full font-black"
+>
+  Complete Deal
+</button>
+
+  </div>
+)}
 
                 {isAdmin && (
                   <div className="mt-8 bg-red-50 border border-red-200 rounded-[2rem] p-5">
@@ -355,6 +369,81 @@ export default function ProductDetailPage() {
             </div>
           </div>
         </div>
+
+
+      {showDealModal && (
+  <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+
+    <div className="bg-white rounded-[2rem] p-8 w-[95%] max-w-md">
+
+      <h2 className="text-3xl font-black">
+        Complete Deal
+      </h2>
+
+      <p className="mt-2 text-slate-500">
+        Original Price: ₹{product.price}
+      </p>
+
+      <div className="mt-6">
+
+        <label className="font-black">
+          Final Selling Price
+        </label>
+
+        <input
+          type="number"
+          value={finalPrice}
+          onChange={(e) =>
+            setFinalPrice(e.target.value)
+          }
+          className="mt-2 w-full px-5 py-4 rounded-2xl border border-slate-300"
+        />
+
+      </div>
+
+      <div className="mt-6">
+
+        <label className="font-black">
+          Payment Method
+        </label>
+
+        <select
+          value={paymentMethod}
+          onChange={(e) =>
+            setPaymentMethod(e.target.value)
+          }
+          className="mt-2 w-full px-5 py-4 rounded-2xl border border-slate-300"
+        >
+          <option>Pay via Meet</option>
+          <option>Cash</option>
+          <option>UPI</option>
+        </select>
+
+      </div>
+
+      <div className="mt-8 flex gap-3">
+
+        <button
+          onClick={() =>
+            setShowDealModal(false)
+          }
+          className="flex-1 border py-4 rounded-full font-black"
+        >
+          Cancel
+        </button>
+
+        <button
+          className="flex-1 bg-green-600 text-white py-4 rounded-full font-black"
+        >
+          Continue
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+)}  
       </section>
     </main>
   );

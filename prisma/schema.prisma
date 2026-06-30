@@ -3,54 +3,35 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  
-}
-
-enum Role {
-  STUDENT
-  ADMIN
-}
-
-enum ProductStatus {
-  AVAILABLE
-  SOLD
-  REMOVED
+  provider = "postgresql"
 }
 
 model User {
-  id              String   @id @default(cuid())
-  name            String
-  email           String   @unique
-  password        String
-
-  role            Role     @default(STUDENT)
-
-  college         String?
-  phone           String?
-
-  isVerified      Boolean  @default(false)
-  emailVerified   Boolean  @default(false)
-  verifyToken     String?
-
-  resetToken      String?
-  resetExpiresAt  DateTime?
-
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  products        Product[]
-
-  profileImageUrl String?
-
-  isSuspended     Boolean @default(false)
-  strikeCount     Int @default(0)
-
-  collegeIdNumber String?
-  collegeIdImageUrl String?
-  selfieImageUrl String?
-  studentVerified Boolean @default(false)
-  studentVerificationStatus String @default("NOT_SUBMITTED")
+  id                        String    @id @default(cuid())
+  name                      String
+  email                     String    @unique
+  password                  String
+  role                      Role      @default(STUDENT)
+  college                   String?
+  phone                     String?
+  isVerified                Boolean   @default(false)
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  emailVerified             Boolean   @default(false)
+  verifyToken               String?
+  resetExpiresAt            DateTime?
+  resetToken                String?
+  profileImageUrl           String?
+  isSuspended               Boolean   @default(false)
+  strikeCount               Int       @default(0)
+  collegeIdImageUrl         String?
+  collegeIdNumber           String?
+  studentVerificationStatus String    @default("NOT_SUBMITTED")
+  studentVerified           Boolean   @default(false)
+  selfieImageUrl            String?
+  buyerDeals                Deal[]    @relation("BuyerDeals")
+  sellerDeals               Deal[]    @relation("SellerDeals")
+  products                  Product[]
 }
 
 model College {
@@ -74,74 +55,61 @@ model CollegeRequest {
 
 model Product {
   id          String        @id @default(cuid())
-
   title       String
   description String
   price       Int
-
   category    String
   condition   String
-
-  imageUrls   String[]
-
   status      ProductStatus @default(AVAILABLE)
-
   sellerId    String
-  seller      User @relation(fields: [sellerId], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  imageUrls   String[]
+  buyerId     String?
+  finalPrice  Int?
+  invoiceId   String?
+  soldAt      DateTime?
+  deals       Deal[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  seller User @relation(fields: [sellerId], references: [id])
 }
 
 model Order {
-  id                String   @id @default(cuid())
-
+  id                String    @id @default(cuid())
   productId         String
   buyerId           String
   sellerId          String
-
   amount            Int
-
   razorpayOrderId   String?
   razorpayPaymentId String?
-
-  paymentStatus     String   @default("PENDING")
-
+  paymentStatus     String    @default("PENDING")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
   cancelReason      String?
   cancelledAt       DateTime?
   cancelledBy       String?
-
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
 }
 
 model Conversation {
-  id         String    @id @default(cuid())
+  id        String   @id @default(cuid())
+  buyerId   String
+  sellerId  String
+  productId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  buyerId    String
-  sellerId   String
-  productId  String
-
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-
-  messages   Message[]
+  messages Message[]
 }
 
 model Message {
-  id              String        @id @default(cuid())
-
-  conversationId  String
-  senderId        String
-
-  text            String
-
-  readByBuyer     Boolean       @default(false)
-  readBySeller    Boolean       @default(false)
-
-  createdAt       DateTime      @default(now())
-
-  conversation    Conversation  @relation(fields: [conversationId], references: [id])
+  id             String       @id @default(cuid())
+  conversationId String
+  senderId       String
+  text           String
+  createdAt      DateTime     @default(now())
+  readByBuyer    Boolean      @default(false)
+  readBySeller   Boolean      @default(false)
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
 }
 
 model SupportTicket {
@@ -156,20 +124,16 @@ model SupportTicket {
   updatedAt DateTime @updatedAt
 }
 
-
 model Report {
-  id          String   @id @default(cuid())
-
-  reporterId  String?
-  targetType  String
-  targetId    String
-  reason      String
-  details     String?
-
-  status      String   @default("OPEN")
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  reporterId String?
+  targetType String
+  targetId   String
+  reason     String
+  details    String?
+  status     String   @default("OPEN")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model AdminLog {
@@ -182,36 +146,76 @@ model AdminLog {
   details    String?
   createdAt  DateTime @default(now())
 }
+
 model Notification {
   id        String   @id @default(cuid())
-
   userId    String
-
   title     String
   message   String
-
   type      String
-
   isRead    Boolean  @default(false)
-
   link      String?
-
   createdAt DateTime @default(now())
 }
+
 model AdBanner {
   id          String   @id @default(cuid())
-
   title       String
   description String
   buttonText  String?
   buttonLink  String?
-
   badge       String?
   emoji       String?
-  imageUrl    String?
-
   isActive    Boolean  @default(true)
-
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  imageUrl    String?
+}
+
+model Deal {
+  id String @id @default(cuid())
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  buyerId String
+  buyer   User   @relation("BuyerDeals", fields: [buyerId], references: [id])
+
+  sellerId String
+  seller   User   @relation("SellerDeals", fields: [sellerId], references: [id])
+
+  originalPrice Int
+  finalPrice    Int
+
+  invoiceId String @unique
+
+  paymentMethod String
+
+  status DealStatus @default(PENDING)
+
+  sellerConfirmed Boolean @default(true)
+  buyerConfirmed  Boolean @default(false)
+
+  completedAt DateTime?
+  confirmedAt DateTime?
+
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum ProductStatus {
+  AVAILABLE
+  SOLD
+  REMOVED
+}
+
+enum DealStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+  EXPIRED
 }
