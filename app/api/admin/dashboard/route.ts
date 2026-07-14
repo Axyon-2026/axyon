@@ -16,13 +16,16 @@ export async function GET() {
     const [
       users,
       products,
-      orders,
+      deals,
       supportTickets,
       reports,
       ads,
+      conversations,
     ] = await Promise.all([
       prisma.user.findMany({
-        orderBy: { createdAt: "desc" },
+        orderBy: {
+          createdAt: "desc",
+        },
         select: {
           id: true,
           name: true,
@@ -41,10 +44,13 @@ export async function GET() {
       }),
 
       prisma.product.findMany({
-        orderBy: { createdAt: "desc" },
+        orderBy: {
+          createdAt: "desc",
+        },
         include: {
           seller: {
             select: {
+              id: true,
               name: true,
               email: true,
             },
@@ -52,75 +58,115 @@ export async function GET() {
         },
       }),
 
-      prisma.order.findMany({
-        orderBy: { createdAt: "desc" },
+      prisma.deal.findMany({
+        where: {
+          status: "COMPLETED",
+        },
+        include: {
+          seller: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          buyer: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          product: {
+            select: {
+              id: true,
+              title: true,
+            },
+          },
+        },
+        orderBy: {
+          completedAt: "desc",
+        },
       }),
 
       prisma.supportTicket.findMany({
-        orderBy: { createdAt: "desc" },
+        orderBy: {
+          createdAt: "desc",
+        },
       }),
 
       prisma.report.findMany({
-        orderBy: { createdAt: "desc" },
+        orderBy: {
+          createdAt: "desc",
+        },
       }),
 
       prisma.adBanner.findMany({
-        orderBy: { createdAt: "desc" },
+        orderBy: {
+          createdAt: "desc",
+        },
       }),
+
+      prisma.conversation.findMany(),
     ]);
 
     const totalUsers = users.length;
 
-    const totalAdmins = users.filter(
-      (user) => user.role === "ADMIN"
-    ).length;
+    const totalAdmins =
+      users.filter(
+        (user) => user.role === "ADMIN"
+      ).length;
 
-    const verifiedUsers = users.filter(
-      (user) =>
-        user.studentVerified ||
-        user.studentVerificationStatus === "APPROVED"
-    ).length;
+    const verifiedUsers =
+      users.filter(
+        (user) =>
+          user.studentVerified ||
+          user.studentVerificationStatus === "APPROVED"
+      ).length;
 
-    const pendingVerifications = users.filter(
-      (user) =>
-        user.studentVerificationStatus === "PENDING"
-    ).length;
+    const pendingVerifications =
+      users.filter(
+        (user) =>
+          user.studentVerificationStatus === "PENDING"
+      ).length;
 
-    const suspendedUsers = users.filter(
-      (user) => user.isSuspended
-    ).length;
+    const suspendedUsers =
+      users.filter(
+        (user) => user.isSuspended
+      ).length;
 
-    const activeProducts = products.filter(
-      (product) => product.status === "AVAILABLE"
-    ).length;
+    const activeProducts =
+      products.filter(
+        (product) =>
+          product.status === "AVAILABLE"
+      ).length;
 
-    const soldProducts = products.filter(
-      (product) => product.status === "SOLD"
-    ).length;
+    const soldProducts =
+      products.filter(
+        (product) =>
+          product.status === "SOLD"
+      ).length;
 
-    const removedProducts = products.filter(
-      (product) => product.status === "REMOVED"
-    ).length;
+    const removedProducts =
+      products.filter(
+        (product) =>
+          product.status === "REMOVED"
+      ).length;
 
-    const successfulOrders = orders.filter(
-      (order) => order.paymentStatus === "SUCCESS"
-    ).length;
+    const openTickets =
+      supportTickets.filter(
+        (ticket) =>
+          ticket.status === "OPEN"
+      ).length;
 
-    const pendingOrders = orders.filter(
-      (order) => order.paymentStatus === "PENDING"
-    ).length;
+    const openReports =
+      reports.filter(
+        (report) =>
+          report.status === "OPEN"
+      ).length;
 
-    const openTickets = supportTickets.filter(
-      (ticket) => ticket.status === "OPEN"
-    ).length;
-
-    const openReports = reports.filter(
-      (report) => report.status === "OPEN"
-    ).length;
-
-    const activeAds = ads.filter(
-      (ad) => ad.isActive
-    ).length;
+    const activeAds =
+      ads.filter(
+        (ad) => ad.isActive
+      ).length;
 
     return NextResponse.json({
       stats: {
@@ -131,38 +177,61 @@ export async function GET() {
         pendingVerifications,
         suspendedUsers,
 
-        totalProducts: products.length,
+        totalProducts:
+          products.length,
+
         activeProducts,
         soldProducts,
         removedProducts,
 
-        totalOrders: orders.length,
-        successfulOrders,
-        pendingOrders,
+        completedDeals:
+          deals.length,
 
-        totalSupportTickets: supportTickets.length,
+        totalSupportTickets:
+          supportTickets.length,
+
         openTickets,
 
-        totalReports: reports.length,
+        totalReports:
+          reports.length,
+
         openReports,
 
-        totalAds: ads.length,
+        totalAds:
+          ads.length,
+
         activeAds,
+
+        totalConversations:
+          conversations.length,
       },
 
       users,
+
       products,
-      orders,
+
+      completedDeals: deals,
+
       supportTickets,
+
       reports,
+
       ads,
     });
   } catch (error) {
-    console.log("ADMIN DASHBOARD ERROR:", error);
+    console.log(
+      "ADMIN DASHBOARD ERROR:",
+      error
+    );
 
     return NextResponse.json(
-      { message: "Failed to load admin dashboard" },
-      { status: 500 }
+      {
+        message:
+          "Failed to load admin dashboard",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }

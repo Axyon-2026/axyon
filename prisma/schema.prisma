@@ -32,6 +32,7 @@ model User {
   buyerDeals                Deal[]    @relation("BuyerDeals")
   sellerDeals               Deal[]    @relation("SellerDeals")
   products                  Product[]
+  rooms                     Room[]
 }
 
 model College {
@@ -71,7 +72,46 @@ model Product {
   soldAt      DateTime?
   deals       Deal[]
 
+  conversations Conversation[]
+
   seller User @relation(fields: [sellerId], references: [id])
+}
+
+model Room {
+  id String @id @default(cuid())
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String
+
+  roomType RoomType
+
+  rent Int
+
+  deposit Int?
+
+  address String
+
+  landmark String?
+
+  college String
+
+  imageUrls String[]
+
+  amenities String[]
+
+  availableFrom DateTime?
+
+  status RoomStatus @default(AVAILABLE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([college])
+  @@index([status])
 }
 
 model Order {
@@ -91,10 +131,16 @@ model Order {
 }
 
 model Conversation {
-  id        String   @id @default(cuid())
-  buyerId   String
-  sellerId  String
+  id String @id @default(cuid())
+
+  buyerId  String
+  sellerId String
+
   productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  isArchived Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -196,8 +242,10 @@ model Deal {
   sellerConfirmed Boolean @default(true)
   buyerConfirmed  Boolean @default(false)
 
-  completedAt DateTime?
+  completedBy String?
+
   confirmedAt DateTime?
+  completedAt DateTime?
 
   createdAt DateTime @default(now())
 }
@@ -218,4 +266,18 @@ enum DealStatus {
   COMPLETED
   CANCELLED
   EXPIRED
+}
+
+enum RoomType {
+  SINGLE
+  SHARED
+  PG
+  HOSTEL
+  APARTMENT
+}
+
+enum RoomStatus {
+  AVAILABLE
+  OCCUPIED
+  REMOVED
 }

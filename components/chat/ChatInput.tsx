@@ -1,33 +1,62 @@
+"use client";
+
 type ChatInputProps = {
-  value: string;
-  onChange: (value: string) => void;
-  onSend: () => void;
+  message: string;
+  setMessage: React.Dispatch<React.SetStateAction<string>>;
   sending: boolean;
+  sendMessage: () => void;
 };
 
 export default function ChatInput({
-  value,
-  onChange,
-  onSend,
+  message,
+  setMessage,
   sending,
+  sendMessage,
 }: ChatInputProps) {
   return (
-    <div className="sticky bottom-0 z-20 border-t border-white/10 bg-[#071019]/95 backdrop-blur-xl px-3 py-3 md:px-5 md:py-4">
+    <div className="border-t border-white/10 bg-[#071019] p-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
       <div className="flex items-center gap-3">
+
         <input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") sendMessage();
+          }}
           placeholder="Type a message..."
-          className="flex-1 rounded-full bg-white/5 border border-white/10 px-5 py-3 outline-none text-white placeholder:text-slate-500 focus:border-green-500"
+          className="
+            flex-1
+            h-12
+            rounded-full
+            border
+            border-white/10
+            bg-[#101826]
+            px-5
+            text-white
+            outline-none
+            placeholder:text-slate-500
+            focus:border-green-500
+          "
         />
 
         <button
-          onClick={onSend}
-          disabled={sending || !value.trim()}
-          className="bg-green-500 hover:bg-green-600 disabled:opacity-50 text-black rounded-full px-6 py-3 font-black transition"
+          disabled={sending}
+          onClick={sendMessage}
+          className="
+            h-12
+            rounded-full
+            bg-green-500
+            px-6
+            font-bold
+            text-black
+            transition
+            hover:bg-green-400
+            disabled:opacity-60
+          "
         >
-          Send
+          {sending ? "..." : "Send"}
         </button>
+
       </div>
     </div>
   );

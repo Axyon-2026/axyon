@@ -10,7 +10,12 @@ const adminLinks = [
     icon: "👥",
     color: "from-green-500 to-emerald-500",
   },
-
+  {
+    title: "Verification",
+    href: "/admin/student-verifications",
+    icon: "🎓",
+    color: "from-emerald-500 to-green-500",
+  },
   {
     title: "Listings",
     href: "/admin/listings",
@@ -48,56 +53,39 @@ const adminLinks = [
 ];
 
 export default function AdminDashboardPage() {
-  const [data, setData] =
-    useState<any>(null);
+  const [data, setData] = useState<any>(null);
 
-  const [message, setMessage] =
-    useState(
-      "Loading admin dashboard..."
-    );
+  const [message, setMessage] = useState("Loading admin dashboard...");
 
-  const [accessDenied, setAccessDenied] =
-    useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   async function fetchDashboard() {
     try {
-      const res =
-        await fetch(
-          "/api/admin/dashboard"
-        );
+      const res = await fetch("/api/admin/dashboard");
 
-      const dashboardData =
-        await res.json();
+      const dashboardData = await res.json();
 
       if (res.status === 403) {
         setAccessDenied(true);
 
-        setMessage(
-          "Access denied"
-        );
+        setMessage("Access denied");
 
         return;
       }
 
       if (!res.ok) {
-      
         setTimeout(() => {
-          window.location.reload();
+          location.reload();
         }, 800);
-      
+
         return;
       }
 
       setData(dashboardData);
 
       setMessage("");
-
     } catch {
-
-      setMessage(
-        "Something went wrong"
-      );
-
+      setMessage("Something went wrong");
     }
   }
 
@@ -111,9 +99,7 @@ export default function AdminDashboardPage() {
 
         <section className="min-h-[80vh] flex items-center justify-center px-4">
           <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-10 max-w-lg text-center shadow-2xl">
-            <div className="text-7xl">
-              🔒
-            </div>
+            <div className="text-7xl">🔒</div>
 
             <h1 className="mt-6 text-4xl font-black text-red-500">
               Access Denied
@@ -125,7 +111,6 @@ export default function AdminDashboardPage() {
 
             <a
               href="/"
-
               className="
                 inline-block
                 mt-8
@@ -166,15 +151,14 @@ export default function AdminDashboardPage() {
               </h1>
 
               <p className="mt-4 text-slate-400 max-w-2xl leading-7">
-                Manage users, student verification, listings, reports,
-                support tickets, and overall marketplace activity.
+                Manage users, student verification, listings, reports, support
+                tickets, and overall marketplace activity.
               </p>
 
-   <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-5">
-
-  <a
-    href="/marketplace"
-    className="
+              <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-5">
+                <a
+                  href="/marketplace"
+                  className="
       group
       relative
       overflow-hidden
@@ -189,32 +173,28 @@ export default function AdminDashboardPage() {
       hover:-translate-y-1
       hover:border-green-500
     "
-  >
-    <div className="absolute right-0 top-0 h-28 w-28 rounded-full bg-green-500/10 blur-3xl" />
+                >
+                  <div className="absolute right-0 top-0 h-28 w-28 rounded-full bg-green-500/10 blur-3xl" />
 
-    <div className="relative z-10">
-      <div className="text-5xl">
-        🛍️
-      </div>
+                  <div className="relative z-10">
+                    <div className="text-5xl">🛍️</div>
 
-      <h2 className="mt-5 text-2xl font-black">
-        Open Marketplace
-      </h2>
+                    <h2 className="mt-5 text-2xl font-black">
+                      Open Marketplace
+                    </h2>
 
-      <p className="mt-3 text-slate-400 leading-7">
-        View live marketplace listings,
-        products, rentals and barter posts.
-      </p>
+                    <p className="mt-3 text-slate-400 leading-7">
+                      View live marketplace listings, products, rentals and
+                      barter posts.
+                    </p>
 
-      <div className="mt-5 text-green-400 font-black">
-        Open →
-      </div>
-    </div>
-  </a>
+                    <div className="mt-5 text-green-400 font-black">Open →</div>
+                  </div>
+                </a>
 
-  <a
-    href="/admin/listings"
-    className="
+                <a
+                  href="/admin/listings"
+                  className="
       group
       relative
       overflow-hidden
@@ -229,32 +209,30 @@ export default function AdminDashboardPage() {
       hover:-translate-y-1
       hover:border-blue-500
     "
-  >
-    <div className="absolute right-0 top-0 h-28 w-28 rounded-full bg-blue-500/10 blur-3xl" />
+                >
+                  <div className="absolute right-0 top-0 h-28 w-28 rounded-full bg-blue-500/10 blur-3xl" />
 
-    <div className="relative z-10">
-      <div className="text-5xl">
-        🛡️
-      </div>
+                  <div className="relative z-10">
+                    <div className="text-5xl">🛡️</div>
 
-      <h2 className="mt-5 text-2xl font-black">
-        Moderate Listings
-      </h2>
+                    <h2 className="mt-5 text-2xl font-black">
+                      Moderate Listings
+                    </h2>
 
-      <p className="mt-3 text-slate-400 leading-7">
-        Remove suspicious products,
-        monitor reports and manage sellers.
-      </p>
+                    <p className="mt-3 text-slate-400 leading-7">
+                      Remove suspicious products, monitor reports and manage
+                      sellers.
+                    </p>
 
-      <div className="mt-5 text-blue-400 font-black">
-        Moderate →
-      </div>
-    </div>
-  </a>
+                    <div className="mt-5 text-blue-400 font-black">
+                      Moderate →
+                    </div>
+                  </div>
+                </a>
 
-  <a
-    href="/admin/ads"
-    className="
+                <a
+                  href="/admin/ads"
+                  className="
       group
       relative
       overflow-hidden
@@ -269,38 +247,31 @@ export default function AdminDashboardPage() {
       hover:-translate-y-1
       hover:border-pink-500
     "
-  >
-    <div className="absolute right-0 top-0 h-28 w-28 rounded-full bg-pink-500/10 blur-3xl" />
+                >
+                  <div className="absolute right-0 top-0 h-28 w-28 rounded-full bg-pink-500/10 blur-3xl" />
 
-    <div className="relative z-10">
-      <div className="text-5xl">
-        📢
-      </div>
+                  <div className="relative z-10">
+                    <div className="text-5xl">📢</div>
 
-      <h2 className="mt-5 text-2xl font-black">
-        Ad Banners
-      </h2>
+                    <h2 className="mt-5 text-2xl font-black">Ad Banners</h2>
 
-      <p className="mt-3 text-slate-400 leading-7">
-        Create sponsored homepage ads,
-        promotions and monetized campaigns.
-      </p>
+                    <p className="mt-3 text-slate-400 leading-7">
+                      Create sponsored homepage ads, promotions and monetized
+                      campaigns.
+                    </p>
 
-      <div className="mt-5 text-pink-400 font-black">
-        Manage Ads →
-      </div>
-    </div>
-  </a>
-
-</div>
+                    <div className="mt-5 text-pink-400 font-black">
+                      Manage Ads →
+                    </div>
+                  </div>
+                </a>
+              </div>
             </div>
           </div>
 
           {message && (
             <div className="mt-6 bg-slate-900 border border-slate-800 rounded-3xl p-6">
-              <p className="text-slate-400 font-semibold">
-                {message}
-              </p>
+              <p className="text-slate-400 font-semibold">{message}</p>
             </div>
           )}
 
@@ -311,74 +282,49 @@ export default function AdminDashboardPage() {
               <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 mt-8">
                 {[
                   {
-                    label:
-                      "Total Users",
+                    label: "Total Users",
 
-                    value:
-                      data.stats
-                        ?.totalUsers,
+                    value: data.stats?.totalUsers,
 
                     icon: "👥",
                   },
 
                   {
-                    label:
-                      "Verified",
+                    label: "Verified",
 
-                    value:
-                      data.stats
-                        ?.verifiedUsers,
+                    value: data.stats?.verifiedUsers,
 
                     icon: "✅",
                   },
 
                   {
-                    label:
-                      "Products",
-
-                    value:
-                      data.stats
-                        ?.totalProducts,
-
+                    label: "Products",
+                    value: data.stats?.totalProducts,
                     icon: "🛍️",
                   },
 
                   {
-                    label:
-                      "Reports",
-
-                    value:
-                      data.stats
-                        ?.totalReports,
-
-                    icon: "🚨",
+                    label: "Sold",
+                    value: data.stats?.soldProducts,
+                    icon: "✅",
                   },
 
                   {
-                    label:
-                      "Support",
-
-                    value:
-                      data.stats
-                        ?.totalSupportTickets,
-
-                    icon: "💬",
+                    label: "Deals",
+                    value: data.stats?.completedDeals,
+                    icon: "🤝",
                   },
 
                   {
-                    label:
-                      "Admins",
+                    label: "Admins",
 
-                    value:
-                      data.stats
-                        ?.totalAdmins,
+                    value: data.stats?.totalAdmins,
 
                     icon: "🛡️",
                   },
                 ].map((item) => (
                   <div
                     key={item.label}
-
                     className="
                       bg-slate-900
                       border
@@ -389,9 +335,7 @@ export default function AdminDashboardPage() {
                     "
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-3xl">
-                        {item.icon}
-                      </span>
+                      <span className="text-3xl">{item.icon}</span>
 
                       <span className="text-[10px] text-green-400 font-black">
                         LIVE
@@ -418,21 +362,16 @@ export default function AdminDashboardPage() {
                       Management
                     </p>
 
-                    <h2 className="mt-1 text-3xl font-black">
-                      Admin Modules
-                    </h2>
+                    <h2 className="mt-1 text-3xl font-black">Admin Modules</h2>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-5 mt-6">
-                  {adminLinks.map(
-                    (item) => (
-                      <a
-                        key={item.title}
-
-                        href={item.href}
-
-                        className="
+                  {adminLinks.map((item) => (
+                    <a
+                      key={item.title}
+                      href={item.href}
+                      className="
                           group
                           bg-slate-900
                           border
@@ -444,9 +383,9 @@ export default function AdminDashboardPage() {
                           hover:-translate-y-1
                           shadow-xl
                         "
-                      >
-                        <div
-                          className={`
+                    >
+                      <div
+                        className={`
                             w-14
                             h-14
                             rounded-2xl
@@ -457,27 +396,60 @@ export default function AdminDashboardPage() {
                             justify-center
                             text-2xl
                           `}
-                        >
-                          {item.icon}
-                        </div>
+                      >
+                        {item.icon}
+                      </div>
 
-                        <h3 className="mt-5 text-2xl font-black">
-                          {item.title}
-                        </h3>
+                      <h3 className="mt-5 text-2xl font-black">{item.title}</h3>
 
-                        <p className="mt-2 text-slate-400 text-sm leading-6">
-                          Manage and monitor {item.title.toLowerCase()}.
-                        </p>
+                      <p className="mt-2 text-slate-400 text-sm leading-6">
+                        Manage and monitor {item.title.toLowerCase()}.
+                      </p>
 
-                        <div className="mt-5 text-green-400 font-black text-sm">
-                          Open →
-                        </div>
-                      </a>
-                    )
-                  )}
+                      <div className="mt-5 text-green-400 font-black text-sm">
+                        Open →
+                      </div>
+                    </a>
+                  ))}
                 </div>
               </div>
+              <div className="mt-10 bg-slate-900 border border-slate-800 rounded-[2rem] p-6 shadow-xl">
+                <h2 className="text-3xl font-black">Recent Completed Deals</h2>
 
+                <div className="mt-6 space-y-4">
+                  {data.completedDeals?.length === 0 && (
+                    <p className="text-slate-400">No completed deals yet.</p>
+                  )}
+
+                  {data.completedDeals?.map((deal: any) => (
+                    <div key={deal.id} className="bg-slate-800 rounded-2xl p-5">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-bold">{deal.product.title}</p>
+
+                          <p className="text-sm text-slate-400 mt-1">
+                            Seller: {deal.seller.name}
+                          </p>
+
+                          <p className="text-sm text-slate-400">
+                            Buyer: {deal.buyer.name}
+                          </p>
+                        </div>
+
+                        <div className="text-right">
+                          <p className="text-green-400 font-black text-xl">
+                            ₹{deal.finalPrice}
+                          </p>
+
+                          <p className="text-xs text-slate-400">
+                            {new Date(deal.completedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
               {/* system */}
 
               <div className="mt-10 bg-slate-900 border border-slate-800 rounded-[2rem] p-6 sm:p-8 shadow-xl">
@@ -492,8 +464,8 @@ export default function AdminDashboardPage() {
                     </h2>
 
                     <p className="mt-3 text-slate-400 max-w-2xl leading-7">
-                      Monitor trust, reports, support activity,
-                      and campus marketplace operations.
+                      Monitor trust, reports, support activity, and campus
+                      marketplace operations.
                     </p>
                   </div>
 
@@ -503,9 +475,7 @@ export default function AdminDashboardPage() {
                         Verification
                       </p>
 
-                      <p className="mt-2 text-green-400 font-black">
-                        Active
-                      </p>
+                      <p className="mt-2 text-green-400 font-black">Active</p>
                     </div>
 
                     <div className="bg-slate-800 rounded-2xl p-5">
@@ -513,9 +483,7 @@ export default function AdminDashboardPage() {
                         Moderation
                       </p>
 
-                      <p className="mt-2 text-green-400 font-black">
-                        Running
-                      </p>
+                      <p className="mt-2 text-green-400 font-black">Running</p>
                     </div>
                   </div>
                 </div>
@@ -526,4 +494,4 @@ export default function AdminDashboardPage() {
       </section>
     </main>
   );
-} 
+}

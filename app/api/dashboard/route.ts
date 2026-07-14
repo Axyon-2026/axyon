@@ -7,122 +7,178 @@ export async function GET() {
   try {
     const cookieStore = await cookies();
 
-    const token =
-      cookieStore.get("axyon_token")?.value;
+    const token = cookieStore.get("axyon_token")?.value;
 
     if (!token) {
       return NextResponse.json(
-        {
-          message:
-            "Please login first",
-        },
-        {
-          status: 401,
-        }
+        { message: "Please login first" },
+        { status: 401 }
       );
     }
 
-    const decoded: any =
-      verifyToken(token);
+    const decoded: any = verifyToken(token);
 
-    const user =
-      await prisma.user.findUnique({
-        where: {
-          id: decoded.id,
-        },
+    const user = await prisma.user.findUnique({
+      where: {
+        id: decoded.id,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        college: true,
+        createdAt: true,
+        role: true,
+        studentVerified: true,
+      },
+    });
 
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          college: true,
-          createdAt: true,
-        },
-      });
+    if (!user) {
+      return NextResponse.json(
+        { message: "User not found" },
+        { status: 404 }
+      );
+    }
 
-    const listedProducts =
+    // ==========================
+    // PRODUCTS
+    // ==========================
+
+    const listedProducts = await prisma.product.findMany({
+      where: {
+        sellerId: decoded.id,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    const activeListings = listedProducts.filter(
+      (p) => p.status === "AVAILABLE"
+    );
+
+    const soldListings = listedProducts.filter(
+      (p) => p.status === "SOLD"
+    );
+
+    const removedListings = listedProducts.filter(
+      (p) => p.status === "REMOVED"
+    );
+
+    // ==========================
+    // ACCOMMODATION
+    // ==========================
+
+    const roomListings = await prisma.room.findMany({
+      where: {
+        ownerId: decoded.id,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    const availableRooms = roomListings.filter(
+      (r) => r.status === "AVAILABLE"
+    );
+
+    const occupiedRooms = roomListings.filter(
+      (r) => r.status === "OCCUPIED"
+    );
+
+    const removedRooms = roomListings.filter(
+      (r) => r.status === "REMOVED"
+    );
+
+    // ==========================
+    // PURCHASES
+    // ==========================
+
+    const purchasedProducts =
       await prisma.product.findMany({
         where: {
-          sellerId: decoded.id,
-        },
-
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
-
-    const purchasedOrders =
-      await prisma.order.findMany({
-        where: {
           buyerId: decoded.id,
-          paymentStatus: "SUCCESS",
+          status: "SOLD",
         },
-
         orderBy: {
-          createdAt: "desc",
+          soldAt: "desc",
         },
       });
 
-    const soldOrders =
-      await prisma.order.findMany({
-        where: {
-          sellerId: decoded.id,
-          paymentStatus: "SUCCESS",
-        },
-
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
+    // ==========================
+    // CONVERSATIONS
+    // ==========================
 
     const conversations =
       await prisma.conversation.findMany({
         where: {
+          isArchived: false,
           OR: [
             {
-              buyerId:
-                decoded.id,
+              buyerId: decoded.id,
             },
             {
-              sellerId:
-                decoded.id,
+              sellerId: decoded.id,
             },
           ],
         },
-
         include: {
-          messages: true,
+          messages: {
+            orderBy: {
+              createdAt: "asc",
+            },
+          },
         },
-
         orderBy: {
           updatedAt: "desc",
         },
       });
 
+    // ==========================
+    // NOTIFICATIONS
+    // ==========================
+
+    const notifications =
+      await prisma.notification.findMany({
+        where: {
+          userId: decoded.id,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 10,
+      });
+
     return NextResponse.json({
       user,
+
       listedProducts,
-      purchasedOrders,
-      soldOrders,
+      activeListings,
+      soldListings,
+      removedListings,
+
+      roomListings,
+      availableRooms,
+      occupiedRooms,
+      removedRooms,
+
+      purchasedProducts,
+
       conversations,
+
+      notifications,
     });
 
   } catch (error) {
-
-    console.log(
-      "DASHBOARD ERROR:",
-      error
-    );
+    console.log("DASHBOARD ERROR:", error);
 
     return NextResponse.json(
       {
-        message:
-          "Failed to load dashboard",
+        message: "Failed to load dashboard",
       },
       {
         status: 500,
       }
     );
-
   }
 }

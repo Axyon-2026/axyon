@@ -2,10 +2,12 @@
 
 import Navbar from "@/components/Navbar";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
   const [data, setData] = useState<any>(null);
   const [message, setMessage] = useState("Loading dashboard...");
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchDashboard() {
@@ -19,7 +21,7 @@ export default function DashboardPage() {
         }
 
         if (dashboardData.user?.role === "ADMIN") {
-          window.location.href = "/admin";
+          router.replace("/admin");
           return;
         }
 
@@ -39,56 +41,80 @@ export default function DashboardPage() {
 
       <section className="px-8 py-10">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div>
-            <h1 className="text-4xl font-bold">Dashboard</h1>
-            <p className="mt-2 text-slate-400">
-              Manage your Axyon account and activity.
-            </p>
-          </div>
 
-          <div className="flex gap-4">
-            <a
-              href="/create-product"
-              className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl font-medium"
-            >
-              Sell Product
-            </a>
+  <div>
+    <h1 className="text-4xl font-bold">Dashboard</h1>
 
-            <a
-              href="/marketplace"
-              className="border border-slate-700 hover:border-slate-500 px-6 py-3 rounded-xl font-medium"
-            >
-              Marketplace
-            </a>
-          </div>
-        </div>
+    <p className="mt-2 text-slate-400">
+      Manage your Axyon account and activity.
+    </p>
+  </div>
 
+  <div className="flex flex-wrap gap-4">
+
+    <a
+      href="/create-product"
+      className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl font-medium"
+    >
+      Sell Product
+    </a>
+
+    <a
+      href="/create-room"
+      className="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-xl font-medium"
+    >
+      List Accommodation
+    </a>
+
+    <a
+      href="/marketplace"
+      className="border border-slate-700 hover:border-slate-500 px-6 py-3 rounded-xl font-medium"
+    >
+      Marketplace
+    </a>
+
+    <a
+      href="/rooms"
+      className="border border-slate-700 hover:border-slate-500 px-6 py-3 rounded-xl font-medium"
+    >
+      Active Accommodation
+    </a>
+
+  </div>
+
+</div>
         {message && <p className="mt-10 text-slate-400">{message}</p>}
 
         {data && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-10">
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-                <p className="text-slate-400 text-sm">Listed Products</p>
+                <p className="text-slate-400 text-sm">Active Listings</p>
                 <h2 className="text-4xl font-bold mt-3">
-                  {data.listedProducts?.length}
+                  {data.activeListings?.length}
                 </h2>
               </div>
 
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
                 <p className="text-slate-400 text-sm">Purchases</p>
                 <h2 className="text-4xl font-bold mt-3">
-                  {data.purchasedOrders?.length}
+                  {data.purchasedProducts?.length}
                 </h2>
               </div>
 
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-                <p className="text-slate-400 text-sm">Sold Items</p>
+                <p className="text-slate-400 text-sm">Products Sold</p>
                 <h2 className="text-4xl font-bold mt-3">
-                  {data.soldOrders?.length}
+                  {data.soldListings?.length}
                 </h2>
               </div>
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                <p className="text-slate-400 text-sm">Accommodation</p>
 
+                <h2 className="text-4xl font-bold mt-3">
+                  {data.availableRooms?.length}
+                </h2>
+              </div>
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
                 <p className="text-slate-400 text-sm">Conversations</p>
                 <h2 className="text-4xl font-bold mt-3">
@@ -163,7 +189,7 @@ export default function DashboardPage() {
                           {product.description}
                         </p>
 
-                        <div className="mt-4 flex gap-2">
+                        <div className="mt-4 flex flex-wrap gap-2">
                           <span className="bg-slate-700 px-3 py-1 rounded-full text-xs">
                             {product.category}
                           </span>
@@ -171,6 +197,32 @@ export default function DashboardPage() {
                           <span className="bg-slate-700 px-3 py-1 rounded-full text-xs">
                             {product.condition}
                           </span>
+
+                          {product.status === "AVAILABLE" && (
+                            <span className="bg-green-700 px-3 py-1 rounded-full text-xs">
+                              AVAILABLE
+                            </span>
+                          )}
+
+                          {product.status === "SOLD" && (
+                            <span className="bg-blue-600 px-3 py-1 rounded-full text-xs">
+                              SOLD
+                            </span>
+                          )}
+
+                          {product.status === "REMOVED" && (
+                            <span className="bg-red-600 px-3 py-1 rounded-full text-xs">
+                              REMOVED
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-5">
+                          <a
+                            href={`/product/${product.id}`}
+                            className="block rounded-xl bg-blue-600 hover:bg-blue-700 py-2 text-center font-semibold transition"
+                          >
+                            View Listing
+                          </a>
                         </div>
                       </div>
                     </div>
@@ -178,23 +230,113 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
+            <div className="mt-10 bg-slate-900 border border-slate-800 rounded-2xl p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">My Accommodation</h2>
 
+                <a
+                  href="/create-room"
+                  className="text-green-400 hover:underline"
+                >
+                  Add Listing
+                </a>
+              </div>
+
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+                {data.roomListings?.length === 0 && (
+                  <p className="text-slate-400">No accommodation listed.</p>
+                )}
+
+                {data.roomListings?.map((room: any) => (
+                  <div
+                    key={room.id}
+                    className="bg-slate-800 rounded-2xl overflow-hidden"
+                  >
+                    <div className="h-48 bg-slate-700">
+                      {room.imageUrls?.length > 0 ? (
+                        <img
+                          src={room.imageUrls[0]}
+                          alt={room.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-500">
+                          No Image
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-5">
+                      <div className="flex justify-between">
+                        <h3 className="font-bold">{room.title}</h3>
+
+                        <span className="text-green-400 font-bold">
+                          ₹{room.rent}
+                        </span>
+                      </div>
+
+                      <p className="mt-2 text-sm text-slate-400 line-clamp-2">
+                        {room.description}
+                      </p>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <span className="bg-slate-700 px-3 py-1 rounded-full text-xs">
+                          {room.roomType}
+                        </span>
+
+                        {room.status === "AVAILABLE" && (
+                          <span className="bg-green-700 px-3 py-1 rounded-full text-xs">
+                            AVAILABLE
+                          </span>
+                        )}
+
+                        {room.status === "OCCUPIED" && (
+                          <span className="bg-blue-700 px-3 py-1 rounded-full text-xs">
+                            OCCUPIED
+                          </span>
+                        )}
+
+                        {room.status === "REMOVED" && (
+                          <span className="bg-red-700 px-3 py-1 rounded-full text-xs">
+                            REMOVED
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="mt-5">
+                        <a
+                          href={`/rooms/${room.id}`}
+                          className="block rounded-xl bg-green-600 hover:bg-green-700 py-2 text-center font-semibold transition"
+                        >
+                          View Accommodation
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-10">
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
                 <h2 className="text-2xl font-bold">Recent Purchases</h2>
 
                 <div className="mt-5 space-y-4">
-                  {data.purchasedOrders?.length === 0 && (
+                  {data.purchasedProducts?.length === 0 && (
                     <p className="text-slate-400">No purchases yet.</p>
                   )}
 
-                  {data.purchasedOrders?.map((order: any) => (
-                    <div key={order.id} className="bg-slate-800 rounded-xl p-4">
-                      <p>Order Amount: ₹{order.amount}</p>
+                  {data.purchasedProducts?.map((product: any) => (
+                    <div
+                      key={product.id}
+                      className="bg-slate-800 rounded-xl p-4"
+                    >
+                      <p className="font-bold">{product.title}</p>
 
-                      <p className="text-sm text-green-400 mt-2">
-                        {order.paymentStatus}
+                      <p className="text-green-400 mt-2">
+                        ₹{product.finalPrice ?? product.price}
                       </p>
+
+                      <p className="text-xs text-slate-400 mt-1">Purchased</p>
                     </div>
                   ))}
                 </div>

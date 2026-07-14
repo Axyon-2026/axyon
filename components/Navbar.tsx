@@ -38,7 +38,7 @@ export default function Navbar() {
       const data = await res.json();
 
       const unread = (data.notifications || []).filter(
-        (item: any) => !item.isRead
+        (item: any) => !item.isRead,
       ).length;
 
       setUnreadCount(unread);
@@ -98,6 +98,7 @@ export default function Navbar() {
             {!isAdmin && (
               <>
                 <NavLink href="/marketplace" label="Marketplace" />
+                <NavLink href="/rooms" label="Accommodation" />
 
                 {isLoggedIn && (
                   <>
@@ -144,7 +145,6 @@ export default function Navbar() {
                 className="relative w-11 h-11 rounded-full border border-white/10 hover:border-green-500 flex items-center justify-center text-lg transition"
               >
                 🔔
-
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-green-400 text-black text-[10px] font-black flex items-center justify-center shadow-[0_0_12px_rgba(34,197,94,0.8)]">
                     {unreadCount > 9 ? "9+" : unreadCount}
@@ -159,9 +159,14 @@ export default function Navbar() {
                   href="/create-product"
                   className="px-6 py-3 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 hover:scale-105 transition shadow-[0_0_30px_rgba(34,197,94,0.35)] text-sm font-black text-black"
                 >
-                  Sell Now
+                  Sell
                 </a>
-
+                <a
+                  href="/create-room"
+                  className="px-6 py-3 rounded-full border border-white/10 hover:border-green-500 transition text-sm font-semibold"
+                >
+                  List Accommodation
+                </a>
                 <a
                   href="/dashboard"
                   className="px-5 py-2.5 rounded-full border border-white/10 hover:border-green-500 transition text-sm font-semibold"
@@ -204,7 +209,10 @@ export default function Navbar() {
               <MobileLink href="/" label="Home" />
 
               {!isAdmin && (
-                <MobileLink href="/marketplace" label="Marketplace" />
+                <>
+                  <MobileLink href="/marketplace" label="Marketplace" />
+                  <MobileLink href="/rooms" label="Accommodation" />
+                </>
               )}
 
               {isLoggedIn && (
@@ -224,6 +232,7 @@ export default function Navbar() {
                   <MobileLink href="/support" label="Support" />
                   <MobileLink href="/dashboard" label="Dashboard" />
                   <MobileLink href="/create-product" label="Sell Product" />
+                  <MobileLink href="/create-room" label="List Accommodation" />
                 </>
               )}
 
@@ -268,13 +277,7 @@ export default function Navbar() {
   );
 }
 
-function NavLink({
-  href,
-  label,
-}: {
-  href: string;
-  label: string;
-}) {
+function NavLink({ href, label }: { href: string; label: string }) {
   return (
     <a
       href={href}
@@ -285,13 +288,7 @@ function NavLink({
   );
 }
 
-function MobileLink({
-  href,
-  label,
-}: {
-  href: string;
-  label: string;
-}) {
+function MobileLink({ href, label }: { href: string; label: string }) {
   return (
     <a
       href={href}
