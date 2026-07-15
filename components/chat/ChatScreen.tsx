@@ -39,13 +39,8 @@ export default function ChatScreen({
   if (!selectedConversation) {
     return <EmptyChat />;
   }
+
   const [showDealModal, setShowDealModal] = useState(false);
-  const [finalPrice, setFinalPrice] = useState(
-    selectedConversation.product.price,
-  );
-
-  const [paymentMethod, setPaymentMethod] = useState("Cash");
-
   const [creatingDeal, setCreatingDeal] = useState(false);
 
   async function completeDeal() {
@@ -60,8 +55,6 @@ export default function ChatScreen({
         body: JSON.stringify({
           productId: selectedConversation.productId,
           buyerId: selectedConversation.buyerId,
-          finalPrice: Number(finalPrice),
-          paymentMethod,
         }),
       });
 
@@ -72,16 +65,20 @@ export default function ChatScreen({
         return;
       }
 
-      alert("Deal request sent successfully!");
+      alert("Deal completed successfully.");
 
       setShowDealModal(false);
+
+      // Refresh page so sold listing disappears
+      window.location.reload();
     } catch (error) {
       console.error(error);
-      alert("Failed to create deal.");
+      alert("Failed to complete deal.");
     } finally {
       setCreatingDeal(false);
     }
   }
+
   return (
     <div className="flex h-full flex-col overflow-hidden bg-[#020817]">
       <ChatHeader
@@ -130,10 +127,6 @@ export default function ChatScreen({
       <CompleteDealModal
         open={showDealModal}
         onClose={() => setShowDealModal(false)}
-        finalPrice={finalPrice}
-        setFinalPrice={setFinalPrice}
-        paymentMethod={paymentMethod}
-        setPaymentMethod={setPaymentMethod}
         loading={creatingDeal}
         onContinue={completeDeal}
       />

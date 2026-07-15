@@ -159,8 +159,27 @@ export default function ProductDetailPage() {
                   <div className="mt-8 space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <button
-                        onClick={() => {
-                          router.push(`/chat?productId=${product.id}`);
+                        onClick={async () => {
+                          const res = await fetch("/api/chat/open", {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                              productId: product.id,
+                            }),
+                          });
+
+                          const data = await res.json();
+
+                          if (!res.ok) {
+                            alert(data.message);
+                            return;
+                          }
+
+                          router.push(
+                            `/chat?conversation=${data.conversationId}`,
+                          );
                         }}
                         className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-full font-black shadow-lg shadow-green-100"
                       >
@@ -168,17 +187,26 @@ export default function ProductDetailPage() {
                       </button>
 
                       <button
-                        onClick={() => {
-                          const text = encodeURIComponent(
-                            `Hi! I'm interested in "${product.title}".
+                        onClick={async () => {
+                          const res = await fetch("/api/chat/open", {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                              productId: product.id,
+                            }),
+                          });
 
-                             I'd like to use Axyon's Pay via Meet option.
-                             
-                             When can we meet on campus?`,
-                          );
+                          const data = await res.json();
+
+                          if (!res.ok) {
+                            alert(data.message);
+                            return;
+                          }
 
                           router.push(
-                            `/chat?productId=${product.id}&message=${text}`,
+                            `/chat?conversation=${data.conversationId}`,
                           );
                         }}
                         className="w-full border border-green-200 hover:border-green-500 text-green-700 py-4 rounded-full font-black bg-green-50"
@@ -206,7 +234,11 @@ export default function ProductDetailPage() {
 
                         <button
                           onClick={async () => {
-                            if (!confirm("Delete this listing?")) return;
+                            const confirmed = window.confirm(
+                              "Are you sure you want to remove this listing?",
+                            );
+
+                            if (!confirmed) return;
 
                             const res = await fetch("/api/products/delete", {
                               method: "POST",
@@ -225,7 +257,7 @@ export default function ProductDetailPage() {
                               return;
                             }
 
-                            alert("Listing deleted.");
+                            alert("Listing removed successfully.");
 
                             router.push("/dashboard");
                           }}

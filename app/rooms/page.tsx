@@ -31,7 +31,7 @@ export default function RoomsPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-screen bg-slate-950 text-white">
       <Navbar />
 
       <section className="max-w-7xl mx-auto px-6 py-10">

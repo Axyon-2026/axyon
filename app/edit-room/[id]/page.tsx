@@ -100,7 +100,7 @@ export default function EditRoomPage() {
 
   if (fetching) {
     return (
-      <main className="min-h-screen bg-slate-50">
+      <main className="min-h-screen bg-slate-950 text-white">
         <Navbar />
         <div className="max-w-3xl mx-auto py-20 text-center">
           Loading...
@@ -110,7 +110,7 @@ export default function EditRoomPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-screen bg-slate-950 text-white">
       <Navbar />
 
       <section className="max-w-3xl mx-auto px-6 py-10">
@@ -122,19 +122,19 @@ export default function EditRoomPage() {
         <div className="mt-8 space-y-5">
 
           <input
-            className="w-full border rounded-xl p-4"
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white placeholder:text-slate-500"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
 
           <textarea
-            className="w-full border rounded-xl p-4 h-40"
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white placeholder:text-slate-500 h-40"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
 
           <select
-            className="w-full border rounded-xl p-4"
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white placeholder:text-slate-500"
             value={roomType}
             onChange={(e) => setRoomType(e.target.value)}
           >
@@ -147,38 +147,38 @@ export default function EditRoomPage() {
 
           <input
             type="number"
-            className="w-full border rounded-xl p-4"
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white placeholder:text-slate-500"
             value={rent}
             onChange={(e) => setRent(e.target.value)}
           />
 
           <input
             type="number"
-            className="w-full border rounded-xl p-4"
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white placeholder:text-slate-500"
             value={deposit}
             onChange={(e) => setDeposit(e.target.value)}
           />
 
           <input
-            className="w-full border rounded-xl p-4"
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white placeholder:text-slate-500"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
           />
 
           <input
-            className="w-full border rounded-xl p-4"
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white placeholder:text-slate-500"
             value={landmark}
             onChange={(e) => setLandmark(e.target.value)}
           />
 
           <input
-            className="w-full border rounded-xl p-4"
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white placeholder:text-slate-500"
             value={college}
             onChange={(e) => setCollege(e.target.value)}
           />
 
           <input
-            className="w-full border rounded-xl p-4"
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white placeholder:text-slate-500"
             value={amenities}
             onChange={(e) => setAmenities(e.target.value)}
           />

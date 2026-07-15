@@ -43,7 +43,7 @@ export default function RoomDetailPage() {
 
   if (message) {
     return (
-      <main className="min-h-screen bg-slate-50">
+      <main className="min-h-screen bg-slate-950 text-white">
         <Navbar />
 
         <div className="py-20 text-center text-slate-500">{message}</div>
@@ -110,7 +110,7 @@ export default function RoomDetailPage() {
     router.refresh();
   }
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-screen bg-slate-950 text-white">
       <Navbar />
 
       <section className="max-w-7xl mx-auto px-6 py-10">

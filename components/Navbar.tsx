@@ -142,7 +142,21 @@ export default function Navbar() {
             {!loading && isLoggedIn && (
               <a
                 href="/notifications"
-                className="relative w-11 h-11 rounded-full border border-white/10 hover:border-green-500 flex items-center justify-center text-lg transition"
+               className="
+                relative
+                px-5
+                py-3
+                rounded-full
+                bg-white/5
+                border
+                border-white/10
+                hover:bg-green-600
+                hover:border-green-500
+                transition
+                flex
+                items-center
+                justify-center
+                "
               >
                 🔔
                 {unreadCount > 0 && (
@@ -159,13 +173,13 @@ export default function Navbar() {
                   href="/create-product"
                   className="px-6 py-3 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 hover:scale-105 transition shadow-[0_0_30px_rgba(34,197,94,0.35)] text-sm font-black text-black"
                 >
-                  Sell
+                  Sell Product
                 </a>
                 <a
                   href="/create-room"
                   className="px-6 py-3 rounded-full border border-white/10 hover:border-green-500 transition text-sm font-semibold"
                 >
-                  List Accommodation
+                  List Room
                 </a>
                 <a
                   href="/dashboard"
@@ -281,7 +295,19 @@ function NavLink({ href, label }: { href: string; label: string }) {
   return (
     <a
       href={href}
-      className="px-5 py-2.5 rounded-full text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/[0.06] transition"
+      className="
+       px-6
+       py-3
+       rounded-full
+       bg-white/5
+       border
+       border-white/10
+       text-white
+       font-bold
+       hover:bg-green-600
+       hover:border-green-500
+       transition
+       "
     >
       {label}
     </a>

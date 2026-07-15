@@ -3,25 +3,13 @@
 type Props = {
   open: boolean;
   onClose: () => void;
-
-  finalPrice: number | string;
-  setFinalPrice: (value: any) => void;
-
-  paymentMethod: string;
-  setPaymentMethod: (value: any) => void;
-
   loading: boolean;
-
   onContinue: () => void;
 };
 
 export default function CompleteDealModal({
   open,
   onClose,
-  finalPrice,
-  setFinalPrice,
-  paymentMethod,
-  setPaymentMethod,
   loading,
   onContinue,
 }: Props) {
@@ -29,51 +17,27 @@ export default function CompleteDealModal({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-
       <div className="w-[95%] max-w-md rounded-3xl bg-white p-7">
 
         <h2 className="text-3xl font-black">
-          Complete Sale
+          Complete Deal
         </h2>
 
-        <p className="mt-2 text-slate-500">
-          Confirm the final deal details.
+        <p className="mt-5 text-slate-600 leading-7">
+          Are you sure you want to complete this deal?
         </p>
 
-        <div className="mt-6">
+        <div className="mt-6 rounded-2xl bg-green-50 border border-green-200 p-5">
 
-          <label className="font-bold">
-            Final Price
-          </label>
+          <p>✅ Product will be marked as SOLD</p>
 
-          <input
-            type="number"
-            value={finalPrice}
-            onChange={(e) =>
-              setFinalPrice(e.target.value)
-            }
-            className="mt-2 w-full rounded-2xl border px-5 py-4"
-          />
+          <p className="mt-2">
+            ✅ Listing will disappear from Marketplace
+          </p>
 
-        </div>
-
-        <div className="mt-5">
-
-          <label className="font-bold">
-            Payment Method
-          </label>
-
-          <select
-            value={paymentMethod}
-            onChange={(e) =>
-              setPaymentMethod(e.target.value)
-            }
-            className="mt-2 w-full rounded-2xl border px-5 py-4"
-          >
-            <option>Cash</option>
-            <option>UPI</option>
-            <option>Pay via Meet</option>
-          </select>
+          <p className="mt-2">
+            ⚠️ This action cannot be undone.
+          </p>
 
         </div>
 
@@ -89,15 +53,14 @@ export default function CompleteDealModal({
           <button
             onClick={onContinue}
             disabled={loading}
-            className="flex-1 rounded-full bg-green-600 py-4 font-bold text-white hover:bg-green-700 disabled:opacity-60"
+            className="flex-1 rounded-full bg-green-600 text-white py-4 font-bold"
           >
-            {loading ? "Creating..." : "Continue"}
+            {loading ? "Completing..." : "Complete Deal"}
           </button>
 
         </div>
 
       </div>
-
     </div>
   );
 }

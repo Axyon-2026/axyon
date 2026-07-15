@@ -60,19 +60,14 @@ export default function ChatPage() {
       }
 
       if (keepSelectedId) {
-        const updated = chats.find(
-          (c: any) => c.id === keepSelectedId
-        );
+        const updated = chats.find((c: any) => c.id === keepSelectedId);
 
         setSelectedConversation(updated || chats[0]);
       } else {
         setSelectedConversation((prev: any) => {
           if (!prev) return chats[0];
 
-          return (
-            chats.find((c: any) => c.id === prev.id) ||
-            chats[0]
-          );
+          return chats.find((c: any) => c.id === prev.id) || chats[0];
         });
       }
 
@@ -86,7 +81,6 @@ export default function ChatPage() {
     fetchCurrentUser();
     fetchChats();
   }, []);
-
   useEffect(() => {
     const interval = setInterval(() => {
       fetchChats(selectedConversation?.id);
@@ -141,11 +135,9 @@ export default function ChatPage() {
 
   return (
     <main className="min-h-screen bg-[#071019] text-white">
-
       <Navbar />
 
       <section className="flex h-[calc(100dvh-80px)] overflow-hidden">
-
         <ChatSidebar
           conversations={conversations}
           currentUser={currentUser}
@@ -158,21 +150,14 @@ export default function ChatPage() {
           currentUser={currentUser}
           selectedConversation={selectedConversation}
           setSelectedConversation={setSelectedConversation}
-
           message={message}
           setMessage={setMessage}
-
           sending={sending}
           sendMessage={sendMessage}
-
           quickReplies={quickReplies}
-
           messagesEndRef={messagesEndRef}
-
-                  />
-
+        />
       </section>
-
     </main>
   );
 }

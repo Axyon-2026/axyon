@@ -10,10 +10,14 @@ export async function POST(req: Request) {
     const token = cookieStore.get("axyon_token")?.value;
 
     if (!token) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { message: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const decoded: any = verifyToken(token);
+
     const seller = await prisma.user.findUnique({
       where: {
         id: decoded.id,
@@ -23,40 +27,7 @@ export async function POST(req: Request) {
       },
     });
 
-    const { productId, buyerId, finalPrice, paymentMethod } = await req.json();  
-
-    const buyer = await prisma.user.findUnique({
-  where: {
-    id: buyerId,
-  },
-  select: {
-    id: true,
-    studentVerified: true,
-    isSuspended: true,
-  },
-});
-
-if (!buyer) {
-  return NextResponse.json(
-    {
-      message: "Buyer not found.",
-    },
-    {
-      status: 404,
-    }
-  );
-}
-
-if (!buyer.studentVerified || buyer.isSuspended) {
-  return NextResponse.json(
-    {
-      message: "Buyer is not eligible to complete deals.",
-    },
-    {
-      status: 403,
-    }
-  );
-}
+    const { productId, buyerId } = await req.json();
 
     const product = await prisma.product.findUnique({
       where: {
@@ -66,74 +37,22 @@ if (!buyer.studentVerified || buyer.isSuspended) {
 
     if (!product) {
       return NextResponse.json(
-        {
-          message: "Product not found",
-        },
-        {
-          status: 404,
-        },
-      );
-    }
-    if (product.status !== "AVAILABLE") {
-      return NextResponse.json(
-        {
-          message: "This product is no longer available.",
-        },
-        {
-          status: 400,
-        },
+        { message: "Product not found." },
+        { status: 404 }
       );
     }
 
     if (product.sellerId !== decoded.id) {
       return NextResponse.json(
-        {
-          message: "Only seller can create a deal",
-        },
-        {
-          status: 403,
-        },
-      );
-    }
-    if (buyerId === decoded.id) {
-      return NextResponse.json(
-        {
-          message: "You cannot buy your own product.",
-        },
-        {
-          status: 400,
-        },
+        { message: "Only the seller can complete the deal." },
+        { status: 403 }
       );
     }
 
-    if (!Number(finalPrice) || Number(finalPrice) <= 0) {
+    if (product.status !== "AVAILABLE") {
       return NextResponse.json(
-        {
-          message: "Invalid final price.",
-        },
-        {
-          status: 400,
-        },
-      );
-    }
-
-    const existingDeal = await prisma.deal.findFirst({
-  where: {
-    productId,
-    status: {
-      in: ["PENDING", "COMPLETED"],
-    },
-  },
-});
-
-    if (existingDeal) {
-      return NextResponse.json(
-        {
-          message: "A pending deal already exists.",
-        },
-        {
-          status: 400,
-        },
+        { message: "Product is already sold." },
+        { status: 400 }
       );
     }
 
@@ -142,33 +61,41 @@ if (!buyer.studentVerified || buyer.isSuspended) {
     const deal = await prisma.deal.create({
       data: {
         productId,
-
         buyerId,
-
         sellerId: decoded.id,
 
         originalPrice: product.price,
+        finalPrice: product.price,
 
-        finalPrice: Number(finalPrice),
-
-        paymentMethod,
+        paymentMethod: "OFFLINE",
 
         invoiceId,
 
         sellerConfirmed: true,
+        buyerConfirmed: true,
 
-        buyerConfirmed: false,
-
-        status: "PENDING",
+        status: "COMPLETED",
       },
     });
+
+    await prisma.product.update({
+      where: {
+        id: productId,
+      },
+      data: {
+        status: "SOLD",
+        buyerId,
+        soldAt: new Date(),
+      },
+    });
+
     await prisma.notification.create({
       data: {
         userId: buyerId,
-        title: "Deal Request",
-        message: `${seller?.name} wants to complete this purchase.`,
-        type: "DEAL_CONFIRMATION",
-        link: `/chat`,
+        title: "Purchase Completed",
+        message: `${seller?.name} has completed your purchase.`,
+        type: "DEAL_COMPLETED",
+        link: "/my-orders",
       },
     });
 
@@ -176,16 +103,17 @@ if (!buyer.studentVerified || buyer.isSuspended) {
       success: true,
       deal,
     });
+
   } catch (error) {
-    console.log("CREATE DEAL ERROR:", error);
+    console.log("COMPLETE DEAL ERROR:", error);
 
     return NextResponse.json(
       {
-        message: "Something went wrong",
+        message: "Something went wrong.",
       },
       {
         status: 500,
-      },
+      }
     );
   }
 }

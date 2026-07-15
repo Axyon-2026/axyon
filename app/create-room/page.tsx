@@ -66,7 +66,7 @@ export default function CreateRoomPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-screen bg-slate-950 text-white">
       <Navbar />
 
       <section className="max-w-3xl mx-auto px-6 py-10">
@@ -79,20 +79,20 @@ export default function CreateRoomPage() {
 
           <input
             placeholder="Title"
-            className="w-full border rounded-xl p-4"
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white placeholder:text-slate-500"
             value={title}
             onChange={(e)=>setTitle(e.target.value)}
           />
 
           <textarea
             placeholder="Description"
-            className="w-full border rounded-xl p-4 h-40"
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white placeholder:text-slate-500 h-40"
             value={description}
             onChange={(e)=>setDescription(e.target.value)}
           />
 
           <select
-            className="w-full border rounded-xl p-4"
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white placeholder:text-slate-500"
             value={roomType}
             onChange={(e)=>setRoomType(e.target.value)}
           >
@@ -106,7 +106,7 @@ export default function CreateRoomPage() {
           <input
             placeholder="Monthly Rent"
             type="number"
-            className="w-full border rounded-xl p-4"
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white placeholder:text-slate-500"
             value={rent}
             onChange={(e)=>setRent(e.target.value)}
           />
@@ -114,35 +114,35 @@ export default function CreateRoomPage() {
           <input
             placeholder="Deposit"
             type="number"
-            className="w-full border rounded-xl p-4"
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white placeholder:text-slate-500"
             value={deposit}
             onChange={(e)=>setDeposit(e.target.value)}
           />
 
           <input
             placeholder="Address"
-            className="w-full border rounded-xl p-4"
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white placeholder:text-slate-500"
             value={address}
             onChange={(e)=>setAddress(e.target.value)}
           />
 
           <input
             placeholder="Landmark"
-            className="w-full border rounded-xl p-4"
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white placeholder:text-slate-500"
             value={landmark}
             onChange={(e)=>setLandmark(e.target.value)}
           />
 
           <input
             placeholder="College"
-            className="w-full border rounded-xl p-4"
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white placeholder:text-slate-500"
             value={college}
             onChange={(e)=>setCollege(e.target.value)}
           />
 
           <input
             placeholder="Amenities (comma separated)"
-            className="w-full border rounded-xl p-4"
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white placeholder:text-slate-500"
             value={amenities}
             onChange={(e)=>setAmenities(e.target.value)}
           />

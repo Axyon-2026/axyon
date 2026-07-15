@@ -11,10 +11,10 @@ const categories = [
     href: "/marketplace",
   },
   {
-    title: "Rentals",
-    desc: "Rent items instead of buying",
-    icon: "🔁",
-    href: "/rentals",
+    title: "Accommodation",
+    desc: "Find rooms and PGs near campus",
+    icon: "🏠",
+    href: "/rooms",
   },
   {
     title: "Barter",
@@ -61,8 +61,8 @@ const steps = [
 
 const highlights = [
   "Verified student community",
-  "Marketplace + chat in one place",
-  "Rentals and barter coming soon",
+  "Marketplace + Accommodation",
+  "Safe student-only transactions",
 ];
 
 export default function HomePage() {
@@ -128,31 +128,50 @@ export default function HomePage() {
                       href="/marketplace"
                       className="bg-white border-2 border-slate-200 hover:border-green-400 text-slate-800 px-8 py-4 rounded-full font-black text-center"
                     >
-                      Explore Axyon
+                      Explore Marketplace
+                    </a>
+
+                    <a
+                      href="/rooms"
+                      className="bg-white border-2 border-slate-200 hover:border-green-400 text-slate-800 px-8 py-4 rounded-full font-black text-center"
+                    >
+                      Accommodation
                     </a>
                   </>
                 )}
 
                 {!loading && isLoggedIn && (
                   <>
-                    <a
-                      href={isAdmin ? "/admin" : "/marketplace"}
-                      className={`px-8 py-4 rounded-full font-black text-center shadow-xl ${
-                        isAdmin
-                          ? "bg-slate-950 hover:bg-slate-800 text-white shadow-slate-200"
-                          : "bg-green-600 hover:bg-green-700 text-white shadow-green-200"
-                      }`}
-                    >
-                      {isAdmin ? "Open Admin Panel" : "Enter Marketplace"}
-                    </a>
-
-                    {!isAdmin && (
+                    {isAdmin ? (
                       <a
-                        href="/create-product"
-                        className="bg-white border-2 border-slate-200 hover:border-green-400 text-slate-800 px-8 py-4 rounded-full font-black text-center"
+                        href="/admin"
+                        className="bg-slate-950 hover:bg-slate-800 text-white px-8 py-4 rounded-full font-black text-center"
                       >
-                        Post Listing
+                        Open Admin Panel
                       </a>
+                    ) : (
+                      <>
+                        <a
+                          href="/marketplace"
+                          className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-full font-black text-center"
+                        >
+                          Marketplace
+                        </a>
+
+                        <a
+                          href="/rooms"
+                          className="bg-white border-2 border-slate-200 hover:border-green-400 text-slate-800 px-8 py-4 rounded-full font-black text-center"
+                        >
+                          Accommodation
+                        </a>
+
+                        <a
+                          href="/create-product"
+                          className="bg-white border-2 border-slate-200 hover:border-green-400 text-slate-800 px-8 py-4 rounded-full font-black text-center"
+                        >
+                          Sell Item
+                        </a>
+                      </>
                     )}
                   </>
                 )}
@@ -204,9 +223,7 @@ export default function HomePage() {
                       🛍️
                     </div>
 
-                    <h3 className="mt-4 font-black text-lg">
-                      Buy & Sell
-                    </h3>
+                    <h3 className="mt-4 font-black text-lg">Buy & Sell</h3>
 
                     <p className="mt-2 text-sm text-slate-500 leading-6">
                       Turn unused items into value inside your college.
@@ -218,9 +235,7 @@ export default function HomePage() {
                       💬
                     </div>
 
-                    <h3 className="mt-4 font-black text-lg">
-                      Campus Chat
-                    </h3>
+                    <h3 className="mt-4 font-black text-lg">Campus Chat</h3>
 
                     <p className="mt-2 text-sm text-slate-500 leading-6">
                       Message students before buying, selling, or exchanging.
@@ -259,12 +274,12 @@ export default function HomePage() {
               <p className="text-green-600 font-black text-sm">
                 Axyon Ecosystem
               </p>
-              
+
               <h2 className="text-3xl sm:text-4xl font-black mt-2">
                 More than buying and selling.
               </h2>
             </div>
-            
+
             <a
               href="/marketplace"
               className="hidden sm:block text-green-600 font-black"
@@ -284,9 +299,7 @@ export default function HomePage() {
                   {item.icon}
                 </div>
 
-                <p className="mt-4 font-black text-slate-900">
-                  {item.title}
-                </p>
+                <p className="mt-4 font-black text-slate-900">{item.title}</p>
 
                 <p className="mt-1 text-xs text-slate-500 leading-5">
                   {item.desc}
@@ -300,9 +313,7 @@ export default function HomePage() {
       <section className="px-4 sm:px-6 lg:px-10 py-16">
         <div className="max-w-5xl mx-auto">
           <div className="text-center">
-            <p className="text-green-600 font-black text-sm">
-              How Axyon Works
-            </p>
+            <p className="text-green-600 font-black text-sm">How Axyon Works</p>
 
             <h2 className="text-3xl sm:text-5xl font-black mt-2">
               Built around student trust.
@@ -349,7 +360,14 @@ export default function HomePage() {
                 href="/marketplace"
                 className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-full font-black"
               >
-                Explore Axyon
+                Marketplace
+              </a>
+
+              <a
+                href="/rooms"
+                className="bg-white text-slate-950 px-8 py-4 rounded-full font-black"
+              >
+                Accommodation
               </a>
 
               {!isAdmin && (
@@ -364,7 +382,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      
     </main>
   );
 }
