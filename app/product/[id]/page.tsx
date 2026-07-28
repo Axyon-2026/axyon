@@ -11,18 +11,25 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [message, setMessage] = useState("Loading product...");
+  const [openingChat, setOpeningChat] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const userRes = await fetch("/api/auth/me");
+        const userRes = await fetch("/api/auth/me", {
+          cache: "no-store",
+        });
 
         if (userRes.ok) {
           const userData = await userRes.json();
           setCurrentUser(userData.user);
         }
 
-        const res = await fetch(`/api/products/${params.id}`);
+        const res = await fetch(`/api/products/${params.id}`, {
+          cache: "no-store",
+        });
+
         const data = await res.json();
 
         if (!res.ok) {
@@ -32,20 +39,120 @@ export default function ProductDetailPage() {
 
         setProduct(data.product);
         setMessage("");
-      } catch {
+      } catch (error) {
+        console.error("PRODUCT LOAD ERROR:", error);
         setMessage("Something went wrong");
       }
     }
 
-    fetchData();
+    if (params.id) {
+      fetchData();
+    }
   }, [params.id]);
+
+  async function openSellerChat() {
+    if (openingChat || !product?.id) return;
+
+    /*
+     * Guests can browse products, but chatting/deals require login.
+     * /api/chat/open remains the authority for authentication.
+     */
+    if (!currentUser) {
+      router.push("/login");
+      return;
+    }
+
+    try {
+      setOpeningChat(true);
+
+      const res = await fetch("/api/chat/open", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productId: product.id,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          router.push("/login");
+          return;
+        }
+
+        alert(data.message || "Failed to open chat.");
+        return;
+      }
+
+      if (!data.conversationId) {
+        alert("Conversation could not be opened.");
+        return;
+      }
+
+      /*
+       * IMPORTANT:
+       * The conversation ID is part of the route.
+       * This guarantees the correct seller/product chat opens.
+       */
+      router.push(`/chat/${data.conversationId}`);
+    } catch (error) {
+      console.error("OPEN CHAT ERROR:", error);
+      alert("Failed to open chat.");
+    } finally {
+      setOpeningChat(false);
+    }
+  }
+
+  async function deleteListing() {
+    if (!product?.id || deleting) return;
+
+    const confirmed = window.confirm(
+      "Are you sure you want to remove this listing?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setDeleting(true);
+
+      const res = await fetch("/api/products/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productId: product.id,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Failed to remove listing.");
+        return;
+      }
+
+      alert("Listing removed successfully.");
+      router.push("/dashboard");
+    } catch (error) {
+      console.error("DELETE LISTING ERROR:", error);
+      alert("Failed to remove listing.");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   if (message) {
     return (
       <main className="min-h-screen bg-[#f8fafc] text-slate-950">
         <Navbar />
 
-        <div className="px-6 py-20 text-center text-slate-500">{message}</div>
+        <div className="px-6 py-20 text-center text-slate-500">
+          {message}
+        </div>
       </main>
     );
   }
@@ -64,57 +171,65 @@ export default function ProductDetailPage() {
     <main className="min-h-screen bg-[#f8fafc] text-slate-950">
       <Navbar />
 
-      <section className="px-4 sm:px-6 lg:px-10 py-8 pb-28">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-8">
+      <section className="px-4 py-8 pb-28 sm:px-6 lg:px-10">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+            {/* LEFT */}
             <div>
-              <div className="bg-white border border-slate-200 rounded-[2rem] overflow-hidden shadow-sm">
+              <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
                 <div className="aspect-square bg-slate-100">
                   {image ? (
                     <img
                       src={image}
                       alt={product.title}
-                      className="w-full h-full object-cover"
+                      className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-7xl">
+                    <div className="flex h-full w-full items-center justify-center text-7xl">
                       🛍️
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="mt-5 bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm">
-                <h2 className="text-2xl font-black">Product Description</h2>
+              <div className="mt-5 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 className="text-2xl font-black">
+                  Product Description
+                </h2>
 
-                <p className="mt-5 text-slate-600 leading-8 whitespace-pre-wrap">
+                <p className="mt-5 whitespace-pre-wrap leading-8 text-slate-600">
                   {product.description}
                 </p>
               </div>
             </div>
 
+            {/* RIGHT */}
             <div>
-              <div className="bg-white border border-slate-200 rounded-[2rem] p-6 sm:p-8 shadow-sm">
+              <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+                {/* Badges */}
                 <div className="flex flex-wrap gap-2">
-                  <span className="bg-green-100 text-green-700 px-4 py-2 rounded-full text-xs font-black">
+                  <span className="rounded-full bg-green-100 px-4 py-2 text-xs font-black text-green-700">
                     {product.category}
                   </span>
-                  <span className="bg-slate-100 text-slate-700 px-4 py-2 rounded-full text-xs font-black">
+
+                  <span className="rounded-full bg-slate-100 px-4 py-2 text-xs font-black text-slate-700">
                     {product.condition}
                   </span>
+
                   {product.seller?.studentVerified && (
-                    <span className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-xs font-black">
+                    <span className="rounded-full bg-blue-100 px-4 py-2 text-xs font-black text-blue-700">
                       Verified Student
                     </span>
                   )}
 
                   {product.status === "SOLD" && (
-                    <span className="bg-green-100 text-green-700 px-4 py-2 rounded-full text-xs font-black">
+                    <span className="rounded-full bg-green-100 px-4 py-2 text-xs font-black text-green-700">
                       Sold
                     </span>
                   )}
+
                   {product.status === "REMOVED" && (
-                    <span className="bg-red-100 text-red-700 px-4 py-2 rounded-full text-xs font-black">
+                    <span className="rounded-full bg-red-100 px-4 py-2 text-xs font-black text-red-700">
                       Removed
                     </span>
                   )}
@@ -127,226 +242,223 @@ export default function ProductDetailPage() {
                 <div className="mt-5 flex items-end gap-3">
                   <p className="text-5xl font-black text-green-600">
                     ₹
-                    {Number(product.finalPrice ?? product.price).toLocaleString(
-                      "en-IN",
-                    )}
+                    {Number(
+                      product.finalPrice ?? product.price
+                    ).toLocaleString("en-IN")}
                   </p>
 
-                  <span className="text-slate-400 font-semibold mb-1">
+                  <span className="mb-1 font-semibold text-slate-400">
                     Campus Deal
                   </span>
                 </div>
 
-                <div className="mt-8 bg-slate-50 border border-slate-200 rounded-3xl p-5">
+                {/* Seller */}
+                <div className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-5">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-black text-xl">
-                      {product.seller?.name?.charAt(0) || "U"}
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-green-100 text-xl font-black text-green-700">
+                      {product.seller?.name?.charAt(0)?.toUpperCase() || "U"}
                     </div>
 
-                    <div>
-                      <h2 className="font-black text-lg">
+                    <div className="min-w-0">
+                      <h2 className="truncate text-lg font-black">
                         {product.seller?.name || "Unknown"}
                       </h2>
 
-                      <p className="text-sm text-slate-500">
+                      <p className="truncate text-sm text-slate-500">
                         {product.seller?.college || "Campus"}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                {!isAdmin && !isSeller && product.status === "AVAILABLE" && (
-                  <div className="mt-8 space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Buyer / guest actions */}
+                {!isAdmin &&
+                  !isSeller &&
+                  product.status === "AVAILABLE" && (
+                    <div className="mt-8 space-y-4">
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <button
+                          type="button"
+                          onClick={openSellerChat}
+                          disabled={openingChat}
+                          className="
+                            w-full
+                            rounded-full
+                            bg-green-600
+                            py-4
+                            font-black
+                            text-white
+                            shadow-lg
+                            shadow-green-100
+                            transition
+                            hover:bg-green-700
+                            active:scale-[0.98]
+                            disabled:cursor-not-allowed
+                            disabled:opacity-60
+                          "
+                        >
+                          {openingChat
+                            ? "Opening Chat..."
+                            : "Chat with Seller"}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={openSellerChat}
+                          disabled={openingChat}
+                          className="
+                            w-full
+                            rounded-full
+                            border
+                            border-green-200
+                            bg-green-50
+                            py-4
+                            font-black
+                            text-green-700
+                            transition
+                            hover:border-green-500
+                            hover:bg-green-100
+                            active:scale-[0.98]
+                            disabled:cursor-not-allowed
+                            disabled:opacity-60
+                          "
+                        >
+                          {openingChat
+                            ? "Opening..."
+                            : "Pay via Meet"}
+                        </button>
+                      </div>
+
+                      <p className="text-center text-xs leading-5 text-slate-500">
+                        Chat with the seller first, agree on the product and
+                        meeting point, then complete the deal safely on campus.
+                      </p>
+
                       <button
-                        onClick={async () => {
-                          const res = await fetch("/api/chat/open", {
-                            method: "POST",
-                            headers: {
-                              "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify({
-                              productId: product.id,
-                            }),
-                          });
-
-                          const data = await res.json();
-
-                          if (!res.ok) {
-                            alert(data.message);
-                            return;
-                          }
-
-                          router.push(
-                            `/chat?conversation=${data.conversationId}`,
-                          );
-                        }}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-full font-black shadow-lg shadow-green-100"
+                        type="button"
+                        className="w-full rounded-full border border-red-200 py-4 font-black text-red-600 transition hover:border-red-400 hover:bg-red-50"
                       >
-                        Chat with Seller
-                      </button>
-
-                      <button
-                        onClick={async () => {
-                          const res = await fetch("/api/chat/open", {
-                            method: "POST",
-                            headers: {
-                              "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify({
-                              productId: product.id,
-                            }),
-                          });
-
-                          const data = await res.json();
-
-                          if (!res.ok) {
-                            alert(data.message);
-                            return;
-                          }
-
-                          router.push(
-                            `/chat?conversation=${data.conversationId}`,
-                          );
-                        }}
-                        className="w-full border border-green-200 hover:border-green-500 text-green-700 py-4 rounded-full font-black bg-green-50"
-                      >
-                        Pay via Meet
+                        Report Product
                       </button>
                     </div>
+                  )}
 
-                    <button className="w-full border border-red-200 hover:border-red-400 text-red-600 py-4 rounded-full font-black">
-                      Report Product
-                    </button>
-                  </div>
-                )}
-
+                {/* Seller controls */}
                 {isSeller && (
                   <div className="mt-8 space-y-4">
                     {product.status === "AVAILABLE" && (
                       <>
-                        <a
-                          href={`/edit-product/${product.id}`}
-                          className="block text-center bg-slate-950 hover:bg-slate-800 text-white py-4 rounded-full font-black"
+                        <button
+                          type="button"
+                          onClick={() =>
+                            router.push(`/edit-product/${product.id}`)
+                          }
+                          className="w-full rounded-full bg-slate-950 py-4 font-black text-white transition hover:bg-slate-800"
                         >
                           Edit Listing
-                        </a>
+                        </button>
 
                         <button
-                          onClick={async () => {
-                            const confirmed = window.confirm(
-                              "Are you sure you want to remove this listing?",
-                            );
-
-                            if (!confirmed) return;
-
-                            const res = await fetch("/api/products/delete", {
-                              method: "POST",
-                              headers: {
-                                "Content-Type": "application/json",
-                              },
-                              body: JSON.stringify({
-                                productId: product.id,
-                              }),
-                            });
-
-                            const data = await res.json();
-
-                            if (!res.ok) {
-                              alert(data.message);
-                              return;
-                            }
-
-                            alert("Listing removed successfully.");
-
-                            router.push("/dashboard");
-                          }}
-                          className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-full font-black"
+                          type="button"
+                          onClick={deleteListing}
+                          disabled={deleting}
+                          className="w-full rounded-full bg-red-600 py-4 font-black text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          Delete Listing
+                          {deleting
+                            ? "Removing..."
+                            : "Delete Listing"}
                         </button>
                       </>
                     )}
 
-                    <a
-                      href="/chat"
-                      className="block text-center bg-green-600 hover:bg-green-700 text-white py-4 rounded-full font-black"
+                    <button
+                      type="button"
+                      onClick={() => router.push("/chat")}
+                      className="w-full rounded-full bg-green-600 py-4 font-black text-white transition hover:bg-green-700"
                     >
                       Manage Conversations
-                    </a>
+                    </button>
                   </div>
                 )}
 
+                {/* Admin */}
                 {isAdmin && (
-                  <div className="mt-8 bg-red-50 border border-red-200 rounded-[2rem] p-5">
+                  <div className="mt-8 rounded-[2rem] border border-red-200 bg-red-50 p-5">
                     <h3 className="text-xl font-black text-red-700">
                       Admin Moderation Mode
                     </h3>
 
-                    <p className="mt-3 text-red-600 leading-7">
+                    <p className="mt-3 leading-7 text-red-600">
                       Admins cannot buy, chat, report, or directly edit student
                       products from the public product page.
                     </p>
 
-                    <a
-                      href="/admin/listings"
-                      className="block text-center mt-5 border border-red-300 hover:border-red-500 text-red-600 py-4 rounded-full font-black"
+                    <button
+                      type="button"
+                      onClick={() => router.push("/admin/listings")}
+                      className="mt-5 w-full rounded-full border border-red-300 py-4 font-black text-red-600 transition hover:border-red-500"
                     >
                       Open Admin Moderation
-                    </a>
+                    </button>
                   </div>
                 )}
+
+                {/* Sold */}
                 {product.status === "SOLD" && !isAdmin && (
-                  <div className="mt-8 bg-green-50 border border-green-200 rounded-[2rem] p-5">
+                  <div className="mt-8 rounded-[2rem] border border-green-200 bg-green-50 p-5">
                     <h3 className="text-xl font-black text-green-700">
                       ✅ Product Sold
                     </h3>
 
                     <div className="mt-4 space-y-2 text-green-700">
                       <p>
-                        <strong>Final Price:</strong> ₹
+                        <strong>Final Price:</strong>{" "}
+                        ₹
                         {Number(
-                          product.finalPrice ?? product.price,
+                          product.finalPrice ?? product.price
                         ).toLocaleString("en-IN")}
                       </p>
 
                       {product.soldAt && (
                         <p>
                           <strong>Sold On:</strong>{" "}
-                          {new Date(product.soldAt).toLocaleDateString()}
+                          {new Date(product.soldAt).toLocaleDateString(
+                            "en-IN"
+                          )}
                         </p>
                       )}
                     </div>
                   </div>
                 )}
 
+                {/* Removed */}
                 {product.status === "REMOVED" && !isAdmin && (
-                  <div className="mt-8 bg-red-50 border border-red-200 rounded-[2rem] p-5">
+                  <div className="mt-8 rounded-[2rem] border border-red-200 bg-red-50 p-5">
                     <h3 className="text-xl font-black text-red-700">
                       Listing Removed
                     </h3>
 
-                    <p className="mt-3 text-red-600 leading-7">
+                    <p className="mt-3 leading-7 text-red-600">
                       This product is no longer available on Axyon.
                     </p>
                   </div>
                 )}
               </div>
 
-              <div className="mt-5 bg-slate-950 text-white rounded-[2rem] p-6 overflow-hidden relative">
+              {/* Safety */}
+              <div className="relative mt-5 overflow-hidden rounded-[2rem] bg-slate-950 p-6 text-white">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(34,197,94,0.35),_transparent_40%)]" />
 
                 <div className="relative">
-                  <h3 className="text-2xl font-black">Campus Safety Tips</h3>
+                  <h3 className="text-2xl font-black">
+                    Campus Safety Tips
+                  </h3>
 
                   <ul className="mt-5 space-y-3 text-slate-300">
                     <li>• Meet inside campus when possible</li>
-
-                    <li>• Verify product before payment</li>
-
-                    <li>• Use Pay via Meet for safer campus transactions</li>
-
-                    <li>• Use verified student accounts</li>
+                    <li>• Verify the product before payment</li>
+                    <li>• Use Pay via Meet for campus transactions</li>
+                    <li>• Prefer verified student accounts</li>
                   </ul>
                 </div>
               </div>

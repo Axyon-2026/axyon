@@ -10,35 +10,46 @@ export default function QuickReplies({
   onSelect,
 }: Props) {
   return (
-    <div className="border-t border-white/5 bg-[#071019] px-3 py-2">
-
-      <div className="flex gap-2 overflow-x-auto no-scrollbar">
-
+    <div className="border-t border-white/5 bg-[#071019] px-3 py-2 sm:px-4">
+      <div
+        className="
+          mx-auto
+          flex
+          w-full
+          max-w-4xl
+          gap-2
+          overflow-x-auto
+          overscroll-x-contain
+          pb-1
+          [scrollbar-width:none]
+          [&::-webkit-scrollbar]:hidden
+        "
+      >
         {replies.map((reply) => (
           <button
             key={reply}
+            type="button"
             onClick={() => onSelect(reply)}
             className="
               shrink-0
               rounded-full
-              border
-              border-white/10
+              border border-white/10
               bg-[#101826]
-              px-4
-              py-2
+              px-3.5 py-2
               text-xs
+              font-medium
               text-slate-300
               transition
-              hover:border-green-500
-              hover:text-green-400
+              active:scale-95
+              hover:border-green-500/60
+              hover:bg-green-500/10
+              hover:text-green-300
             "
           >
             {reply}
           </button>
         ))}
-
       </div>
-
     </div>
   );
 }

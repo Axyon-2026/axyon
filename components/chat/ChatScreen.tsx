@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
 import CompleteDealModal from "./CompleteDealModal";
 import ChatHeader from "./ChatHeader";
 import CompactProductCard from "./CompactProductCard";
@@ -36,14 +37,72 @@ export default function ChatScreen({
   quickReplies,
   messagesEndRef,
 }: Props) {
+  const [showDealModal, setShowDealModal] = useState(false);
+  const [creatingDeal, setCreatingDeal] = useState(false);
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const previousConversationRef = useRef<string | null>(null);
+  const previousMessageCountRef = useRef(0);
+
+  const conversationId = selectedConversation?.id ?? null;
+  const messages = selectedConversation?.messages || [];
+  const messageCount = messages.length;
+
+  useEffect(() => {
+    if (!conversationId) return;
+
+    const changedConversation =
+      previousConversationRef.current !== conversationId;
+
+    if (changedConversation) {
+      previousConversationRef.current = conversationId;
+      previousMessageCountRef.current = messageCount;
+
+      requestAnimationFrame(() => {
+        const container = scrollContainerRef.current;
+
+        if (container) {
+          container.scrollTop = container.scrollHeight;
+        }
+      });
+
+      return;
+    }
+
+    const receivedNewMessage =
+      messageCount > previousMessageCountRef.current;
+
+    previousMessageCountRef.current = messageCount;
+
+    if (!receivedNewMessage) return;
+
+    const container = scrollContainerRef.current;
+
+    if (!container) return;
+
+    const distanceFromBottom =
+      container.scrollHeight -
+      container.scrollTop -
+      container.clientHeight;
+
+    // Only auto-scroll when the user is already near the latest messages.
+    if (distanceFromBottom < 180) {
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+        });
+      });
+    }
+  }, [conversationId, messageCount, messagesEndRef]);
+
   if (!selectedConversation) {
     return <EmptyChat />;
   }
 
-  const [showDealModal, setShowDealModal] = useState(false);
-  const [creatingDeal, setCreatingDeal] = useState(false);
-
   async function completeDeal() {
+    if (creatingDeal) return;
+
     try {
       setCreatingDeal(true);
 
@@ -61,18 +120,17 @@ export default function ChatScreen({
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.message);
+        alert(data.message || "Failed to complete deal.");
         return;
       }
 
-      alert("Deal completed successfully.");
-
       setShowDealModal(false);
 
-      // Refresh page so sold listing disappears
-      window.location.reload();
+      // Keep the user inside chat.
+      // The next conversation refresh will receive SOLD from the API.
+      alert("Deal completed successfully.");
     } catch (error) {
-      console.error(error);
+      console.error("COMPLETE DEAL ERROR:", error);
       alert("Failed to complete deal.");
     } finally {
       setCreatingDeal(false);
@@ -80,56 +138,103 @@ export default function ChatScreen({
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-[#020817]">
-      <ChatHeader
-        conversation={selectedConversation}
-        currentUser={currentUser}
-        onBack={() => setSelectedConversation(null)}
-      />
-
-      <CompactProductCard
-        product={selectedConversation.product}
-        conversation={selectedConversation}
-        currentUser={currentUser}
-        onCompleteSale={() => setShowDealModal(true)}
-      />
-
-      <div
-        className="
-          flex-1
-          overflow-y-auto
-          px-4
-          py-4
-          space-y-4
-          overscroll-contain
-        "
-      >
-        <MessageList
-          messages={selectedConversation.messages || []}
-          currentUserId={currentUser?.id}
+    <section
+      className="
+        flex
+        h-full
+        min-h-0
+        min-w-0
+        flex-col
+        overflow-hidden
+        bg-[#020817]
+      "
+    >
+      {/* Never part of message scrolling */}
+      <div className="shrink-0">
+        <ChatHeader
+          conversation={selectedConversation}
+          currentUser={currentUser}
+          onBack={() => setSelectedConversation(null)}
         />
 
-        <div ref={messagesEndRef} />
+        <CompactProductCard
+          product={selectedConversation.product}
+          conversation={selectedConversation}
+          currentUser={currentUser}
+          onCompleteSale={() => setShowDealModal(true)}
+        />
       </div>
 
-      <QuickReplies
-        replies={quickReplies}
-        onSelect={(reply) => setMessage(reply)}
-      />
+      {/* ONLY this section scrolls */}
+      <div
+        ref={scrollContainerRef}
+        className="
+          min-h-0
+          flex-1
+          overflow-y-auto
+          overscroll-contain
+          scroll-smooth
+          px-3
+          py-5
+          sm:px-5
+          md:px-6
+          [overflow-anchor:none]
+          [-webkit-overflow-scrolling:touch]
+        "
+      >
+        <div className="mx-auto flex w-full max-w-4xl flex-col gap-3">
+          {messages.length === 0 && (
+            <div className="py-10 text-center">
+              <div className="text-3xl">👋</div>
 
-      <ChatInput
-        message={message}
-        setMessage={setMessage}
-        sending={sending}
-        sendMessage={sendMessage}
-      />
+              <p className="mt-3 font-bold text-white">
+                Start the conversation
+              </p>
+
+              <p className="mt-1 text-sm text-slate-400">
+                Ask about availability, price or where to meet.
+              </p>
+            </div>
+          )}
+
+          <MessageList
+            messages={messages}
+            currentUserId={currentUser?.id}
+          />
+
+          <div
+            ref={messagesEndRef}
+            className="h-px shrink-0"
+            aria-hidden="true"
+          />
+        </div>
+      </div>
+
+      {/* Composer stays outside the scrolling region */}
+      <div className="relative z-20 shrink-0 bg-[#071019]">
+        <QuickReplies
+          replies={quickReplies}
+          onSelect={(reply) => setMessage(reply)}
+        />
+
+        <ChatInput
+          message={message}
+          setMessage={setMessage}
+          sending={sending}
+          sendMessage={sendMessage}
+        />
+      </div>
 
       <CompleteDealModal
         open={showDealModal}
-        onClose={() => setShowDealModal(false)}
+        onClose={() => {
+          if (!creatingDeal) {
+            setShowDealModal(false);
+          }
+        }}
         loading={creatingDeal}
         onContinue={completeDeal}
       />
-    </div>
+    </section>
   );
 }
