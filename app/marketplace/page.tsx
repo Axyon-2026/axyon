@@ -1,7 +1,7 @@
 "use client";
 
 import Navbar from "@/components/Navbar";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 const categories = [
   "All",
@@ -26,41 +26,147 @@ export default function MarketplacePage() {
   const [condition, setCondition] = useState("All");
   const [maxPrice, setMaxPrice] = useState("");
 
+  const fetchProducts = useCallback(async () => {
+    try {
+      const res = await fetch("/api/products", {
+        cache: "no-store",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setMessage(
+          data.message || "Failed to load products"
+        );
+        return;
+      }
+
+      /*
+       * The API already returns AVAILABLE products.
+       *
+       * We filter again on the client so stale/invalid
+       * objects can never accidentally render.
+       */
+      const availableProducts = (
+        data.products || []
+      ).filter(
+        (product: any) =>
+          product.status === "AVAILABLE"
+      );
+
+      setProducts(availableProducts);
+      setMessage("");
+    } catch {
+      setMessage(
+        "Something went wrong while loading products"
+      );
+    }
+  }, []);
+
+  const fetchCurrentUser = useCallback(async () => {
+    try {
+      const userRes = await fetch(
+        "/api/auth/me",
+        {
+          cache: "no-store",
+        }
+      );
+
+      if (userRes.ok) {
+        const userData = await userRes.json();
+        setCurrentUser(userData.user);
+      }
+    } catch {
+      setCurrentUser(null);
+    }
+  }, []);
+
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const userRes = await fetch("/api/auth/me");
+    fetchCurrentUser();
+    fetchProducts();
+  }, [fetchCurrentUser, fetchProducts]);
 
-        if (userRes.ok) {
-          const userData = await userRes.json();
-          setCurrentUser(userData.user);
-        }
+  /*
+   * Keep Marketplace synchronized with seller actions.
+   *
+   * Example:
+   *
+   * Seller deletes listing
+   *        ↓
+   * Product becomes REMOVED
+   *        ↓
+   * Marketplace refreshes
+   *        ↓
+   * Product is no longer returned
+   *        ↓
+   * Product disappears
+   */
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchProducts();
+    }, 10000);
 
-        const res = await fetch("/api/products");
-        const data = await res.json();
+    return () => {
+      clearInterval(interval);
+    };
+  }, [fetchProducts]);
 
-        if (!res.ok) {
-          setMessage("Failed to load products");
-          return;
-        }
-
-        setProducts(data.products || []);
-        setMessage("");
-      } catch {
-        setMessage("Something went wrong while loading products");
+  /*
+   * When the user comes back to the Marketplace tab/page,
+   * refresh immediately instead of showing an old list.
+   */
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (
+        document.visibilityState === "visible"
+      ) {
+        fetchProducts();
       }
     }
 
-    fetchData();
-  }, []);
+    document.addEventListener(
+      "visibilitychange",
+      handleVisibilityChange
+    );
+
+    window.addEventListener(
+      "focus",
+      fetchProducts
+    );
+
+    return () => {
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChange
+      );
+
+      window.removeEventListener(
+        "focus",
+        fetchProducts
+      );
+    };
+  }, [fetchProducts]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
-      const searchText = search.toLowerCase();
+      /*
+       * Final safety check.
+       */
+      if (product.status !== "AVAILABLE") {
+        return false;
+      }
+
+      const searchText =
+        search.toLowerCase().trim();
 
       const matchesSearch =
-        product.title?.toLowerCase().includes(searchText) ||
-        product.description?.toLowerCase().includes(searchText);
+        !searchText ||
+        product.title
+          ?.toLowerCase()
+          .includes(searchText) ||
+        product.description
+          ?.toLowerCase()
+          .includes(searchText);
 
       const matchesCategory =
         category === "All"
@@ -73,7 +179,8 @@ export default function MarketplacePage() {
           : product.condition === condition;
 
       const matchesPrice = maxPrice
-        ? Number(product.price) <= Number(maxPrice)
+        ? Number(product.price) <=
+          Number(maxPrice)
         : true;
 
       return (
@@ -83,7 +190,13 @@ export default function MarketplacePage() {
         matchesPrice
       );
     });
-  }, [products, search, category, condition, maxPrice]);
+  }, [
+    products,
+    search,
+    category,
+    condition,
+    maxPrice,
+  ]);
 
   function resetFilters() {
     setSearch("");
@@ -93,29 +206,32 @@ export default function MarketplacePage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#071019] text-white overflow-hidden">
+    <main className="min-h-screen overflow-hidden bg-[#071019] text-white">
       <Navbar />
 
-      <section className="px-4 sm:px-6 lg:px-10 py-8 pb-32">
-        <div className="max-w-7xl mx-auto">
-          <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.04] backdrop-blur-2xl p-6 sm:p-10 shadow-[0_0_60px_rgba(0,0,0,0.45)]">
-            <div className="absolute top-0 right-0 w-72 h-72 bg-green-500/20 rounded-full blur-3xl" />
+      <section className="px-4 py-8 pb-32 sm:px-6 lg:px-10">
+        <div className="mx-auto max-w-7xl">
 
-            <div className="absolute bottom-0 left-0 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl" />
+          {/* HERO */}
 
-            <div className="relative flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
+          <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.04] p-6 shadow-[0_0_60px_rgba(0,0,0,0.45)] backdrop-blur-2xl sm:p-10">
+            <div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-green-500/20 blur-3xl" />
+
+            <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl" />
+
+            <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <span className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/20 rounded-full px-4 py-2 text-xs font-black text-green-400">
+                <span className="inline-flex items-center gap-2 rounded-full border border-green-500/20 bg-green-500/10 px-4 py-2 text-xs font-black text-green-400">
                   ✦ Verified Campus Marketplace
                 </span>
 
-                <h1 className="mt-6 text-4xl sm:text-6xl font-black leading-[0.95]">
+                <h1 className="mt-6 text-4xl font-black leading-[0.95] sm:text-6xl">
                   Discover campus
                   <br />
                   deals around you.
                 </h1>
 
-                <p className="mt-6 text-slate-400 max-w-2xl text-lg leading-8">
+                <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-400">
                   Explore books, electronics, notes, furniture,
                   hostel essentials, and student deals inside
                   trusted college communities.
@@ -126,18 +242,18 @@ export default function MarketplacePage() {
                 <a
                   href="/create-product"
                   className="
+                    rounded-full
                     bg-gradient-to-r
                     from-green-500
                     to-emerald-600
-                    hover:scale-105
-                    transition
-                    text-black
                     px-7
                     py-4
-                    rounded-full
-                    font-black
-                    shadow-[0_0_40px_rgba(34,197,94,0.35)]
                     text-center
+                    font-black
+                    text-black
+                    shadow-[0_0_40px_rgba(34,197,94,0.35)]
+                    transition
+                    hover:scale-105
                   "
                 >
                   + Post Listing
@@ -146,24 +262,28 @@ export default function MarketplacePage() {
             </div>
           </div>
 
-          <div className="mt-6 bg-white/[0.04] border border-white/10 backdrop-blur-2xl rounded-[2rem] p-5">
+          {/* FILTERS */}
+
+          <div className="mt-6 rounded-[2rem] border border-white/10 bg-white/[0.04] p-5 backdrop-blur-2xl">
             <input
               type="text"
               placeholder="Search books, laptops, notes..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
               className="
                 w-full
-                px-5
-                py-4
                 rounded-2xl
-                bg-white/[0.04]
                 border
                 border-white/10
-                outline-none
-                focus:border-green-500
+                bg-white/[0.04]
+                px-5
+                py-4
                 text-white
+                outline-none
                 placeholder:text-slate-500
+                focus:border-green-500
               "
             />
 
@@ -171,20 +291,23 @@ export default function MarketplacePage() {
               {categories.map((cat) => (
                 <button
                   key={cat}
-                  onClick={() => setCategory(cat)}
+                  type="button"
+                  onClick={() =>
+                    setCategory(cat)
+                  }
                   className={`
                     shrink-0
+                    rounded-full
+                    border
                     px-5
                     py-3
-                    rounded-full
                     text-sm
                     font-black
-                    border
                     transition-all
                     ${
                       category === cat
-                        ? "bg-green-500 text-black border-green-500 shadow-[0_0_25px_rgba(34,197,94,0.35)]"
-                        : "bg-white/[0.04] text-slate-400 border-white/10"
+                        ? "border-green-500 bg-green-500 text-black shadow-[0_0_25px_rgba(34,197,94,0.35)]"
+                        : "border-white/10 bg-white/[0.04] text-slate-400"
                     }
                   `}
                 >
@@ -193,19 +316,21 @@ export default function MarketplacePage() {
               ))}
             </div>
 
-            <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
               <select
                 value={condition}
-                onChange={(e) => setCondition(e.target.value)}
+                onChange={(e) =>
+                  setCondition(e.target.value)
+                }
                 className="
-                  px-4
-                  py-4
                   rounded-2xl
-                  bg-white/[0.04]
                   border
                   border-white/10
-                  outline-none
+                  bg-white/[0.04]
+                  px-4
+                  py-4
                   text-white
+                  outline-none
                 "
               >
                 {conditions.map((item) => (
@@ -229,28 +354,29 @@ export default function MarketplacePage() {
                   setMaxPrice(e.target.value)
                 }
                 className="
-                  px-4
-                  py-4
                   rounded-2xl
-                  bg-white/[0.04]
                   border
                   border-white/10
-                  outline-none
+                  bg-white/[0.04]
+                  px-4
+                  py-4
                   text-white
+                  outline-none
                   placeholder:text-slate-500
                 "
               />
 
               <button
+                type="button"
                 onClick={resetFilters}
                 className="
+                  rounded-2xl
                   border
                   border-white/10
-                  hover:border-green-500
                   py-4
-                  rounded-2xl
                   font-black
                   transition
+                  hover:border-green-500
                 "
               >
                 Reset Filters
@@ -262,7 +388,7 @@ export default function MarketplacePage() {
             <div className="mt-8 flex items-center justify-between">
               <p className="text-slate-400">
                 Showing{" "}
-                <span className="text-green-400 font-black">
+                <span className="font-black text-green-400">
                   {filteredProducts.length}
                 </span>{" "}
                 listing(s)
@@ -278,21 +404,25 @@ export default function MarketplacePage() {
 
           {!message &&
             filteredProducts.length === 0 && (
-              <div className="mt-10 bg-white/[0.04] border border-white/10 rounded-[2rem] p-12 text-center">
-                <div className="text-6xl">🛍️</div>
+              <div className="mt-10 rounded-[2rem] border border-white/10 bg-white/[0.04] p-12 text-center">
+                <div className="text-6xl">
+                  🛍️
+                </div>
 
                 <h2 className="mt-5 text-3xl font-black">
                   No Listings Found
                 </h2>
 
-                <p className="mt-4 text-slate-400 max-w-lg mx-auto leading-7">
+                <p className="mx-auto mt-4 max-w-lg leading-7 text-slate-400">
                   Try changing your filters or search terms
                   to discover more campus products.
                 </p>
               </div>
             )}
 
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+          {/* PRODUCTS */}
+
+          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
             {filteredProducts.map((product) => {
               const isSeller =
                 currentUser?.id ===
@@ -313,14 +443,14 @@ export default function MarketplacePage() {
                     relative
                     overflow-hidden
                     rounded-[2rem]
-                    bg-white/[0.04]
                     border
                     border-white/10
-                    hover:border-green-500/40
+                    bg-white/[0.04]
+                    backdrop-blur-xl
                     transition-all
                     duration-300
                     hover:-translate-y-1
-                    backdrop-blur-xl
+                    hover:border-green-500/40
                   "
                 >
                   <div className="relative aspect-[1.1/1] overflow-hidden">
@@ -329,8 +459,8 @@ export default function MarketplacePage() {
                         src={image}
                         alt={product.title}
                         className="
-                          w-full
                           h-full
+                          w-full
                           object-cover
                           transition-transform
                           duration-500
@@ -338,19 +468,19 @@ export default function MarketplacePage() {
                         "
                       />
                     ) : (
-                      <div className="w-full h-full bg-white/[0.03] flex items-center justify-center text-7xl">
+                      <div className="flex h-full w-full items-center justify-center bg-white/[0.03] text-7xl">
                         🛍️
                       </div>
                     )}
 
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
-                    <div className="absolute top-4 left-4 flex gap-2 flex-wrap">
-                      <span className="bg-black/50 backdrop-blur-xl border border-white/10 px-3 py-1 rounded-full text-xs font-black">
+                    <div className="absolute left-4 top-4 flex flex-wrap gap-2">
+                      <span className="rounded-full border border-white/10 bg-black/50 px-3 py-1 text-xs font-black backdrop-blur-xl">
                         {product.category}
                       </span>
 
-                      <span className="bg-green-500 text-black px-3 py-1 rounded-full text-xs font-black">
+                      <span className="rounded-full bg-green-500 px-3 py-1 text-xs font-black text-black">
                         ₹{product.price}
                       </span>
                     </div>
@@ -358,19 +488,19 @@ export default function MarketplacePage() {
 
                   <div className="p-5">
                     <div className="flex items-start justify-between gap-3">
-                      <h2 className="text-2xl font-black line-clamp-2">
+                      <h2 className="line-clamp-2 text-2xl font-black">
                         {product.title}
                       </h2>
 
                       {product.seller
                         ?.studentVerified && (
-                        <div className="w-10 h-10 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center shrink-0">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-green-500/20 bg-green-500/10">
                           ✅
                         </div>
                       )}
                     </div>
 
-                    <p className="mt-3 text-slate-400 line-clamp-2 leading-7">
+                    <p className="mt-3 line-clamp-2 leading-7 text-slate-400">
                       {product.description}
                     </p>
 
@@ -387,9 +517,9 @@ export default function MarketplacePage() {
 
                       <div
                         className={`
+                          rounded-full
                           px-4
                           py-2
-                          rounded-full
                           text-xs
                           font-black
                           ${
