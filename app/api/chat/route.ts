@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { verifyToken } from "@/lib/auth";
+import { createNotification } from "@/lib/notifications";
 
 async function getCurrentUserId() {
   const cookieStore = await cookies();
@@ -21,9 +22,7 @@ async function getCurrentUserId() {
   }
 }
 
-/* =========================================================
-   GET — LOAD CHAT INBOX + CONVERSATIONS
-   ========================================================= */
+
 
 export async function GET() {
   try {
@@ -277,16 +276,14 @@ export async function POST(req: Request) {
 
           text,
 
-          // Sender has obviously seen their own message.
           readByBuyer: isBuyer,
           readBySeller: isSeller,
         },
       });
 
     /*
-     * Prisma's @updatedAt does not change when a related
-     * Message is created, so explicitly touch the conversation.
-     * This keeps the newest active chat at the top of the inbox.
+     * Keep the conversation at the top of the inbox
+     * after a new message is sent.
      */
     await prisma.conversation.update({
       where: {
@@ -298,36 +295,34 @@ export async function POST(req: Request) {
       },
     });
 
-    try {
-      await prisma.notification.create({
-        data: {
-          userId: recipientId,
+    /*
+     * Create both:
+     *
+     * 1. In-app notification
+     * 2. Email notification
+     *
+     * The notification helper catches its own errors,
+     * so a notification/email failure cannot make the
+     * actual chat message fail.
+     */
+    await createNotification({
+      userId: recipientId,
 
-          title:
-            sender?.name
-              ? `New message from ${sender.name}`
-              : "New message",
+      title: sender?.name
+        ? `New message from ${sender.name}`
+        : "New message on Axyon",
 
-          message:
-            text.length > 100
-              ? `${text.slice(0, 100)}…`
-              : text,
+      message:
+        text.length > 100
+          ? `${text.slice(0, 100)}…`
+          : text,
 
-          type: "CHAT_MESSAGE",
+      type: "CHAT_MESSAGE",
 
-          link: `/chat/${conversation.id}`,
-        },
-      });
-    } catch (notificationError) {
-      /*
-       * A notification failure should not make a successfully
-       * created chat message appear to have failed.
-       */
-      console.error(
-        "CHAT NOTIFICATION ERROR:",
-        notificationError
-      );
-    }
+      link: `/chat/${conversation.id}`,
+
+      sendEmail: true,
+    });
 
     return NextResponse.json({
       success: true,
