@@ -29,10 +29,11 @@ model User {
   studentVerificationStatus String    @default("NOT_SUBMITTED")
   studentVerified           Boolean   @default(false)
   selfieImageUrl            String?
-  buyerDeals                Deal[]    @relation("BuyerDeals")
-  sellerDeals               Deal[]    @relation("SellerDeals")
-  products                  Product[]
-  rooms                     Room[]
+
+  buyerDeals  Deal[]    @relation("BuyerDeals")
+  sellerDeals Deal[]    @relation("SellerDeals")
+  products    Product[]
+  rooms       Room[]
 }
 
 model College {
@@ -46,68 +47,65 @@ model College {
 }
 
 model CollegeRequest {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   collegeName String
   userEmail   String
-  status      String    @default("PENDING")
-  createdAt   DateTime  @default(now())
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
   updatedAt   DateTime? @updatedAt
 }
 
 model Product {
-  id          String        @id @default(cuid())
-  title       String
-  description String
-  price       Int
-  category    String
-  condition   String
-  status      ProductStatus @default(AVAILABLE)
-  sellerId    String
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  imageUrls   String[]
-  buyerId     String?
-  finalPrice  Int?
-  invoiceId   String?
-  soldAt      DateTime?
-  deals       Deal[]
+  id            String        @id @default(cuid())
+  title         String
+  description   String
+  price         Int
+  category      String
+  condition     String
+  status        ProductStatus @default(AVAILABLE)
+  sellerId      String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  imageUrls     String[]
+  buyerId       String?
+  finalPrice    Int?
+  invoiceId     String?
+  soldAt        DateTime?
 
-  conversations Conversation[]
-
-  seller User @relation(fields: [sellerId], references: [id])
+  deals          Deal[]
+  conversations  Conversation[]
+  seller         User         @relation(fields: [sellerId], references: [id])
 }
 
 model Room {
-  id String @id @default(cuid())
+  id            String     @id @default(cuid())
+  ownerId       String
+  owner         User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
-  ownerId String
-  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  title         String
+  description   String
+  roomType      RoomType
 
-  title       String
-  description String
+  rent          Int
+  deposit       Int?
 
-  roomType RoomType
+  address       String
+  landmark      String?
+  college       String
 
-  rent Int
+  contactNumber String?
 
-  deposit Int?
-
-  address String
-
-  landmark String?
-
-  college String
-
-  imageUrls String[]
-
-  amenities String[]
+  imageUrls     String[]
+  amenities     String[]
 
   availableFrom DateTime?
 
-  status RoomStatus @default(AVAILABLE)
+  status        RoomStatus @default(AVAILABLE)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  conversations Conversation[]
 
   @@index([ownerId])
   @@index([college])
@@ -115,36 +113,44 @@ model Room {
 }
 
 model Order {
-  id                String    @id @default(cuid())
+  id                String   @id @default(cuid())
   productId         String
   buyerId           String
   sellerId          String
   amount            Int
   razorpayOrderId   String?
   razorpayPaymentId String?
-  paymentStatus     String    @default("PENDING")
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  paymentStatus     String   @default("PENDING")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
   cancelReason      String?
   cancelledAt       DateTime?
   cancelledBy       String?
 }
 
 model Conversation {
-  id String @id @default(cuid())
+  id         String   @id @default(cuid())
 
-  buyerId  String
-  sellerId String
+  buyerId    String
+  sellerId   String
 
-  productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId  String?
+  product    Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  isArchived Boolean @default(false)
+  roomId     String?
+  room       Room?    @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  isArchived Boolean  @default(false)
 
-  messages Message[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  messages   Message[]
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([productId])
+  @@index([roomId])
 }
 
 model Message {
@@ -155,6 +161,7 @@ model Message {
   createdAt      DateTime     @default(now())
   readByBuyer    Boolean      @default(false)
   readBySeller   Boolean      @default(false)
+
   conversation   Conversation @relation(fields: [conversationId], references: [id])
 }
 
@@ -219,35 +226,31 @@ model AdBanner {
 }
 
 model Deal {
-  id String @id @default(cuid())
+  id              String     @id @default(cuid())
+  productId       String
+  product         Product    @relation(fields: [productId], references: [id])
 
-  productId String
-  product   Product @relation(fields: [productId], references: [id])
+  buyerId         String
+  buyer           User       @relation("BuyerDeals", fields: [buyerId], references: [id])
 
-  buyerId String
-  buyer   User   @relation("BuyerDeals", fields: [buyerId], references: [id])
+  sellerId        String
+  seller           User      @relation("SellerDeals", fields: [sellerId], references: [id])
 
-  sellerId String
-  seller   User   @relation("SellerDeals", fields: [sellerId], references: [id])
+  originalPrice   Int
+  finalPrice      Int
 
-  originalPrice Int
-  finalPrice    Int
+  invoiceId       String     @unique
+  paymentMethod   String
 
-  invoiceId String @unique
+  status          DealStatus @default(PENDING)
 
-  paymentMethod String
+  sellerConfirmed Boolean    @default(true)
+  buyerConfirmed  Boolean    @default(false)
 
-  status DealStatus @default(PENDING)
-
-  sellerConfirmed Boolean @default(true)
-  buyerConfirmed  Boolean @default(false)
-
-  completedBy String?
-
-  confirmedAt DateTime?
-  completedAt DateTime?
-
-  createdAt DateTime @default(now())
+  completedBy     String?
+  confirmedAt    DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime    @default(now())
 }
 
 enum Role {
