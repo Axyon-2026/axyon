@@ -24,6 +24,13 @@ const adminLinks = [
   },
 
   {
+    title: "Accommodation",
+    href: "/admin/rooms",
+    icon: "🏠",
+    color: "from-green-500 to-teal-500",
+  },
+
+  {
     title: "Reports",
     href: "/admin/reports",
     icon: "🚨",
