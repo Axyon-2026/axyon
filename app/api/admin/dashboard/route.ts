@@ -16,6 +16,7 @@ export async function GET() {
     const [
       users,
       products,
+      rooms,
       deals,
       supportTickets,
       reports,
@@ -33,6 +34,7 @@ export async function GET() {
           phone: true,
           college: true,
           role: true,
+          marketplaceType: true,
           emailVerified: true,
           isVerified: true,
           studentVerified: true,
@@ -53,6 +55,22 @@ export async function GET() {
               id: true,
               name: true,
               email: true,
+            },
+          },
+        },
+      }),
+
+      prisma.room.findMany({
+        orderBy: {
+          createdAt: "desc",
+        },
+        include: {
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              marketplaceType: true,
             },
           },
         },
@@ -108,118 +126,263 @@ export async function GET() {
       prisma.conversation.findMany(),
     ]);
 
+    /* ---------------- USERS ---------------- */
+
     const totalUsers = users.length;
 
-    const totalAdmins =
-      users.filter(
-        (user) => user.role === "ADMIN"
-      ).length;
+    const activeUsers = users.filter(
+      (user) => !user.isSuspended
+    ).length;
 
-    const verifiedUsers =
-      users.filter(
-        (user) =>
-          user.studentVerified ||
-          user.studentVerificationStatus === "APPROVED"
-      ).length;
+    const totalAdmins = users.filter(
+      (user) => user.role === "ADMIN"
+    ).length;
 
-    const pendingVerifications =
-      users.filter(
-        (user) =>
-          user.studentVerificationStatus === "PENDING"
-      ).length;
+    const verifiedUsers = users.filter(
+      (user) =>
+        user.studentVerified ||
+        user.studentVerificationStatus === "APPROVED"
+    ).length;
 
-    const suspendedUsers =
-      users.filter(
-        (user) => user.isSuspended
-      ).length;
+    const pendingVerifications = users.filter(
+      (user) =>
+        user.studentVerificationStatus === "PENDING"
+    ).length;
 
-    const activeProducts =
-      products.filter(
-        (product) =>
-          product.status === "AVAILABLE"
-      ).length;
+    const rejectedVerifications = users.filter(
+      (user) =>
+        user.studentVerificationStatus === "REJECTED"
+    ).length;
 
-    const soldProducts =
-      products.filter(
-        (product) =>
-          product.status === "SOLD"
-      ).length;
+    const suspendedUsers = users.filter(
+      (user) => user.isSuspended
+    ).length;
 
-    const removedProducts =
-      products.filter(
-        (product) =>
-          product.status === "REMOVED"
-      ).length;
+    const campusUsers = users.filter(
+      (user) =>
+        user.marketplaceType === "CAMPUS"
+    ).length;
 
-    const openTickets =
-      supportTickets.filter(
-        (ticket) =>
-          ticket.status === "OPEN"
-      ).length;
+    const schoolUsers = users.filter(
+      (user) =>
+        user.marketplaceType === "SCHOOL"
+    ).length;
 
-    const openReports =
-      reports.filter(
-        (report) =>
-          report.status === "OPEN"
-      ).length;
+    /* ---------------- PRODUCTS ---------------- */
 
-    const activeAds =
-      ads.filter(
-        (ad) => ad.isActive
-      ).length;
+    const campusProducts = products.filter(
+      (product) =>
+        product.marketplaceType === "CAMPUS"
+    );
+
+    const schoolProducts = products.filter(
+      (product) =>
+        product.marketplaceType === "SCHOOL"
+    );
+
+    const activeProducts = products.filter(
+      (product) =>
+        product.status === "AVAILABLE"
+    ).length;
+
+    const soldProducts = products.filter(
+      (product) =>
+        product.status === "SOLD"
+    ).length;
+
+    const removedProducts = products.filter(
+      (product) =>
+        product.status === "REMOVED"
+    ).length;
+
+    /* ---------------- CAMPUS ROOMS ---------------- */
+
+    /*
+     * School Marketplace does not have accommodation.
+     * Rooms therefore remain a Campus-only feature.
+     */
+
+    const activeRooms = rooms.filter(
+      (room) =>
+        room.status === "AVAILABLE"
+    ).length;
+
+    const occupiedRooms = rooms.filter(
+      (room) =>
+        room.status === "OCCUPIED"
+    ).length;
+
+    const removedRooms = rooms.filter(
+      (room) =>
+        room.status === "REMOVED"
+    ).length;
+
+    /* ---------------- SUPPORT ---------------- */
+
+    const openTickets = supportTickets.filter(
+      (ticket) =>
+        ticket.status === "OPEN"
+    ).length;
+
+    const resolvedTickets = supportTickets.filter(
+      (ticket) =>
+        ticket.status === "RESOLVED"
+    ).length;
+
+    /* ---------------- REPORTS ---------------- */
+
+    const openReports = reports.filter(
+      (report) =>
+        report.status === "OPEN"
+    ).length;
+
+    const reviewingReports = reports.filter(
+      (report) =>
+        report.status === "REVIEWING"
+    ).length;
+
+    const resolvedReports = reports.filter(
+      (report) =>
+        report.status === "RESOLVED"
+    ).length;
+
+    const dismissedReports = reports.filter(
+      (report) =>
+        report.status === "DISMISSED"
+    ).length;
+
+    /* ---------------- ADS ---------------- */
+
+    const activeAds = ads.filter(
+      (ad) => ad.isActive
+    ).length;
+
+    /* ---------------- RESPONSE ---------------- */
 
     return NextResponse.json({
       stats: {
         totalUsers,
+        activeUsers,
         totalAdmins,
 
         verifiedUsers,
         pendingVerifications,
+        rejectedVerifications,
         suspendedUsers,
 
-        totalProducts:
-          products.length,
+        campusUsers,
+        schoolUsers,
 
+        totalProducts: products.length,
         activeProducts,
         soldProducts,
         removedProducts,
 
-        completedDeals:
-          deals.length,
+        campusProducts: campusProducts.length,
+        schoolProducts: schoolProducts.length,
+
+        totalRooms: rooms.length,
+        activeRooms,
+        occupiedRooms,
+        removedRooms,
+
+        completedDeals: deals.length,
 
         totalSupportTickets:
           supportTickets.length,
-
         openTickets,
+        resolvedTickets,
 
-        totalReports:
-          reports.length,
-
+        totalReports: reports.length,
         openReports,
+        reviewingReports,
+        resolvedReports,
+        dismissedReports,
 
-        totalAds:
-          ads.length,
-
+        totalAds: ads.length,
         activeAds,
 
         totalConversations:
           conversations.length,
       },
 
-      users,
+      /* ---------------- DASHBOARD UI DATA ---------------- */
+
+      users: {
+        total: totalUsers,
+        active: activeUsers,
+        suspended: suspendedUsers,
+        verified: verifiedUsers,
+        pendingVerification:
+          pendingVerifications,
+        campus: campusUsers,
+        school: schoolUsers,
+      },
+
+      listings: {
+        total: products.length,
+        active: activeProducts,
+        sold: soldProducts,
+        removed: removedProducts,
+        campus: campusProducts.length,
+        school: schoolProducts.length,
+      },
+
+      /*
+       * Accommodation exists only in Campus Marketplace.
+       */
+
+      rooms: {
+        total: rooms.length,
+        active: activeRooms,
+        occupied: occupiedRooms,
+        removed: removedRooms,
+      },
+
+      reports: {
+        total: reports.length,
+        pending: openReports,
+        reviewing: reviewingReports,
+        resolved: resolvedReports,
+        dismissed: dismissedReports,
+      },
+
+      support: {
+        total: supportTickets.length,
+        open: openTickets,
+        resolved: resolvedTickets,
+      },
+
+      schoolVerification: {
+        pending: pendingVerifications,
+        approved: verifiedUsers,
+        rejected: rejectedVerifications,
+      },
+
+      recentUsers: users.slice(0, 5),
+
+      recentListings: products.slice(0, 5),
+
+      recentRooms: rooms.slice(0, 5),
+
+      recentReports: reports.slice(0, 5),
+
+      /* ---------------- FULL ADMIN DATA ---------------- */
+
+      usersList: users,
 
       products,
+
+      roomsList: rooms,
 
       completedDeals: deals,
 
       supportTickets,
 
-      reports,
-
       ads,
     });
   } catch (error) {
-    console.log(
+    console.error(
       "ADMIN DASHBOARD ERROR:",
       error
     );

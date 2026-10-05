@@ -8,8 +8,12 @@ export async function GET() {
 
     if (!admin) {
       return NextResponse.json(
-        { message: "Admin access only" },
-        { status: 403 }
+        {
+          message: "Admin access only",
+        },
+        {
+          status: 403,
+        }
       );
     }
 
@@ -20,13 +24,23 @@ export async function GET() {
       take: 100,
     });
 
-    return NextResponse.json({ logs });
+    return NextResponse.json({
+      logs,
+    });
   } catch (error) {
-    console.log("ADMIN LOGS ERROR:", error);
+    console.error(
+      "ADMIN LOGS ERROR:",
+      error
+    );
 
     return NextResponse.json(
-      { message: "Failed to load admin logs" },
-      { status: 500 }
+      {
+        message:
+          "Failed to load admin logs",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }

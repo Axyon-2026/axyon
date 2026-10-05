@@ -1,45 +1,13 @@
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
-
 import { prisma } from "@/lib/prisma";
-import { verifyToken } from "@/lib/auth";
-
-async function getAdmin() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("axyon_token")?.value;
-
-  if (!token) {
-    return null;
-  }
-
-  const decoded: any = verifyToken(token);
-
-  if (!decoded?.id) {
-    return null;
-  }
-
-  const user = await prisma.user.findUnique({
-    where: {
-      id: decoded.id,
-    },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-    },
-  });
-
-  if (!user || user.role !== "ADMIN") {
-    return null;
-  }
-
-  return user;
-}
+import {
+  getAdminUser,
+  logAdminAction,
+} from "@/lib/admin";
+import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const admin = await getAdmin();
+    const admin = await getAdminUser();
 
     if (!admin) {
       return NextResponse.json(
@@ -75,11 +43,15 @@ export async function GET() {
       rooms,
     });
   } catch (error) {
-    console.error("ADMIN ROOMS GET ERROR:", error);
+    console.error(
+      "ADMIN ROOMS GET ERROR:",
+      error
+    );
 
     return NextResponse.json(
       {
-        message: "Failed to load accommodation listings.",
+        message:
+          "Failed to load accommodation listings.",
       },
       {
         status: 500,
@@ -90,7 +62,7 @@ export async function GET() {
 
 export async function PATCH(req: Request) {
   try {
-    const admin = await getAdmin();
+    const admin = await getAdminUser();
 
     if (!admin) {
       return NextResponse.json(
@@ -115,10 +87,11 @@ export async function PATCH(req: Request) {
         ? body.action.trim().toUpperCase()
         : "";
 
-    if (!roomId) {
+    if (!roomId || !action) {
       return NextResponse.json(
         {
-          message: "Room ID is required.",
+          message:
+            "Room ID and action are required.",
         },
         {
           status: 400,
@@ -126,27 +99,31 @@ export async function PATCH(req: Request) {
       );
     }
 
-    if (action !== "REMOVE" && action !== "RESTORE") {
+    // Admin moderation is REMOVE-only.
+    if (action !== "REMOVE") {
       return NextResponse.json(
         {
-          message: "Invalid action.",
+          message:
+            "Admins can only remove accommodation listings.",
         },
         {
-          status: 400,
+          status: 403,
         }
       );
     }
 
-    const room = await prisma.room.findUnique({
-      where: {
-        id: roomId,
-      },
-    });
+    const room =
+      await prisma.room.findUnique({
+        where: {
+          id: roomId,
+        },
+      });
 
     if (!room) {
       return NextResponse.json(
         {
-          message: "Accommodation not found.",
+          message:
+            "Accommodation not found.",
         },
         {
           status: 404,
@@ -154,49 +131,54 @@ export async function PATCH(req: Request) {
       );
     }
 
-    const updatedRoom = await prisma.room.update({
-      where: {
-        id: roomId,
-      },
-      data: {
-        status:
-          action === "REMOVE"
-            ? "REMOVED"
-            : "AVAILABLE",
-      },
-    });
+    if (room.status === "REMOVED") {
+      return NextResponse.json(
+        {
+          message:
+            "This accommodation has already been removed.",
+        },
+        {
+          status: 409,
+        }
+      );
+    }
 
-    await prisma.adminLog.create({
-      data: {
-        adminId: admin.id,
-        adminEmail: admin.email,
-        action:
-          action === "REMOVE"
-            ? "REMOVE_ACCOMMODATION"
-            : "RESTORE_ACCOMMODATION",
-        targetType: "ROOM",
-        targetId: room.id,
-        details:
-          action === "REMOVE"
-            ? `Accommodation "${room.title}" was removed by admin.`
-            : `Accommodation "${room.title}" was restored by admin.`,
-      },
+    const updatedRoom =
+      await prisma.room.update({
+        where: {
+          id: roomId,
+        },
+        data: {
+          status: "REMOVED",
+        },
+      });
+
+    await logAdminAction({
+      adminId: admin.id,
+      adminEmail: admin.email,
+      action: "REMOVE_ACCOMMODATION",
+      targetType: "ROOM",
+      targetId: room.id,
+      details:
+        `Accommodation "${room.title}" was removed by admin.`,
     });
 
     return NextResponse.json({
       success: true,
       message:
-        action === "REMOVE"
-          ? "Accommodation removed successfully."
-          : "Accommodation restored successfully.",
+        "Accommodation removed successfully.",
       room: updatedRoom,
     });
   } catch (error) {
-    console.error("ADMIN ROOMS PATCH ERROR:", error);
+    console.error(
+      "ADMIN ROOMS PATCH ERROR:",
+      error
+    );
 
     return NextResponse.json(
       {
-        message: "Failed to update accommodation.",
+        message:
+          "Failed to remove accommodation.",
       },
       {
         status: 500,

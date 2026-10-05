@@ -22,7 +22,9 @@ async function getCurrentUserId() {
   }
 }
 
-
+/* =========================================================
+   GET — LOAD CONVERSATIONS
+   ========================================================= */
 
 export async function GET() {
   try {
@@ -55,7 +57,18 @@ export async function GET() {
         },
 
         include: {
+          /*
+           * Product is included for item conversations.
+           */
           product: true,
+
+          /*
+           * Room is included for accommodation conversations.
+           *
+           * This allows the chat UI to display:
+           * 🏠 Accommodation — Single Room
+           */
+          room: true,
 
           messages: {
             orderBy: {
@@ -208,6 +221,8 @@ export async function POST(req: Request) {
               title: true,
             },
           },
+
+          room: true,
         },
       });
 

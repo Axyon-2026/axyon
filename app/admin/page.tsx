@@ -1,504 +1,549 @@
 "use client";
 
-import Navbar from "@/components/Navbar";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 
-const adminLinks = [
-  {
-    title: "Users",
-    href: "/admin/users",
-    icon: "👥",
-    color: "from-green-500 to-emerald-500",
-  },
-  {
-    title: "Verification",
-    href: "/admin/student-verifications",
-    icon: "🎓",
-    color: "from-emerald-500 to-green-500",
-  },
-  {
-    title: "Listings",
-    href: "/admin/listings",
-    icon: "🛍️",
-    color: "from-blue-500 to-cyan-500",
-  },
+type DashboardData = {
+  users?: {
+    total?: number;
+    active?: number;
+    suspended?: number;
+    verified?: number;
+    pendingVerification?: number;
+    campus?: number;
+    school?: number;
+  };
 
-  {
-    title: "Accommodation",
-    href: "/admin/rooms",
-    icon: "🏠",
-    color: "from-green-500 to-teal-500",
-  },
+  listings?: {
+    total?: number;
+    active?: number;
+    removed?: number;
+    sold?: number;
+    campus?: number;
+    school?: number;
+  };
 
-  {
-    title: "Reports",
-    href: "/admin/reports",
-    icon: "🚨",
-    color: "from-red-500 to-orange-500",
-  },
+  rooms?: {
+    total?: number;
+    active?: number;
+    occupied?: number;
+    removed?: number;
+  };
 
-  {
-    title: "Support",
-    href: "/admin/support",
-    icon: "💬",
-    color: "from-purple-500 to-pink-500",
-  },
+  reports?: {
+    total?: number;
+    pending?: number;
+    reviewing?: number;
+    resolved?: number;
+    dismissed?: number;
+  };
 
-  {
-    title: "Analytics",
-    href: "/admin/analytics",
-    icon: "📊",
-    color: "from-yellow-500 to-amber-500",
-  },
+  support?: {
+    total?: number;
+    open?: number;
+    resolved?: number;
+  };
 
-  {
-    title: "Logs",
-    href: "/admin/logs",
-    icon: "📁",
-    color: "from-slate-600 to-slate-700",
-  },
-];
+  schoolVerification?: {
+    pending?: number;
+    approved?: number;
+    rejected?: number;
+  };
 
-export default function AdminDashboardPage() {
-  const [data, setData] = useState<any>(null);
+  recentUsers?: any[];
+  recentListings?: any[];
+  recentRooms?: any[];
+  recentReports?: any[];
+};
 
-  const [message, setMessage] = useState("Loading admin dashboard...");
+type StatCardProps = {
+  label: string;
+  value: number | string;
+  description: string;
+  href: string;
+  icon: string;
+};
 
-  const [accessDenied, setAccessDenied] = useState(false);
+function StatCard({ label, value, description, href, icon }: StatCardProps) {
+  return (
+    <Link
+      href={href}
+      className="group rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-xl transition group-hover:bg-green-50">
+          {icon}
+        </div>
 
-  async function fetchDashboard() {
+        <span className="text-slate-300 transition group-hover:text-green-600">
+          →
+        </span>
+      </div>
+
+      <p className="mt-5 text-xs font-black uppercase tracking-wider text-slate-400">
+        {label}
+      </p>
+
+      <p className="mt-1 text-3xl font-black tracking-tight text-slate-950">
+        {value}
+      </p>
+
+      <p className="mt-2 text-sm text-slate-500">{description}</p>
+    </Link>
+  );
+}
+
+function SectionCard({
+  title,
+  description,
+  href,
+  children,
+}: {
+  title: string;
+  description: string;
+  href?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="text-lg font-black text-slate-950">{title}</h2>
+
+          <p className="mt-1 text-sm text-slate-500">{description}</p>
+        </div>
+
+        {href && (
+          <Link
+            href={href}
+            className="shrink-0 text-sm font-black text-green-600 hover:text-green-700"
+          >
+            View all →
+          </Link>
+        )}
+      </div>
+
+      <div className="mt-6">{children}</div>
+    </section>
+  );
+}
+
+export default function AdminDashboard() {
+  const [data, setData] = useState<DashboardData | null>(null);
+
+  const [loading, setLoading] = useState(true);
+
+  const [error, setError] = useState("");
+
+  async function loadDashboard() {
     try {
-      const res = await fetch("/api/admin/dashboard");
+      setError("");
 
-      const dashboardData = await res.json();
+      const res = await fetch("/api/admin/dashboard", {
+        cache: "no-store",
+      });
 
-      if (res.status === 403) {
-        setAccessDenied(true);
-
-        setMessage("Access denied");
-
-        return;
-      }
+      const result = await res.json();
 
       if (!res.ok) {
-        setTimeout(() => {
-          location.reload();
-        }, 800);
-
-        return;
+        throw new Error(result.message || "Failed to load dashboard");
       }
 
-      setData(dashboardData);
-
-      setMessage("");
-    } catch {
-      setMessage("Something went wrong");
+      setData(result);
+    } catch (err: any) {
+      setError(err?.message || "Failed to load dashboard");
+    } finally {
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    fetchDashboard();
+    loadDashboard();
   }, []);
-  if (accessDenied) {
+
+  const totals = useMemo(() => {
+    return {
+      users: data?.users?.total ?? 0,
+
+      listings: data?.listings?.total ?? 0,
+
+      rooms: data?.rooms?.total ?? 0,
+
+      reports: data?.reports?.pending ?? 0,
+
+      support: data?.support?.open ?? 0,
+
+      verification: data?.schoolVerification?.pending ?? 0,
+    };
+  }, [data]);
+
+  if (loading) {
     return (
-      <main className="min-h-screen bg-[#0f172a] text-white">
-        <Navbar />
+      <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 lg:px-10">
+        <div className="mx-auto max-w-7xl">
+          <div className="h-10 w-64 animate-pulse rounded-xl bg-slate-200" />
 
-        <section className="min-h-[80vh] flex items-center justify-center px-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-10 max-w-lg text-center shadow-2xl">
-            <div className="text-7xl">🔒</div>
+          <div className="mt-3 h-5 w-96 max-w-full animate-pulse rounded-lg bg-slate-200" />
 
-            <h1 className="mt-6 text-4xl font-black text-red-500">
-              Access Denied
-            </h1>
-
-            <p className="mt-4 text-slate-400 leading-7">
-              You do not have permission to access the admin dashboard.
-            </p>
-
-            <a
-              href="/"
-              className="
-                inline-block
-                mt-8
-                bg-green-600
-                hover:bg-green-700
-                px-7
-                py-4
-                rounded-full
-                font-black
-              "
-            >
-              Go Home
-            </a>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({
+              length: 6,
+            }).map((_, index) => (
+              <div
+                key={index}
+                className="h-40 animate-pulse rounded-3xl bg-white shadow-sm"
+              />
+            ))}
           </div>
-        </section>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#0f172a] text-white">
-      <Navbar />
+    <main className="min-h-screen bg-slate-50 text-slate-950">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
+        {/* HEADER */}
 
-      <section className="px-4 sm:px-6 lg:px-10 py-8 pb-28">
-        <div className="max-w-7xl mx-auto">
-          {/* hero */}
+        <div className="rounded-[2rem] bg-slate-950 p-6 text-white shadow-xl sm:p-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-slate-300">
+                <span className="h-2 w-2 rounded-full bg-green-400" />
+                Axyon Control Center
+              </div>
 
-          <div className="rounded-[2rem] bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 p-8 sm:p-10 shadow-2xl overflow-hidden relative">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(34,197,94,0.25),_transparent_35%)]" />
-
-            <div className="relative">
-              <span className="inline-flex bg-green-500/10 border border-green-500/20 text-green-400 rounded-full px-4 py-2 text-xs font-black">
-                Axyon Admin Control Center
-              </span>
-
-              <h1 className="mt-6 text-4xl sm:text-5xl font-black">
+              <h1 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">
                 Admin Dashboard
               </h1>
 
-              <p className="mt-4 text-slate-400 max-w-2xl leading-7">
-                Manage users, student verification, listings, reports, support
-                tickets, and overall marketplace activity.
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">
+                Monitor the Campus and School marketplaces, verification,
+                reports, users, accommodation and platform activity from one
+                place.
               </p>
-
-              <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-5">
-                <a
-                  href="/marketplace"
-                  className="
-      group
-      relative
-      overflow-hidden
-      rounded-[2rem]
-      border
-      border-green-500/20
-      bg-gradient-to-br
-      from-green-500/10
-      to-emerald-500/5
-      p-6
-      transition-all
-      hover:-translate-y-1
-      hover:border-green-500
-    "
-                >
-                  <div className="absolute right-0 top-0 h-28 w-28 rounded-full bg-green-500/10 blur-3xl" />
-
-                  <div className="relative z-10">
-                    <div className="text-5xl">🛍️</div>
-
-                    <h2 className="mt-5 text-2xl font-black">
-                      Open Marketplace
-                    </h2>
-
-                    <p className="mt-3 text-slate-400 leading-7">
-                      View live marketplace listings, products, rentals and
-                      barter posts.
-                    </p>
-
-                    <div className="mt-5 text-green-400 font-black">Open →</div>
-                  </div>
-                </a>
-
-                <a
-                  href="/admin/listings"
-                  className="
-      group
-      relative
-      overflow-hidden
-      rounded-[2rem]
-      border
-      border-blue-500/20
-      bg-gradient-to-br
-      from-blue-500/10
-      to-cyan-500/5
-      p-6
-      transition-all
-      hover:-translate-y-1
-      hover:border-blue-500
-    "
-                >
-                  <div className="absolute right-0 top-0 h-28 w-28 rounded-full bg-blue-500/10 blur-3xl" />
-
-                  <div className="relative z-10">
-                    <div className="text-5xl">🛡️</div>
-
-                    <h2 className="mt-5 text-2xl font-black">
-                      Moderate Listings
-                    </h2>
-
-                    <p className="mt-3 text-slate-400 leading-7">
-                      Remove suspicious products, monitor reports and manage
-                      sellers.
-                    </p>
-
-                    <div className="mt-5 text-blue-400 font-black">
-                      Moderate →
-                    </div>
-                  </div>
-                </a>
-
-                <a
-                  href="/admin/ads"
-                  className="
-      group
-      relative
-      overflow-hidden
-      rounded-[2rem]
-      border
-      border-pink-500/20
-      bg-gradient-to-br
-      from-pink-500/10
-      to-purple-500/5
-      p-6
-      transition-all
-      hover:-translate-y-1
-      hover:border-pink-500
-    "
-                >
-                  <div className="absolute right-0 top-0 h-28 w-28 rounded-full bg-pink-500/10 blur-3xl" />
-
-                  <div className="relative z-10">
-                    <div className="text-5xl">📢</div>
-
-                    <h2 className="mt-5 text-2xl font-black">Ad Banners</h2>
-
-                    <p className="mt-3 text-slate-400 leading-7">
-                      Create sponsored homepage ads, promotions and monetized
-                      campaigns.
-                    </p>
-
-                    <div className="mt-5 text-pink-400 font-black">
-                      Manage Ads →
-                    </div>
-                  </div>
-                </a>
-              </div>
             </div>
+
+            <button
+              type="button"
+              onClick={loadDashboard}
+              className="w-full rounded-2xl border border-white/10 bg-white/10 px-5 py-3 text-sm font-black text-white transition hover:bg-white/15 sm:w-auto"
+            >
+              ↻ Refresh
+            </button>
           </div>
 
-          {message && (
-            <div className="mt-6 bg-slate-900 border border-slate-800 rounded-3xl p-6">
-              <p className="text-slate-400 font-semibold">{message}</p>
+          {/* ADMIN PERMISSIONS */}
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            {[
+              ["Monitor", "Users, listings, accommodation & reports"],
+              ["Moderate", "Remove inappropriate content"],
+              ["No marketplace activity", "No buying, selling or editing"],
+            ].map(([title, text]) => (
+              <div
+                key={title}
+                className="rounded-2xl border border-white/10 bg-white/5 p-4"
+              >
+                <p className="text-sm font-black">{title}</p>
+
+                <p className="mt-1 text-xs leading-5 text-slate-400">{text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {error && (
+          <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
+            {error}
+          </div>
+        )}
+
+        {/* OVERVIEW */}
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <StatCard
+            label="Users"
+            value={totals.users}
+            description="Registered platform users"
+            href="/admin/users"
+            icon="👥"
+          />
+
+          <StatCard
+            label="Listings"
+            value={totals.listings}
+            description="Campus + School marketplace items"
+            href="/admin/listings"
+            icon="📦"
+          />
+
+          <StatCard
+            label="Accommodation"
+            value={totals.rooms}
+            description="Campus accommodation listings"
+            href="/admin/rooms"
+            icon="🏠"
+          />
+
+          <StatCard
+            label="Pending reports"
+            value={totals.reports}
+            description="Reports requiring moderation"
+            href="/admin/reports"
+            icon="🚩"
+          />
+
+          <StatCard
+            label="Open support"
+            value={totals.support}
+            description="Support requests awaiting action"
+            href="/admin/support"
+            icon="💬"
+          />
+
+          <StatCard
+            label="School verification"
+            value={totals.verification}
+            description="Students awaiting approval"
+            href="/admin/school-verification"
+            icon="🎓"
+          />
+        </div>
+
+        {/* MARKETPLACE OVERVIEW */}
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          {/* CAMPUS */}
+
+          <SectionCard
+            title="Campus Marketplace"
+            description="Overview of the existing college marketplace."
+            href="/admin/listings"
+          >
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-xs font-bold text-slate-400">Items</p>
+
+                <p className="mt-1 text-2xl font-black">
+                  {data?.listings?.campus ?? 0}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-xs font-bold text-slate-400">
+                  Accommodation
+                </p>
+
+                <p className="mt-1 text-2xl font-black">
+                  {data?.rooms?.total ?? 0}
+                </p>
+              </div>
             </div>
-          )}
+          </SectionCard>
 
-          {data && (
-            <>
-              {/* stats */}
+          {/* SCHOOL */}
 
-              <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 mt-8">
-                {[
-                  {
-                    label: "Total Users",
+          <SectionCard
+            title="School Marketplace"
+            description="Overview of the verified school marketplace."
+            href="/admin/listings"
+          >
+            <div className="grid grid-cols-1 gap-3">
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-xs font-bold text-slate-400">Items</p>
 
-                    value: data.stats?.totalUsers,
+                <p className="mt-1 text-2xl font-black">
+                  {data?.listings?.school ?? 0}
+                </p>
+              </div>
+            </div>
 
-                    icon: "👥",
-                  },
+            <div className="mt-4 rounded-2xl border border-green-100 bg-green-50 p-4">
+              <p className="text-sm font-black text-green-800">
+                School marketplace is product-only
+              </p>
 
-                  {
-                    label: "Verified",
+              <p className="mt-1 text-xs leading-5 text-green-700">
+                School accommodation is not part of the School Marketplace.
+              </p>
+            </div>
+          </SectionCard>
+        </div>
 
-                    value: data.stats?.verifiedUsers,
+        {/* QUICK ACTIONS */}
 
-                    icon: "✅",
-                  },
+        <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div>
+            <h2 className="text-lg font-black">Admin controls</h2>
 
-                  {
-                    label: "Products",
-                    value: data.stats?.totalProducts,
-                    icon: "🛍️",
-                  },
+            <p className="mt-1 text-sm text-slate-500">
+              Administrative tools only. Marketplace creation and editing are
+              intentionally unavailable to admins.
+            </p>
+          </div>
 
-                  {
-                    label: "Sold",
-                    value: data.stats?.soldProducts,
-                    icon: "✅",
-                  },
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              ["👥", "Manage Users", "/admin/users"],
+              ["📦", "Review Listings", "/admin/listings"],
+              ["🏠", "Review Accommodation", "/admin/rooms"],
+              ["🚩", "Handle Reports", "/admin/reports"],
+              ["🎓", "School Verification", "/admin/school-verification"],
+              ["📚", "Home Tuition", "/admin/home-tuition"],
+              ["📣", "Announcements", "/admin/announcements"],
+              ["💬", "Support", "/admin/support"],
+              ["📊", "Analytics", "/admin/analytics"],
+              ["📋", "Audit Logs", "/admin/logs"],
+            ].map(([icon, label, href]) => (
+              <Link
+                key={href}
+                href={href}
+                className="flex items-center gap-3 rounded-2xl border border-slate-200 p-4 transition hover:border-green-200 hover:bg-green-50"
+              >
+                <span className="text-xl">{icon}</span>
 
-                  {
-                    label: "Deals",
-                    value: data.stats?.completedDeals,
-                    icon: "🤝",
-                  },
+                <span className="text-sm font-black">{label}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
 
-                  {
-                    label: "Admins",
+        {/* RECENT ACTIVITY */}
 
-                    value: data.stats?.totalAdmins,
+        <div className="mt-6 grid gap-6 lg:grid-cols-3">
+          {/* USERS */}
 
-                    icon: "🛡️",
-                  },
-                ].map((item) => (
+          <SectionCard
+            title="Recent users"
+            description="Latest account activity."
+            href="/admin/users"
+          >
+            <div className="space-y-3">
+              {(data?.recentUsers || []).slice(0, 5).map((user, index) => (
+                <div
+                  key={user.id || index}
+                  className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 p-3"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-black">
+                      {user.name || user.email || "User"}
+                    </p>
+
+                    <p className="truncate text-xs text-slate-500">
+                      {user.email || "No email"}
+                    </p>
+                  </div>
+
+                  <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-slate-500">
+                    {user.marketplaceType || "CAMPUS"}
+                  </span>
+                </div>
+              ))}
+
+              {!data?.recentUsers?.length && (
+                <p className="py-6 text-center text-sm text-slate-400">
+                  No recent users.
+                </p>
+              )}
+            </div>
+          </SectionCard>
+
+          {/* LISTINGS */}
+
+          <SectionCard
+            title="Recent listings"
+            description="Latest marketplace activity."
+            href="/admin/listings"
+          >
+            <div className="space-y-3">
+              {(data?.recentListings || [])
+                .slice(0, 5)
+                .map((listing, index) => (
                   <div
-                    key={item.label}
-                    className="
-                      bg-slate-900
-                      border
-                      border-slate-800
-                      rounded-[2rem]
-                      p-5
-                      shadow-xl
-                    "
+                    key={listing.id || index}
+                    className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 p-3"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-3xl">{item.icon}</span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-black">
+                        {listing.title || "Untitled listing"}
+                      </p>
 
-                      <span className="text-[10px] text-green-400 font-black">
-                        LIVE
-                      </span>
+                      <p className="truncate text-xs text-slate-500">
+                        {listing.seller?.name ||
+                          listing.seller?.email ||
+                          "Unknown seller"}
+                      </p>
                     </div>
 
-                    <h2 className="mt-5 text-3xl font-black">
-                      {item.value || 0}
-                    </h2>
-
-                    <p className="mt-2 text-sm text-slate-400 font-semibold">
-                      {item.label}
-                    </p>
+                    <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-slate-500">
+                      {listing.marketplaceType || "CAMPUS"}
+                    </span>
                   </div>
                 ))}
-              </div>
 
-              {/* admin modules */}
+              {!data?.recentListings?.length && (
+                <p className="py-6 text-center text-sm text-slate-400">
+                  No recent listings.
+                </p>
+              )}
+            </div>
+          </SectionCard>
 
-              <div className="mt-10">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-green-400 text-sm font-black">
-                      Management
+          {/* REPORTS */}
+
+          <SectionCard
+            title="Recent reports"
+            description="Moderation activity requiring attention."
+            href="/admin/reports"
+          >
+            <div className="space-y-3">
+              {(data?.recentReports || []).slice(0, 5).map((report, index) => (
+                <div
+                  key={report.id || index}
+                  className="rounded-2xl bg-slate-50 p-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm font-black">
+                      {report.reason || "Reported content"}
                     </p>
 
-                    <h2 className="mt-1 text-3xl font-black">Admin Modules</h2>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-5 mt-6">
-                  {adminLinks.map((item) => (
-                    <a
-                      key={item.title}
-                      href={item.href}
-                      className="
-                          group
-                          bg-slate-900
-                          border
-                          border-slate-800
-                          hover:border-green-500
-                          rounded-[2rem]
-                          p-6
-                          transition
-                          hover:-translate-y-1
-                          shadow-xl
-                        "
-                    >
-                      <div
-                        className={`
-                            w-14
-                            h-14
-                            rounded-2xl
-                            bg-gradient-to-br
-                            ${item.color}
-                            flex
-                            items-center
-                            justify-center
-                            text-2xl
-                          `}
-                      >
-                        {item.icon}
-                      </div>
-
-                      <h3 className="mt-5 text-2xl font-black">{item.title}</h3>
-
-                      <p className="mt-2 text-slate-400 text-sm leading-6">
-                        Manage and monitor {item.title.toLowerCase()}.
-                      </p>
-
-                      <div className="mt-5 text-green-400 font-black text-sm">
-                        Open →
-                      </div>
-                    </a>
-                  ))}
-                </div>
-              </div>
-              <div className="mt-10 bg-slate-900 border border-slate-800 rounded-[2rem] p-6 shadow-xl">
-                <h2 className="text-3xl font-black">Recent Completed Deals</h2>
-
-                <div className="mt-6 space-y-4">
-                  {data.completedDeals?.length === 0 && (
-                    <p className="text-slate-400">No completed deals yet.</p>
-                  )}
-
-                  {data.completedDeals?.map((deal: any) => (
-                    <div key={deal.id} className="bg-slate-800 rounded-2xl p-5">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-bold">{deal.product.title}</p>
-
-                          <p className="text-sm text-slate-400 mt-1">
-                            Seller: {deal.seller.name}
-                          </p>
-
-                          <p className="text-sm text-slate-400">
-                            Buyer: {deal.buyer.name}
-                          </p>
-                        </div>
-
-                        <div className="text-right">
-                          <p className="text-green-400 font-black text-xl">
-                            ₹{deal.finalPrice}
-                          </p>
-
-                          <p className="text-xs text-slate-400">
-                            {new Date(deal.completedAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              {/* system */}
-
-              <div className="mt-10 bg-slate-900 border border-slate-800 rounded-[2rem] p-6 sm:p-8 shadow-xl">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                  <div>
-                    <p className="text-green-400 text-sm font-black">
-                      System Status
-                    </p>
-
-                    <h2 className="mt-2 text-3xl font-black">
-                      Marketplace Health
-                    </h2>
-
-                    <p className="mt-3 text-slate-400 max-w-2xl leading-7">
-                      Monitor trust, reports, support activity, and campus
-                      marketplace operations.
-                    </p>
+                    <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-black text-amber-700">
+                      {report.status || "PENDING"}
+                    </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-slate-800 rounded-2xl p-5">
-                      <p className="text-sm text-slate-400 font-semibold">
-                        Verification
-                      </p>
-
-                      <p className="mt-2 text-green-400 font-black">Active</p>
-                    </div>
-
-                    <div className="bg-slate-800 rounded-2xl p-5">
-                      <p className="text-sm text-slate-400 font-semibold">
-                        Moderation
-                      </p>
-
-                      <p className="mt-2 text-green-400 font-black">Running</p>
-                    </div>
-                  </div>
+                  <p className="mt-1 truncate text-xs text-slate-500">
+                    {report.product?.title ||
+                      report.room?.title ||
+                      "Content under review"}
+                  </p>
                 </div>
-              </div>
-            </>
-          )}
+              ))}
+
+              {!data?.recentReports?.length && (
+                <p className="py-6 text-center text-sm text-slate-400">
+                  No recent reports.
+                </p>
+              )}
+            </div>
+          </SectionCard>
         </div>
-      </section>
+
+        {/* FOOTER NOTE */}
+
+        <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 text-center shadow-sm">
+          <p className="text-sm font-black text-slate-700">
+            Axyon Administration
+          </p>
+
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            Admin accounts are for platform oversight and moderation only.
+            Marketplace buying, selling, creation and listing editing remain
+            unavailable.
+          </p>
+        </div>
+      </div>
     </main>
   );
 }

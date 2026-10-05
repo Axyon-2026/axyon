@@ -1,44 +1,57 @@
 "use client";
 
 import Navbar from "@/components/Navbar";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+type Ad = {
+  id: string;
+  title?: string;
+  description?: string;
+  buttonText?: string;
+  buttonLink?: string;
+  badge?: string;
+  emoji?: string;
+  imageUrl?: string;
+  isActive?: boolean;
+};
 
 export default function AdminAdsPage() {
-  const [ads, setAds] = useState<any[]>([]);
+  const [ads, setAds] = useState<Ad[]>([]);
   const [message, setMessage] = useState("Loading ads...");
+  const [loading, setLoading] = useState(false);
 
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [description, setDescription] =
+    useState("");
   const [buttonText, setButtonText] =
     useState("Learn More");
-
   const [buttonLink, setButtonLink] =
     useState("/");
-
   const [badge, setBadge] =
     useState("SPONSORED");
-
   const [emoji, setEmoji] =
     useState("✨");
-
   const [image, setImage] =
     useState<File | null>(null);
 
   async function fetchAds() {
     try {
+      setMessage("Loading ads...");
+
       const res = await fetch(
-        "/api/admin/ads"
+        "/api/admin/ads",
+        {
+          cache: "no-store",
+        }
       );
 
-      const data =
-        await res.json();
+      const data = await res.json();
 
       if (!res.ok) {
         setMessage(
           data.message ||
-            "Failed to load ads"
+            "Failed to load ads."
         );
-
         return;
       }
 
@@ -46,7 +59,7 @@ export default function AdminAdsPage() {
       setMessage("");
     } catch {
       setMessage(
-        "Something went wrong"
+        "Something went wrong while loading ads."
       );
     }
   }
@@ -60,38 +73,44 @@ export default function AdminAdsPage() {
   ) {
     e.preventDefault();
 
+    if (!title.trim()) {
+      alert("Please enter a banner title.");
+      return;
+    }
+
+    if (!description.trim()) {
+      alert("Please enter a description.");
+      return;
+    }
+
     try {
-      const formData =
-        new FormData();
+      setLoading(true);
+
+      const formData = new FormData();
 
       formData.append(
         "title",
-        title
+        title.trim()
       );
-
       formData.append(
         "description",
-        description
+        description.trim()
       );
-
       formData.append(
         "buttonText",
-        buttonText
+        buttonText.trim()
       );
-
       formData.append(
         "buttonLink",
-        buttonLink
+        buttonLink.trim()
       );
-
       formData.append(
         "badge",
-        badge
+        badge.trim()
       );
-
       formData.append(
         "emoji",
-        emoji
+        emoji.trim()
       );
 
       if (image) {
@@ -101,24 +120,21 @@ export default function AdminAdsPage() {
         );
       }
 
-      const res =
-        await fetch(
-          "/api/admin/ads",
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
+      const res = await fetch(
+        "/api/admin/ads",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
-      const data =
-        await res.json();
+      const data = await res.json();
 
       if (!res.ok) {
         alert(
           data.message ||
-            "Failed to create ad"
+            "Failed to create ad."
         );
-
         return;
       }
 
@@ -130,12 +146,22 @@ export default function AdminAdsPage() {
       setEmoji("✨");
       setImage(null);
 
-      fetchAds();
+      const input =
+        document.getElementById(
+          "ad-image"
+        ) as HTMLInputElement | null;
 
+      if (input) {
+        input.value = "";
+      }
+
+      await fetchAds();
     } catch {
       alert(
-        "Something went wrong"
+        "Something went wrong while creating the ad."
       );
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -143,100 +169,151 @@ export default function AdminAdsPage() {
     adId: string,
     action: string
   ) {
-    const res = await fetch(
-      "/api/admin/ads",
-      {
-        method: "PATCH",
-
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
-
-        body: JSON.stringify({
-          adId,
-          action,
-        }),
-      }
-    );
-
-    const data =
-      await res.json();
-
-    if (!res.ok) {
-      alert(
-        data.message ||
-          "Failed to update ad"
+    try {
+      const res = await fetch(
+        "/api/admin/ads",
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            adId,
+            action,
+          }),
+        }
       );
 
-      return;
-    }
+      const data = await res.json();
 
-    fetchAds();
+      if (!res.ok) {
+        alert(
+          data.message ||
+            "Failed to update ad."
+        );
+        return;
+      }
+
+      await fetchAds();
+    } catch {
+      alert(
+        "Something went wrong while updating the ad."
+      );
+    }
   }
 
+  const activeAds = useMemo(
+    () =>
+      ads.filter(
+        (ad) => ad.isActive
+      ).length,
+    [ads]
+  );
+
+  const inactiveAds =
+    ads.length - activeAds;
+
   return (
-    <main className="min-h-screen bg-[#071019] text-white">
+    <main className="min-h-screen bg-slate-950 text-white">
       <Navbar />
 
-      <section className="px-4 py-10 pb-28 sm:px-6 lg:px-10">
+      <section className="px-4 py-6 pb-28 sm:px-6 lg:px-10 lg:py-10">
         <div className="mx-auto max-w-7xl">
+          {/* HERO */}
+          <div className="relative overflow-hidden rounded-[2rem] border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/30 p-6 shadow-2xl sm:p-8 lg:p-10">
+            <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-emerald-500/10 blur-3xl" />
 
-          <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-[#071b34] via-[#071019] to-[#0f3b2e] p-8 sm:p-12">
-
-            <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-green-500/20 blur-3xl" />
-
-            <div className="relative z-10">
-
-              <span className="inline-flex rounded-full border border-green-500/20 bg-green-500/10 px-4 py-2 text-xs font-black text-green-400">
+            <div className="relative">
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-black uppercase tracking-wider text-emerald-400">
+                <span className="h-2 w-2 rounded-full bg-emerald-400" />
                 Axyon Advertising System
-              </span>
+              </div>
 
-              <h1 className="mt-6 text-5xl font-black leading-tight sm:text-6xl">
-                Homepage Ad Banners
-              </h1>
+              <div className="mt-5 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <h1 className="text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+                    Homepage Ads
+                  </h1>
 
-              <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-300">
-                Create premium homepage campaigns,
-                startup promotions, campus events,
-                sponsored products and business ads.
-              </p>
+                  <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-400 sm:text-base">
+                    Create and manage premium homepage
+                    campaigns, startup promotions, campus
+                    events, sponsored products, and
+                    business advertisements.
+                  </p>
+                </div>
 
+                <a
+                  href="/admin"
+                  className="inline-flex w-fit rounded-full border border-slate-700 bg-slate-950/70 px-5 py-3 text-sm font-black text-slate-300 transition hover:border-emerald-500/50 hover:text-white"
+                >
+                  ← Admin Dashboard
+                </a>
+              </div>
+
+              {/* STATS */}
+              <div className="mt-7 grid grid-cols-3 gap-3">
+                <div className="rounded-2xl border border-slate-800 bg-black/20 p-4">
+                  <p className="text-[9px] font-black uppercase tracking-wider text-slate-500">
+                    Total Ads
+                  </p>
+
+                  <p className="mt-1 text-2xl font-black">
+                    {ads.length}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+                  <p className="text-[9px] font-black uppercase tracking-wider text-emerald-400">
+                    Active
+                  </p>
+
+                  <p className="mt-1 text-2xl font-black text-emerald-300">
+                    {activeAds}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-slate-800 bg-black/20 p-4">
+                  <p className="text-[9px] font-black uppercase tracking-wider text-slate-500">
+                    Inactive
+                  </p>
+
+                  <p className="mt-1 text-2xl font-black">
+                    {inactiveAds}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[460px_1fr]">
-
+          {/* MAIN */}
+          <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[430px_1fr]">
+            {/* CREATE */}
             <form
               onSubmit={createAd}
-              className="rounded-[2.5rem] border border-white/10 bg-white/[0.04] p-7 backdrop-blur-xl"
+              className="h-fit rounded-[2rem] border border-slate-800 bg-slate-900 p-5 shadow-xl sm:p-6"
             >
-
-              <div className="flex items-center gap-4">
-
-                <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-green-500/10 text-4xl">
+              <div className="flex items-start gap-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-2xl">
                   📢
                 </div>
 
                 <div>
-
-                  <h2 className="text-3xl font-black">
+                  <h2 className="text-2xl font-black">
                     Create Ad
                   </h2>
 
-                  <p className="mt-1 text-sm text-slate-400">
-                    Multiple ads can stay active
-                    and appear on homepage.
+                  <p className="mt-1 text-sm leading-6 text-slate-500">
+                    Publish a new homepage campaign.
                   </p>
-
                 </div>
-
               </div>
 
-              <div className="mt-8 space-y-5">
-
+              <div className="mt-7 space-y-5">
+                {/* TITLE */}
                 <div>
-                  <label className="mb-2 block text-sm font-black text-slate-300">
+                  <label className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-400">
                     Banner Title
                   </label>
 
@@ -244,16 +321,15 @@ export default function AdminAdsPage() {
                     placeholder="e.g. Startup Fest 2026"
                     value={title}
                     onChange={(e) =>
-                      setTitle(
-                        e.target.value
-                      )
+                      setTitle(e.target.value)
                     }
-                    className="w-full rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-4 outline-none transition-all focus:border-green-500"
+                    className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3.5 text-sm outline-none transition focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/10"
                   />
                 </div>
 
+                {/* DESCRIPTION */}
                 <div>
-                  <label className="mb-2 block text-sm font-black text-slate-300">
+                  <label className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-400">
                     Description
                   </label>
 
@@ -266,14 +342,14 @@ export default function AdminAdsPage() {
                       )
                     }
                     rows={5}
-                    className="w-full resize-none rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-4 outline-none transition-all focus:border-green-500"
+                    className="w-full resize-none rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3.5 text-sm leading-6 outline-none transition focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/10"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-
+                {/* BUTTON */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="mb-2 block text-sm font-black text-slate-300">
+                    <label className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-400">
                       Button Text
                     </label>
 
@@ -285,12 +361,12 @@ export default function AdminAdsPage() {
                           e.target.value
                         )
                       }
-                      className="w-full rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-4 outline-none transition-all focus:border-green-500"
+                      className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3.5 text-sm outline-none transition focus:border-emerald-500/60"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-sm font-black text-slate-300">
+                    <label className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-400">
                       Button Link
                     </label>
 
@@ -302,16 +378,15 @@ export default function AdminAdsPage() {
                           e.target.value
                         )
                       }
-                      className="w-full rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-4 outline-none transition-all focus:border-green-500"
+                      className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3.5 text-sm outline-none transition focus:border-emerald-500/60"
                     />
                   </div>
-
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-
+                {/* BADGE / EMOJI */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="mb-2 block text-sm font-black text-slate-300">
+                    <label className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-400">
                       Badge
                     </label>
 
@@ -323,12 +398,12 @@ export default function AdminAdsPage() {
                           e.target.value
                         )
                       }
-                      className="w-full rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-4 outline-none transition-all focus:border-green-500"
+                      className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3.5 text-sm outline-none transition focus:border-emerald-500/60"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-sm font-black text-slate-300">
+                    <label className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-400">
                       Emoji
                     </label>
 
@@ -340,179 +415,224 @@ export default function AdminAdsPage() {
                           e.target.value
                         )
                       }
-                      className="w-full rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-4 outline-none transition-all focus:border-green-500"
+                      className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3.5 text-sm outline-none transition focus:border-emerald-500/60"
                     />
                   </div>
-
                 </div>
 
+                {/* IMAGE */}
                 <div>
-
-                  <label className="mb-2 block text-sm font-black text-slate-300">
+                  <label className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-400">
                     Banner Image
                   </label>
 
-                  <div className="rounded-[2rem] border border-dashed border-white/10 bg-white/[0.03] p-6 text-center">
-
-                    <div className="text-5xl">
+                  <label className="block cursor-pointer rounded-2xl border border-dashed border-slate-700 bg-slate-950/70 p-6 text-center transition hover:border-emerald-500/50 hover:bg-emerald-500/[0.02]">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-800 text-2xl">
                       🖼️
                     </div>
 
-                    <p className="mt-4 text-sm text-slate-400">
-                      Upload professional ad banner image
+                    <p className="mt-3 text-sm font-bold text-slate-300">
+                      Upload banner image
+                    </p>
+
+                    <p className="mt-1 text-xs text-slate-600">
+                      JPG, PNG, WEBP or other image
                     </p>
 
                     <input
+                      id="ad-image"
                       type="file"
                       accept="image/*"
                       onChange={(e) =>
                         setImage(
-                          e.target
-                            .files?.[0] ||
+                          e.target.files?.[0] ||
                             null
                         )
                       }
-                      className="mt-5 block w-full text-sm text-slate-400"
+                      className="hidden"
                     />
 
                     {image && (
-                      <p className="mt-4 text-sm font-bold text-green-400">
-                        {image.name}
-                      </p>
+                      <div className="mt-4 rounded-xl bg-emerald-500/10 px-3 py-2 text-xs font-bold text-emerald-400">
+                        ✓ {image.name}
+                      </div>
                     )}
-
-                  </div>
-
+                  </label>
                 </div>
 
                 <button
-                  className="
-                    mt-3
-                    w-full
-                    rounded-full
-                    bg-green-500
-                    px-6
-                    py-5
-                    text-lg
-                    font-black
-                    text-black
-                    shadow-[0_0_40px_rgba(34,197,94,0.35)]
-                    transition-all
-                    hover:scale-[1.02]
-                    hover:bg-green-400
-                  "
+                  type="submit"
+                  disabled={loading}
+                  className="w-full rounded-full bg-emerald-500 px-6 py-4 text-sm font-black text-slate-950 shadow-lg shadow-emerald-500/10 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Publish Ad Banner
+                  {loading
+                    ? "Publishing..."
+                    : "Publish Ad Banner"}
                 </button>
-
               </div>
-
             </form>
 
-            <div>
+            {/* ADS */}
+            <div className="min-w-0">
+              <div className="mb-5 flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-wider text-emerald-400">
+                    Campaign Library
+                  </p>
+
+                  <h2 className="mt-1 text-2xl font-black">
+                    Existing Ads
+                  </h2>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={fetchAds}
+                  className="rounded-full border border-slate-700 px-4 py-2 text-xs font-black text-slate-400 transition hover:border-emerald-500/50 hover:text-white"
+                >
+                  ↻ Refresh
+                </button>
+              </div>
 
               {message && (
-                <p className="mb-5 text-slate-400">
-                  {message}
-                </p>
+                <div className="rounded-[1.75rem] border border-slate-800 bg-slate-900 p-8 text-center shadow-xl">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-800 text-2xl">
+                    ⏳
+                  </div>
+
+                  <p className="mt-4 text-sm font-semibold text-slate-400">
+                    {message}
+                  </p>
+                </div>
               )}
 
-              <div className="space-y-6">
+              {!message &&
+                ads.length === 0 && (
+                  <div className="rounded-[2rem] border border-slate-800 bg-slate-900 p-10 text-center shadow-xl sm:p-14">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-800 text-3xl">
+                      📢
+                    </div>
 
-                {ads.map((ad) => (
+                    <h2 className="mt-5 text-2xl font-black">
+                      No Ads Yet
+                    </h2>
 
-                  <div
-                    key={ad.id}
-                    className="
-                      relative
-                      overflow-hidden
-                      rounded-[2.5rem]
-                      border
-                      border-white/10
-                      bg-white/[0.04]
-                      p-7
-                      backdrop-blur-xl
-                    "
-                  >
+                    <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+                      Create your first homepage campaign
+                      using the form beside this panel.
+                    </p>
+                  </div>
+                )}
 
-                    <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-green-500/10 blur-3xl" />
-
-                    <div className="relative z-10">
-
+              <div className="space-y-5">
+                {!message &&
+                  ads.map((ad) => (
+                    <article
+                      key={ad.id}
+                      className="relative overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-900 shadow-xl"
+                    >
+                      {/* IMAGE */}
                       {ad.imageUrl && (
-                        <div className="mb-6 overflow-hidden rounded-[2rem] border border-white/10">
+                        <div className="relative overflow-hidden border-b border-slate-800">
                           <img
                             src={ad.imageUrl}
-                            alt={ad.title}
-                            className="h-64 w-full object-cover"
+                            alt={
+                              ad.title ||
+                              "Advertisement"
+                            }
+                            className="h-48 w-full object-cover sm:h-64"
                           />
+
+                          <div className="absolute left-4 top-4 rounded-full border border-white/10 bg-black/60 px-3 py-1.5 text-[9px] font-black uppercase tracking-wider backdrop-blur">
+                            {ad.badge ||
+                              "SPONSORED"}
+                          </div>
                         </div>
                       )}
 
-                      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="p-5 sm:p-6">
+                        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="flex min-w-0 gap-4">
+                            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-2xl">
+                              {ad.emoji ||
+                                "✨"}
+                            </div>
 
-                        <div className="flex gap-5">
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap gap-2">
+                                <span
+                                  className={`rounded-full border px-3 py-1 text-[9px] font-black uppercase tracking-wider ${
+                                    ad.isActive
+                                      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+                                      : "border-slate-700 bg-slate-950 text-slate-500"
+                                  }`}
+                                >
+                                  {ad.isActive
+                                    ? "ACTIVE"
+                                    : "INACTIVE"}
+                                </span>
 
-                          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[2rem] bg-green-500/10 text-5xl">
-                            {ad.emoji || "✨"}
+                                {!ad.imageUrl && (
+                                  <span className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1 text-[9px] font-black uppercase tracking-wider text-slate-500">
+                                    {ad.badge ||
+                                      "SPONSORED"}
+                                  </span>
+                                )}
+                              </div>
+
+                              <h3 className="mt-3 break-words text-xl font-black sm:text-2xl">
+                                {ad.title ||
+                                  "Untitled Ad"}
+                              </h3>
+
+                              {ad.description && (
+                                <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-slate-400">
+                                  {
+                                    ad.description
+                                  }
+                                </p>
+                              )}
+                            </div>
                           </div>
-
-                          <div>
-
-                            <span
-                              className={`
-                                inline-flex
-                                rounded-full
-                                px-4
-                                py-2
-                                text-xs
-                                font-black
-                                ${
-                                  ad.isActive
-                                    ? "bg-green-500 text-black"
-                                    : "bg-white/10 text-slate-400"
-                                }
-                              `}
-                            >
-                              {ad.isActive
-                                ? "ACTIVE"
-                                : "INACTIVE"}
-                            </span>
-
-                            <h2 className="mt-4 text-3xl font-black">
-                              {ad.title}
-                            </h2>
-
-                            <p className="mt-4 max-w-2xl text-slate-400 leading-7">
-                              {ad.description}
-                            </p>
-
-                          </div>
-
                         </div>
 
-                        <div className="flex flex-wrap gap-3">
+                        {/* CAMPAIGN DETAILS */}
+                        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+                            <p className="text-[9px] font-black uppercase tracking-wider text-slate-600">
+                              Button
+                            </p>
 
+                            <p className="mt-1 text-sm font-bold text-slate-300">
+                              {ad.buttonText ||
+                                "Learn More"}
+                            </p>
+                          </div>
+
+                          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+                            <p className="text-[9px] font-black uppercase tracking-wider text-slate-600">
+                              Destination
+                            </p>
+
+                            <p className="mt-1 break-all font-mono text-xs font-bold text-slate-400">
+                              {ad.buttonLink ||
+                                "/"}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* ACTIONS */}
+                        <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                           {!ad.isActive && (
                             <button
+                              type="button"
                               onClick={() =>
                                 updateAd(
                                   ad.id,
                                   "ACTIVATE"
                                 )
                               }
-                              className="
-                                rounded-full
-                                border
-                                border-green-500/20
-                                bg-green-500/10
-                                px-6
-                                py-3
-                                font-black
-                                text-green-400
-                                transition-all
-                                hover:border-green-500
-                              "
+                              className="rounded-full bg-emerald-500 px-5 py-3 text-sm font-black text-slate-950 transition hover:bg-emerald-400"
                             >
                               Activate
                             </button>
@@ -520,69 +640,38 @@ export default function AdminAdsPage() {
 
                           {ad.isActive && (
                             <button
+                              type="button"
                               onClick={() =>
                                 updateAd(
                                   ad.id,
                                   "REMOVE"
                                 )
                               }
-                              className="
-                                rounded-full
-                                border
-                                border-red-500/20
-                                bg-red-500/10
-                                px-6
-                                py-3
-                                font-black
-                                text-red-400
-                                transition-all
-                                hover:border-red-500
-                              "
+                              className="rounded-full border border-amber-500/20 bg-amber-500/10 px-5 py-3 text-sm font-black text-amber-400 transition hover:border-amber-500/50"
                             >
-                              Remove
+                              Deactivate
                             </button>
                           )}
 
                           <button
+                            type="button"
                             onClick={() =>
                               updateAd(
                                 ad.id,
                                 "DELETE"
                               )
                             }
-                            className="
-                              rounded-full
-                              border
-                              border-white/10
-                              bg-white/[0.04]
-                              px-6
-                              py-3
-                              font-black
-                              text-white
-                              transition-all
-                              hover:border-red-500
-                              hover:text-red-400
-                            "
+                            className="rounded-full border border-red-500/20 bg-red-500/5 px-5 py-3 text-sm font-black text-red-400 transition hover:border-red-500/50 hover:bg-red-500/10"
                           >
                             Delete
                           </button>
-
                         </div>
-
                       </div>
-
-                    </div>
-
-                  </div>
-
-                ))}
-
+                    </article>
+                  ))}
               </div>
-
             </div>
-
           </div>
-
         </div>
       </section>
     </main>

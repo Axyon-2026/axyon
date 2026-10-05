@@ -8,8 +8,12 @@ export async function GET() {
 
     if (!admin) {
       return NextResponse.json(
-        { message: "Admin access only" },
-        { status: 403 }
+        {
+          message: "Admin access only",
+        },
+        {
+          status: 403,
+        }
       );
     }
 
@@ -36,6 +40,7 @@ export async function GET() {
         collegeIdNumber: true,
         collegeIdImageUrl: true,
         selfieImageUrl: true,
+
         studentVerified: true,
         studentVerificationStatus: true,
       },
@@ -45,11 +50,18 @@ export async function GET() {
       users,
     });
   } catch (error) {
-    console.log("ADMIN USERS ERROR:", error);
+    console.error(
+      "ADMIN USERS ERROR:",
+      error
+    );
 
     return NextResponse.json(
-      { message: "Failed to load users" },
-      { status: 500 }
+      {
+        message: "Failed to load users",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }

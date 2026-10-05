@@ -33,6 +33,7 @@ export async function GET() {
     const products = await prisma.product.findMany({
       where: {
         status: "AVAILABLE",
+        marketplaceType: "CAMPUS",
       },
       orderBy: {
         createdAt: "desc",
@@ -93,6 +94,16 @@ export async function POST(req: Request) {
       );
     }
 
+    if (user.marketplaceType !== "CAMPUS") {
+      return NextResponse.json(
+        {
+          message:
+            "School Marketplace users cannot create Campus listings.",
+        },
+        { status: 403 }
+      );
+    }
+
     if (user.isSuspended) {
       return NextResponse.json(
         { message: "Your account is suspended." },
@@ -102,12 +113,16 @@ export async function POST(req: Request) {
 
     if (user.studentVerificationStatus !== "APPROVED") {
       return NextResponse.json(
-        { message: "Please complete student verification before listing." },
+        {
+          message:
+            "Please complete student verification before listing.",
+        },
         { status: 403 }
       );
     }
 
-    const contentType = req.headers.get("content-type") || "";
+    const contentType =
+      req.headers.get("content-type") || "";
 
     let title = "";
     let description = "";
@@ -119,20 +134,39 @@ export async function POST(req: Request) {
     if (contentType.includes("multipart/form-data")) {
       const formData = await req.formData();
 
-      title = String(formData.get("title") || "");
-      description = String(formData.get("description") || "");
-      price = formData.get("price") || "";
-      category = String(formData.get("category") || "");
-      condition = String(formData.get("condition") || "");
+      title = String(
+        formData.get("title") || ""
+      );
 
-      const files = formData.getAll("images") as File[];
+      description = String(
+        formData.get("description") || ""
+      );
+
+      price =
+        formData.get("price") || "";
+
+      category = String(
+        formData.get("category") || ""
+      );
+
+      condition = String(
+        formData.get("condition") || ""
+      );
+
+      const files =
+        formData.getAll("images") as File[];
 
       const validFiles = files.filter(
-        (file) => file && file.name && file.size > 0
+        (file) =>
+          file &&
+          file.name &&
+          file.size > 0
       );
 
       imageUrls = await Promise.all(
-        validFiles.map((file) => uploadToCloudinary(file))
+        validFiles.map((file) =>
+          uploadToCloudinary(file)
+        )
       );
     } else {
       const body = await req.json();
@@ -147,61 +181,88 @@ export async function POST(req: Request) {
 
     if (!title || title.trim().length < 3) {
       return NextResponse.json(
-        { message: "Title must be at least 3 characters." },
+        {
+          message:
+            "Title must be at least 3 characters.",
+        },
         { status: 400 }
       );
     }
 
-    if (!description || description.trim().length < 10) {
+    if (
+      !description ||
+      description.trim().length < 10
+    ) {
       return NextResponse.json(
-        { message: "Please provide a proper description." },
+        {
+          message:
+            "Please provide a proper description.",
+        },
         { status: 400 }
       );
     }
 
     if (!price || Number(price) < 1) {
       return NextResponse.json(
-        { message: "Price must be at least ₹1." },
+        {
+          message:
+            "Price must be at least ₹1.",
+        },
         { status: 400 }
       );
     }
 
     if (Number(price) > 500000) {
       return NextResponse.json(
-        { message: "Price cannot exceed ₹5,00,000." },
+        {
+          message:
+            "Price cannot exceed ₹5,00,000.",
+        },
         { status: 400 }
       );
     }
 
     if (!category || !condition) {
       return NextResponse.json(
-        { message: "Category and condition are required." },
+        {
+          message:
+            "Category and condition are required.",
+        },
         { status: 400 }
       );
     }
 
-    const product = await prisma.product.create({
-      data: {
-        title: title.trim(),
-        description: description.trim(),
-        price: Number(price),
-        category,
-        condition,
-        imageUrls,
-        status: "AVAILABLE",
-        sellerId: user.id,
-      },
-    });
+    const product =
+      await prisma.product.create({
+        data: {
+          title: title.trim(),
+          description: description.trim(),
+          price: Number(price),
+          category,
+          condition,
+          imageUrls,
+          status: "AVAILABLE",
+          marketplaceType: "CAMPUS",
+          sellerId: user.id,
+        },
+      });
 
     return NextResponse.json({
-      message: "Product listed successfully",
+      message:
+        "Product listed successfully",
       product,
     });
   } catch (error) {
-    console.log("PRODUCT CREATE ERROR:", error);
+    console.log(
+      "PRODUCT CREATE ERROR:",
+      error
+    );
 
     return NextResponse.json(
-      { message: "Failed to create product" },
+      {
+        message:
+          "Failed to create product",
+      },
       { status: 500 }
     );
   }

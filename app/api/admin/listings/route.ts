@@ -32,13 +32,22 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({ listings });
+    return NextResponse.json({
+      listings,
+    });
   } catch (error) {
-    console.log("ADMIN LISTINGS FETCH ERROR:", error);
+    console.error(
+      "ADMIN LISTINGS FETCH ERROR:",
+      error
+    );
 
     return NextResponse.json(
-      { message: "Failed to load listings" },
-      { status: 500 }
+      {
+        message: "Failed to load listings",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }
@@ -54,89 +63,149 @@ export async function PATCH(req: Request) {
       );
     }
 
-    const { productId, action } = await req.json();
+    const body = await req.json();
+
+    const productId = body.productId;
+    const action = body.action;
 
     if (!productId || !action) {
       return NextResponse.json(
-        { message: "Product ID and action are required" },
-        { status: 400 }
+        {
+          message:
+            "Product ID and action are required",
+        },
+        {
+          status: 400,
+        }
       );
     }
 
-    const product = await prisma.product.findUnique({
-      where: { id: productId },
-      include: {
-        seller: {
-          select: {
-            email: true,
+    /*
+     * Admin marketplace permissions:
+     *
+     * Admins are moderators only.
+     *
+     * Allowed:
+     * - Remove inappropriate listings
+     *
+     * Not allowed:
+     * - Create listings
+     * - Edit listings
+     * - Buy listings
+     * - Sell listings
+     * - Restore removed listings
+     */
+
+    if (action !== "REMOVE") {
+      return NextResponse.json(
+        {
+          message:
+            "Admins can only remove inappropriate listings",
+        },
+        {
+          status: 403,
+        }
+      );
+    }
+
+    const product =
+      await prisma.product.findUnique({
+        where: {
+          id: productId,
+        },
+        include: {
+          seller: {
+            select: {
+              id: true,
+              email: true,
+            },
           },
         },
-      },
-    });
+      });
 
     if (!product) {
       return NextResponse.json(
-        { message: "Listing not found" },
-        { status: 404 }
+        {
+          message: "Listing not found",
+        },
+        {
+          status: 404,
+        }
       );
     }
 
-    if (action === "REMOVE") {
-      const updatedProduct = await prisma.product.update({
-        where: { id: productId },
+    if (
+      String(product.status).toUpperCase() ===
+      "REMOVED"
+    ) {
+      return NextResponse.json(
+        {
+          message:
+            "Listing is already removed",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const updatedProduct =
+      await prisma.product.update({
+        where: {
+          id: productId,
+        },
         data: {
           status: "REMOVED",
         },
       });
 
-      await logAdminAction({
-        adminId: admin.id,
-        adminEmail: admin.email,
-        action: "REMOVE_LISTING",
-        targetType: "PRODUCT",
-        targetId: productId,
-        details: `Removed listing "${product.title}" by seller ${product.seller?.email}`,
-      });
+    /*
+     * Archive active conversations connected
+     * to the removed listing.
+     */
+    await prisma.conversation.updateMany({
+      where: {
+        productId,
+        isArchived: false,
+      },
+      data: {
+        isArchived: true,
+      },
+    });
 
-      return NextResponse.json({
-        message: "Listing removed successfully",
-        product: updatedProduct,
-      });
-    }
+    await logAdminAction({
+      adminId: admin.id,
+      adminEmail: admin.email,
+      action: "REMOVE_LISTING",
+      targetType: "PRODUCT",
+      targetId: productId,
+      details:
+        `Removed listing "${product.title}" by seller ${
+          product.seller?.email || "unknown"
+        } from ${
+          product.marketplaceType || "unknown"
+        } marketplace`,
+    });
 
-    if (action === "RESTORE") {
-      const updatedProduct = await prisma.product.update({
-        where: { id: productId },
-        data: {
-          status: "AVAILABLE",
-        },
-      });
-
-      await logAdminAction({
-        adminId: admin.id,
-        adminEmail: admin.email,
-        action: "RESTORE_LISTING",
-        targetType: "PRODUCT",
-        targetId: productId,
-        details: `Restored listing "${product.title}"`,
-      });
-
-      return NextResponse.json({
-        message: "Listing restored successfully",
-        product: updatedProduct,
-      });
-    }
-
-    return NextResponse.json(
-      { message: "Invalid action" },
-      { status: 400 }
-    );
+    return NextResponse.json({
+      message:
+        "Listing removed successfully",
+      product: updatedProduct,
+    });
   } catch (error) {
-    console.log("ADMIN LISTINGS ACTION ERROR:", error);
+    console.error(
+      "ADMIN LISTINGS ACTION ERROR:",
+      error
+    );
 
     return NextResponse.json(
-      { message: "Failed to update listing" },
-      { status: 500 }
+      {
+        message:
+          "Failed to remove listing",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }

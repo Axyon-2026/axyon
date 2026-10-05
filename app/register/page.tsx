@@ -25,7 +25,6 @@ export default function RegisterPage() {
     async function fetchColleges() {
       try {
         const res = await fetch("/api/colleges");
-
         const data = await res.json();
 
         setColleges(data.colleges || []);
@@ -41,31 +40,21 @@ export default function RegisterPage() {
     function handleOutsideClick(event: MouseEvent) {
       if (
         collegeRef.current &&
-        !collegeRef.current.contains(
-          event.target as Node
-        )
+        !collegeRef.current.contains(event.target as Node)
       ) {
         setCollegeOpen(false);
       }
     }
 
-    document.addEventListener(
-      "mousedown",
-      handleOutsideClick
-    );
+    document.addEventListener("mousedown", handleOutsideClick);
 
     return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleOutsideClick
-      );
+      document.removeEventListener("mousedown", handleOutsideClick);
     };
   }, []);
 
   const filteredColleges = useMemo(() => {
-    const query = collegeSearch
-      .trim()
-      .toLowerCase();
+    const query = collegeSearch.trim().toLowerCase();
 
     if (!query) {
       return colleges.slice(0, 30);
@@ -73,14 +62,9 @@ export default function RegisterPage() {
 
     return colleges
       .filter((collegeItem) => {
-        const name =
-          collegeItem.name?.toLowerCase() || "";
-
-        const city =
-          collegeItem.city?.toLowerCase() || "";
-
-        const state =
-          collegeItem.state?.toLowerCase() || "";
+        const name = collegeItem.name?.toLowerCase() || "";
+        const city = collegeItem.city?.toLowerCase() || "";
+        const state = collegeItem.state?.toLowerCase() || "";
 
         return (
           name.includes(query) ||
@@ -91,9 +75,7 @@ export default function RegisterPage() {
       .slice(0, 30);
   }, [colleges, collegeSearch]);
 
-  function selectCollege(
-    collegeName: string
-  ) {
+  function selectCollege(collegeName: string) {
     setCollege(collegeName);
     setCollegeSearch(collegeName);
     setCollegeOpen(false);
@@ -106,16 +88,12 @@ export default function RegisterPage() {
     setCollegeOpen(false);
   }
 
-  async function handleRegister(
-    e: React.FormEvent
-  ) {
+  async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     setMessage("");
 
     const finalCollege =
-      college === "OTHER"
-        ? otherCollege.trim()
-        : college;
+      college === "OTHER" ? otherCollege.trim() : college;
 
     if (
       !name ||
@@ -128,59 +106,43 @@ export default function RegisterPage() {
       return;
     }
 
-    if (
-      !email.includes("@") ||
-      !email.includes(".")
-    ) {
-      setMessage(
-        "Please enter a valid email address"
-      );
+    if (!email.includes("@") || !email.includes(".")) {
+      setMessage("Please enter a valid email address");
       return;
     }
 
     if (phone.length < 10) {
-      setMessage(
-        "Please enter a valid phone number"
-      );
+      setMessage("Please enter a valid phone number");
       return;
     }
 
     if (password.length < 6) {
-      setMessage(
-        "Password must be at least 6 characters"
-      );
+      setMessage("Password must be at least 6 characters");
       return;
     }
 
     setMessage("Creating account...");
 
     try {
-      const res = await fetch(
-        "/api/auth/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name,
-            email,
-            phone,
-            college: finalCollege,
-            collegeRequest:
-              college === "OTHER",
-            password,
-          }),
-        }
-      );
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          phone,
+          college: finalCollege,
+          collegeRequest: college === "OTHER",
+          password,
+        }),
+      });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setMessage(
-          data.message ||
-            "Registration failed"
-        );
+        setMessage(data.message || "Registration failed");
         return;
       }
 
@@ -196,9 +158,7 @@ export default function RegisterPage() {
       setOtherCollege("");
       setPassword("");
     } catch {
-      setMessage(
-        "Something went wrong. Please try again."
-      );
+      setMessage("Something went wrong. Please try again.");
     }
   }
 
@@ -206,24 +166,26 @@ export default function RegisterPage() {
     <main className="min-h-screen bg-[#f8fafc] text-slate-950">
       <Navbar />
 
-      <section className="min-h-[calc(100vh-90px)] px-4 py-10 sm:px-6 lg:px-10">
-        <div className="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-8 lg:grid-cols-2">
+      <section className="relative min-h-[calc(100vh-90px)] overflow-hidden px-4 py-8 sm:px-6 sm:py-12 lg:px-10 lg:py-16">
+        <div className="pointer-events-none absolute -left-40 top-10 h-80 w-80 rounded-full bg-green-200/30 blur-3xl" />
+        <div className="pointer-events-none absolute -right-40 bottom-0 h-96 w-96 rounded-full bg-emerald-100/40 blur-3xl" />
 
+        <div className="relative mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-14">
           {/* LEFT SIDE */}
 
           <div className="hidden lg:block">
             <span className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-4 py-2 text-xs font-black text-green-700">
+              <span className="h-2 w-2 rounded-full bg-green-500" />
               Join Verified Campus Network
             </span>
 
-            <h1 className="mt-6 text-6xl font-black leading-[0.95] tracking-tight">
+            <h1 className="mt-6 max-w-xl text-5xl font-black leading-[0.95] tracking-tight xl:text-6xl">
               Start your campus marketplace journey.
             </h1>
 
             <p className="mt-6 max-w-lg text-lg leading-8 text-slate-600">
-              Create your Axyon account, verify your student
-              identity, and start buying or selling with trusted
-              students from your college.
+              Create your Axyon account, verify your student identity, and
+              start buying or selling with trusted students from your college.
             </p>
 
             <div className="mt-8 max-w-lg space-y-4">
@@ -236,298 +198,305 @@ export default function RegisterPage() {
                   key={item}
                   className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
                 >
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 font-black text-green-700">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 font-black text-green-700">
                     ✓
                   </span>
 
-                  <p className="font-bold text-slate-700">
-                    {item}
-                  </p>
+                  <p className="font-bold text-slate-700">{item}</p>
                 </div>
               ))}
             </div>
           </div>
 
+          {/* MOBILE INTRO */}
+
+          <div className="lg:hidden">
+            <span className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-3 py-1.5 text-[11px] font-black uppercase tracking-wide text-green-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+              Join Axyon
+            </span>
+
+            <h1 className="mt-4 text-4xl font-black leading-[0.98] tracking-tight sm:text-5xl">
+              Start your
+              <br />
+              <span className="text-green-600">campus journey.</span>
+            </h1>
+
+            <p className="mt-4 max-w-lg text-sm leading-6 text-slate-600 sm:text-base">
+              Create your account and join your college marketplace.
+            </p>
+          </div>
+
           {/* REGISTER CARD */}
 
-          <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-xl sm:p-8">
-            <div className="mb-8 text-center">
-              <div className="mb-3 flex items-center justify-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.7)]" />
+          <div className="w-full">
+            <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_20px_70px_rgba(15,23,42,0.10)] sm:p-8 lg:p-10">
+              <div className="mb-7">
+                <div className="mb-4 flex items-center gap-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-950">
+                    <span className="h-2.5 w-2.5 rounded-full bg-green-400 shadow-[0_0_12px_rgba(34,197,94,0.8)]" />
+                  </div>
 
-                <span className="text-3xl font-black tracking-tight">
-                  AXYON
-                </span>
+                  <span className="text-xl font-black tracking-tight">
+                    AXYON
+                  </span>
+                </div>
+
+                <h1 className="text-2xl font-black tracking-tight sm:text-3xl">
+                  Create your account
+                </h1>
+
+                <p className="mt-2 text-sm text-slate-500">
+                  Join your verified student marketplace.
+                </p>
               </div>
 
-              <h1 className="text-3xl font-black">
-                Create your account
-              </h1>
+              <form onSubmit={handleRegister} className="space-y-4">
+                {/* NAME */}
 
-              <p className="mt-2 text-sm text-slate-500">
-                Join your verified student marketplace.
-              </p>
-            </div>
+                <div>
+                  <label className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-500">
+                    Full name
+                  </label>
 
-            <form
-              onSubmit={handleRegister}
-              className="space-y-4"
-            >
-              {/* NAME */}
-
-              <input
-                type="text"
-                placeholder="Full name"
-                value={name}
-                onChange={(e) =>
-                  setName(e.target.value)
-                }
-                className="
-                  w-full
-                  rounded-2xl
-                  border
-                  border-slate-200
-                  bg-slate-100
-                  px-5
-                  py-4
-                  outline-none
-                  focus:border-green-500
-                  focus:bg-white
-                "
-              />
-
-              {/* EMAIL */}
-
-              <input
-                type="email"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) =>
-                  setEmail(e.target.value)
-                }
-                className="
-                  w-full
-                  rounded-2xl
-                  border
-                  border-slate-200
-                  bg-slate-100
-                  px-5
-                  py-4
-                  outline-none
-                  focus:border-green-500
-                  focus:bg-white
-                "
-              />
-
-              {/* PHONE */}
-
-              <input
-                type="tel"
-                placeholder="Phone number"
-                value={phone}
-                onChange={(e) =>
-                  setPhone(e.target.value)
-                }
-                className="
-                  w-full
-                  rounded-2xl
-                  border
-                  border-slate-200
-                  bg-slate-100
-                  px-5
-                  py-4
-                  outline-none
-                  focus:border-green-500
-                  focus:bg-white
-                "
-              />
-
-              {/* COLLEGE SEARCH */}
-
-              <div
-                ref={collegeRef}
-                className="relative"
-              >
-                <label className="mb-2 block text-sm font-black text-slate-700">
-                  College
-                </label>
-
-                <div className="relative">
                   <input
                     type="text"
-                    value={collegeSearch}
-                    placeholder="Search college, city or state..."
-                    onFocus={() =>
-                      setCollegeOpen(true)
-                    }
-                    onChange={(e) => {
-                      setCollegeSearch(
-                        e.target.value
-                      );
-
-                      setCollege("");
-
-                      setOtherCollege("");
-
-                      setCollegeOpen(true);
-                    }}
+                    placeholder="Full name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    autoComplete="name"
                     className="
                       w-full
                       rounded-2xl
-                      border
-                      border-slate-200
+                      border border-slate-200
                       bg-slate-100
-                      px-5
-                      py-4
-                      pr-12
+                      px-5 py-4
+                      text-sm
                       outline-none
                       transition
+                      placeholder:text-slate-400
                       focus:border-green-500
                       focus:bg-white
+                      focus:ring-4
+                      focus:ring-green-500/10
                     "
                   />
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setCollegeOpen(
-                        (prev) => !prev
-                      )
-                    }
-                    className="
-                      absolute
-                      right-3
-                      top-1/2
-                      flex
-                      h-9
-                      w-9
-                      -translate-y-1/2
-                      items-center
-                      justify-center
-                      rounded-full
-                      text-slate-500
-                      hover:bg-slate-200
-                    "
-                  >
-                    {collegeOpen ? "⌃" : "⌄"}
-                  </button>
                 </div>
 
-                {/* DROPDOWN */}
+                {/* EMAIL + PHONE */}
 
-                {collegeOpen && (
-                  <div
-                    className="
-                      absolute
-                      left-0
-                      right-0
-                      z-50
-                      mt-2
-                      overflow-hidden
-                      rounded-2xl
-                      border
-                      border-slate-200
-                      bg-white
-                      shadow-2xl
-                    "
-                  >
-                    <div className="max-h-72 overflow-y-auto overscroll-contain p-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-500">
+                      Email
+                    </label>
 
-                      {filteredColleges.length > 0 ? (
-                        filteredColleges.map(
-                          (collegeItem) => (
+                    <input
+                      type="email"
+                      placeholder="Email address"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      autoComplete="email"
+                      className="
+                        w-full
+                        rounded-2xl
+                        border border-slate-200
+                        bg-slate-100
+                        px-5 py-4
+                        text-sm
+                        outline-none
+                        transition
+                        placeholder:text-slate-400
+                        focus:border-green-500
+                        focus:bg-white
+                        focus:ring-4
+                        focus:ring-green-500/10
+                      "
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-500">
+                      Phone
+                    </label>
+
+                    <input
+                      type="tel"
+                      placeholder="Phone number"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      autoComplete="tel"
+                      inputMode="tel"
+                      className="
+                        w-full
+                        rounded-2xl
+                        border border-slate-200
+                        bg-slate-100
+                        px-5 py-4
+                        text-sm
+                        outline-none
+                        transition
+                        placeholder:text-slate-400
+                        focus:border-green-500
+                        focus:bg-white
+                        focus:ring-4
+                        focus:ring-green-500/10
+                      "
+                    />
+                  </div>
+                </div>
+
+                {/* COLLEGE SEARCH */}
+
+                <div ref={collegeRef} className="relative">
+                  <label className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-500">
+                    College
+                  </label>
+
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={collegeSearch}
+                      placeholder="Search college, city or state..."
+                      onFocus={() => setCollegeOpen(true)}
+                      onChange={(e) => {
+                        setCollegeSearch(e.target.value);
+                        setCollege("");
+                        setOtherCollege("");
+                        setCollegeOpen(true);
+                      }}
+                      className="
+                        w-full
+                        rounded-2xl
+                        border border-slate-200
+                        bg-slate-100
+                        px-5 py-4 pr-12
+                        text-sm
+                        outline-none
+                        transition
+                        placeholder:text-slate-400
+                        focus:border-green-500
+                        focus:bg-white
+                        focus:ring-4
+                        focus:ring-green-500/10
+                      "
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => setCollegeOpen((prev) => !prev)}
+                      aria-label="Toggle college list"
+                      className="
+                        absolute right-3 top-1/2
+                        flex h-9 w-9
+                        -translate-y-1/2
+                        items-center justify-center
+                        rounded-xl
+                        text-lg font-black
+                        text-slate-500
+                        transition
+                        hover:bg-slate-200
+                        hover:text-slate-900
+                      "
+                    >
+                      {collegeOpen ? "⌃" : "⌄"}
+                    </button>
+                  </div>
+
+                  {/* DROPDOWN */}
+
+                  {collegeOpen && (
+                    <div
+                      className="
+                        absolute
+                        left-0 right-0
+                        z-50
+                        mt-2
+                        overflow-hidden
+                        rounded-2xl
+                        border border-slate-200
+                        bg-white
+                        shadow-2xl
+                      "
+                    >
+                      <div className="max-h-72 overflow-y-auto overscroll-contain p-2">
+                        {filteredColleges.length > 0 ? (
+                          filteredColleges.map((collegeItem) => (
                             <button
-                              key={
-                                collegeItem.id
-                              }
+                              key={collegeItem.id}
                               type="button"
                               onClick={() =>
-                                selectCollege(
-                                  collegeItem.name
-                                )
+                                selectCollege(collegeItem.name)
                               }
                               className="
                                 w-full
                                 rounded-xl
-                                px-4
-                                py-3
+                                px-4 py-3
                                 text-left
                                 transition
                                 hover:bg-green-50
+                                active:bg-green-100
                               "
                             >
                               <p className="font-bold text-slate-900">
-                                {
-                                  collegeItem.name
-                                }
+                                {collegeItem.name}
                               </p>
 
                               <p className="mt-1 text-xs text-slate-500">
-                                {
-                                  collegeItem.city
-                                }
-                                {collegeItem.city &&
-                                collegeItem.state
+                                {collegeItem.city}
+                                {collegeItem.city && collegeItem.state
                                   ? ", "
                                   : ""}
-                                {
-                                  collegeItem.state
-                                }
+                                {collegeItem.state}
                               </p>
                             </button>
-                          )
-                        )
-                      ) : (
-                        <div className="px-4 py-6 text-center">
-                          <p className="font-bold text-slate-700">
-                            No college found
-                          </p>
+                          ))
+                        ) : (
+                          <div className="px-4 py-6 text-center">
+                            <p className="font-bold text-slate-700">
+                              No college found
+                            </p>
 
-                          <p className="mt-1 text-xs text-slate-500">
-                            Try another search or add your
-                            college manually.
-                          </p>
+                            <p className="mt-1 text-xs text-slate-500">
+                              Try another search or add your college manually.
+                            </p>
+                          </div>
+                        )}
+
+                        {/* OTHER */}
+
+                        <div className="mt-2 border-t border-slate-100 pt-2">
+                          <button
+                            type="button"
+                            onClick={selectOtherCollege}
+                            className="
+                              w-full
+                              rounded-xl
+                              px-4 py-3
+                              text-left
+                              font-black
+                              text-green-700
+                              transition
+                              hover:bg-green-50
+                            "
+                          >
+                            + My college is not listed
+                          </button>
                         </div>
-                      )}
-
-                      {/* OTHER */}
-
-                      <div className="mt-2 border-t border-slate-100 pt-2">
-                        <button
-                          type="button"
-                          onClick={
-                            selectOtherCollege
-                          }
-                          className="
-                            w-full
-                            rounded-xl
-                            px-4
-                            py-3
-                            text-left
-                            font-black
-                            text-green-700
-                            transition
-                            hover:bg-green-50
-                          "
-                        >
-                          + My college is not listed
-                        </button>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* SELECTED COLLEGE */}
+                  {/* SELECTED COLLEGE */}
 
-                {college &&
-                  college !== "OTHER" && (
-                    <div className="mt-2 flex items-center justify-between rounded-xl border border-green-200 bg-green-50 px-4 py-3">
+                  {college && college !== "OTHER" && (
+                    <div className="mt-2 flex items-center justify-between gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3">
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-green-700">
+                        <p className="text-[10px] font-black uppercase tracking-wide text-green-700">
                           Selected college
                         </p>
 
-                        <p className="truncate font-black text-green-900">
+                        <p className="truncate text-sm font-black text-green-900">
                           {college}
                         </p>
                       </div>
@@ -538,149 +507,146 @@ export default function RegisterPage() {
                           setCollege("");
                           setCollegeSearch("");
                         }}
-                        className="ml-3 shrink-0 text-sm font-black text-green-700 hover:text-red-600"
+                        className="shrink-0 text-xs font-black text-green-700 transition hover:text-red-600"
                       >
                         Change
                       </button>
                     </div>
                   )}
-              </div>
-
-              {/* OTHER COLLEGE */}
-
-              {college === "OTHER" && (
-                <div className="rounded-2xl border border-green-200 bg-green-50 p-4">
-                  <p className="mb-3 text-sm font-black text-green-800">
-                    College not listed?
-                  </p>
-
-                  <input
-                    type="text"
-                    placeholder="Enter your college name"
-                    value={otherCollege}
-                    onChange={(e) =>
-                      setOtherCollege(
-                        e.target.value
-                      )
-                    }
-                    className="
-                      w-full
-                      rounded-2xl
-                      border
-                      border-green-200
-                      bg-white
-                      px-5
-                      py-4
-                      outline-none
-                      focus:border-green-500
-                    "
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCollege("");
-                      setCollegeSearch("");
-                      setOtherCollege("");
-                    }}
-                    className="mt-3 text-sm font-black text-green-700 hover:text-red-600"
-                  >
-                    ← Choose from college list
-                  </button>
                 </div>
-              )}
 
-              {/* PASSWORD */}
+                {/* OTHER COLLEGE */}
 
-              <div className="relative">
-                <input
-                  type={
-                    showPassword
-                      ? "text"
-                      : "password"
-                  }
-                  placeholder="Create password"
-                  value={password}
-                  onChange={(e) =>
-                    setPassword(
-                      e.target.value
-                    )
-                  }
+                {college === "OTHER" && (
+                  <div className="rounded-2xl border border-green-200 bg-green-50 p-4">
+                    <p className="mb-3 text-sm font-black text-green-800">
+                      College not listed?
+                    </p>
+
+                    <input
+                      type="text"
+                      placeholder="Enter your college name"
+                      value={otherCollege}
+                      onChange={(e) => setOtherCollege(e.target.value)}
+                      className="
+                        w-full
+                        rounded-2xl
+                        border border-green-200
+                        bg-white
+                        px-5 py-4
+                        text-sm
+                        outline-none
+                        transition
+                        placeholder:text-slate-400
+                        focus:border-green-500
+                        focus:ring-4
+                        focus:ring-green-500/10
+                      "
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCollege("");
+                        setCollegeSearch("");
+                        setOtherCollege("");
+                      }}
+                      className="mt-3 text-xs font-black text-green-700 transition hover:text-red-600"
+                    >
+                      ← Choose from college list
+                    </button>
+                  </div>
+                )}
+
+                {/* PASSWORD */}
+
+                <div>
+                  <label className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-500">
+                    Password
+                  </label>
+
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Create password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      autoComplete="new-password"
+                      className="
+                        w-full
+                        rounded-2xl
+                        border border-slate-200
+                        bg-slate-100
+                        px-5 py-4 pr-20
+                        text-sm
+                        outline-none
+                        transition
+                        placeholder:text-slate-400
+                        focus:border-green-500
+                        focus:bg-white
+                        focus:ring-4
+                        focus:ring-green-500/10
+                      "
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="
+                        absolute right-5 top-1/2
+                        -translate-y-1/2
+                        text-xs font-black
+                        text-slate-500
+                        transition
+                        hover:text-green-600
+                      "
+                    >
+                      {showPassword ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                </div>
+
+                {/* SUBMIT */}
+
+                <button
+                  type="submit"
                   className="
                     w-full
                     rounded-2xl
-                    border
-                    border-slate-200
-                    bg-slate-100
-                    px-5
+                    bg-green-600
                     py-4
-                    pr-20
-                    outline-none
-                    focus:border-green-500
-                    focus:bg-white
-                  "
-                />
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setShowPassword(
-                      !showPassword
-                    )
-                  }
-                  className="
-                    absolute
-                    right-5
-                    top-4
                     text-sm
-                    font-bold
-                    text-slate-500
-                    hover:text-green-600
+                    font-black
+                    text-white
+                    shadow-lg
+                    shadow-green-600/20
+                    transition
+                    hover:bg-green-700
+                    active:scale-[0.99]
                   "
                 >
-                  {showPassword
-                    ? "Hide"
-                    : "Show"}
+                  Create Account
                 </button>
-              </div>
+              </form>
 
-              {/* SUBMIT */}
+              {message && (
+                <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-center text-sm font-semibold leading-6 text-slate-600">
+                    {message}
+                  </p>
+                </div>
+              )}
 
-              <button
-                type="submit"
-                className="
-                  w-full
-                  rounded-full
-                  bg-green-600
-                  py-4
-                  font-black
-                  text-white
-                  shadow-lg
-                  shadow-green-100
-                  transition
-                  hover:bg-green-700
-                  active:scale-[0.99]
-                "
-              >
-                Create Account
-              </button>
-            </form>
-
-            {message && (
-              <p className="mt-5 text-center text-sm font-semibold text-slate-600">
-                {message}
+              <p className="mt-7 text-center text-sm text-slate-500">
+                Already have an account?{" "}
+                <a
+                  href="/login"
+                  className="font-black text-green-600 transition hover:text-green-700"
+                >
+                  Login
+                </a>
               </p>
-            )}
-
-            <p className="mt-8 text-center text-sm text-slate-500">
-              Already have an account?{" "}
-              <a
-                href="/login"
-                className="font-black text-green-600"
-              >
-                Login
-              </a>
-            </p>
+            </div>
           </div>
         </div>
       </section>

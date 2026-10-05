@@ -1,339 +1,192 @@
 "use client";
-import Navbar from "@/components/Navbar";
-import HomeAdBanner from "@/components/HomeAdBanner";
-import { useEffect, useState } from "react";
 
-const categories = [
-  {
-    title: "Marketplace",
-    desc: "Buy and sell campus essentials",
-    icon: "🛍️",
-    href: "/marketplace",
-  },
-  {
-    title: "Accommodation",
-    desc: "Find rooms and PGs near campus",
-    icon: "🏠",
-    href: "/rooms",
-  },
-  {
-    title: "Barter",
-    desc: "Exchange items with students",
-    icon: "🤝",
-    href: "/barter",
-  },
-  {
-    title: "Campus Chat",
-    desc: "Talk safely before deals",
-    icon: "💬",
-    href: "/chat",
-  },
-  {
-    title: "Verification",
-    desc: "Trusted student identities",
-    icon: "✅",
-    href: "/student-verification",
-  },
-  {
-    title: "Support",
-    desc: "Help when something goes wrong",
-    icon: "🛡️",
-    href: "/support",
-  },
-];
-const steps = [
-  {
-    number: "01",
-    title: "Join your campus",
-    description: "Create your account and verify your student identity.",
-  },
-  {
-    number: "02",
-    title: "Discover campus deals",
-    description: "Browse listings, rentals, exchanges, and student services.",
-  },
-  {
-    number: "03",
-    title: "Connect with trust",
-    description: "Chat, meet safely, and transact inside your college network.",
-  },
-];
-
-const highlights = [
-  "Verified student community",
-  "Marketplace + Accommodation",
-  "Safe student-only transactions",
-];
+import Link from "next/link";
 
 export default function HomePage() {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchUser() {
-      try {
-        const res = await fetch("/api/auth/me");
-
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.user);
-        }
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchUser();
-  }, []);
-
-  const isLoggedIn = !!user;
-  const isAdmin = user?.role === "ADMIN";
-
   return (
-    <main className="min-h-screen bg-[#f8fafc] text-slate-950">
-      <Navbar />
-
-      <section className="px-4 sm:px-6 lg:px-10 pt-14 pb-20">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <span className="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 px-4 py-2 rounded-full text-xs font-black">
-                ✦ India’s Smart Student Ecosystem
-              </span>
-
-              <h1 className="mt-7 text-5xl sm:text-6xl lg:text-7xl font-black leading-[0.95] tracking-tight text-slate-950">
-                The student network built for{" "}
-                <span className="text-green-600">real campus life...</span>
-              </h1>
-
-              <p className="mt-7 text-lg sm:text-xl text-slate-600 max-w-2xl leading-8">
-                Axyon helps students buy, sell, rent, exchange, and connect
-                safely within verified college communities — powered by trusted
-                identities, campus chat, and student-first experiences.
-              </p>
-
-              <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                {!loading && !isLoggedIn && (
-                  <>
-                    <a
-                      href="/register"
-                      className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-full font-black text-center shadow-xl shadow-green-200"
-                    >
-                      Join Campus
-                    </a>
-
-                    <a
-                      href="/marketplace"
-                      className="bg-white border-2 border-slate-200 hover:border-green-400 text-slate-800 px-8 py-4 rounded-full font-black text-center"
-                    >
-                      Explore Marketplace
-                    </a>
-
-                    <a
-                      href="/rooms"
-                      className="bg-white border-2 border-slate-200 hover:border-green-400 text-slate-800 px-8 py-4 rounded-full font-black text-center"
-                    >
-                      Accommodation
-                    </a>
-                  </>
-                )}
-
-                {!loading && isLoggedIn && (
-                  <>
-                    {isAdmin ? (
-                      <a
-                        href="/admin"
-                        className="bg-slate-950 hover:bg-slate-800 text-white px-8 py-4 rounded-full font-black text-center"
-                      >
-                        Open Admin Panel
-                      </a>
-                    ) : (
-                      <>
-                        <a
-                          href="/marketplace"
-                          className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-full font-black text-center"
-                        >
-                          Marketplace
-                        </a>
-
-                        <a
-                          href="/rooms"
-                          className="bg-white border-2 border-slate-200 hover:border-green-400 text-slate-800 px-8 py-4 rounded-full font-black text-center"
-                        >
-                          Accommodation
-                        </a>
-
-                        <a
-                          href="/create-product"
-                          className="bg-white border-2 border-slate-200 hover:border-green-400 text-slate-800 px-8 py-4 rounded-full font-black text-center"
-                        >
-                          Sell Item
-                        </a>
-                      </>
-                    )}
-                  </>
-                )}
-              </div>
-
-              <div className="mt-9 flex flex-wrap gap-3">
-                {highlights.map((item) => (
-                  <div
-                    key={item}
-                    className="bg-white border border-slate-200 rounded-full px-4 py-2 text-sm font-bold text-slate-600 shadow-sm"
-                  >
-                    {item}
-                  </div>
-                ))}
-              </div>
+    <main className="min-h-screen bg-[#f7f9fc] text-slate-950">
+      <header className="border-b border-slate-200 bg-white/90 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center justify-center px-5 py-5 sm:px-8">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-xl font-black text-white shadow-lg">
+              AX
             </div>
-
-            <div className="relative">
-              <div className="absolute -top-10 -right-10 w-72 h-72 bg-green-300 rounded-full blur-3xl opacity-40" />
-              <div className="absolute -bottom-10 -left-10 w-72 h-72 bg-emerald-200 rounded-full blur-3xl opacity-60" />
-
-              <div className="relative grid gap-5">
-                <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-2xl">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <p className="text-sm text-slate-500 font-bold">
-                        Axyon Core
-                      </p>
-
-                      <h2 className="mt-2 text-3xl font-black">
-                        One campus. One trusted network.
-                      </h2>
-                    </div>
-
-                    <div className="w-16 h-16 rounded-2xl bg-green-100 flex items-center justify-center text-3xl">
-                      🎓
-                    </div>
-                  </div>
-
-                  <p className="mt-5 text-slate-600 leading-7">
-                    Axyon is not just a marketplace. It is a student ecosystem
-                    for deals, trust, communication, and campus convenience.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-5">
-                  <div className="bg-white border border-slate-200 rounded-[2rem] p-5 shadow-sm">
-                    <div className="w-12 h-12 rounded-2xl bg-green-100 flex items-center justify-center text-2xl">
-                      🛍️
-                    </div>
-
-                    <h3 className="mt-4 font-black text-lg">Buy & Sell</h3>
-
-                    <p className="mt-2 text-sm text-slate-500 leading-6">
-                      Turn unused items into value inside your college.
-                    </p>
-                  </div>
-
-                  <div className="bg-white border border-slate-200 rounded-[2rem] p-5 shadow-sm">
-                    <div className="w-12 h-12 rounded-2xl bg-green-100 flex items-center justify-center text-2xl">
-                      💬
-                    </div>
-
-                    <h3 className="mt-4 font-black text-lg">Campus Chat</h3>
-
-                    <p className="mt-2 text-sm text-slate-500 leading-6">
-                      Message students before buying, selling, or exchanging.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="bg-slate-950 text-white rounded-[2rem] p-6 shadow-2xl overflow-hidden relative">
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(34,197,94,0.35),_transparent_40%)]" />
-
-                  <div className="relative">
-                    <p className="text-green-400 text-sm font-black">
-                      NEXT ON AXYON
-                    </p>
-
-                    <h3 className="mt-2 text-3xl font-black">
-                      Rentals & Barter
-                    </h3>
-
-                    <p className="mt-3 text-slate-300 leading-7">
-                      Rent essentials, exchange items, and reduce student
-                      expenses with smarter campus sharing.
-                    </p>
-                  </div>
-                </div>
-              </div>
+            <div>
+              <h1 className="text-2xl font-black tracking-tight">Axyon</h1>
+              <p className="text-xs font-semibold text-slate-500">
+                India&apos;s Smart Student Ecosystem
+              </p>
             </div>
           </div>
         </div>
-      </section>
-      <HomeAdBanner />
-      <section className="px-4 sm:px-6 lg:px-10 py-14 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <p className="text-green-600 font-black text-sm">
-                Axyon Ecosystem
-              </p>
+      </header>
 
-              <h2 className="text-3xl sm:text-4xl font-black mt-2">
-                More than buying and selling.
-              </h2>
-            </div>
+      <section className="px-5 pb-16 pt-16 sm:px-8 sm:pt-24">
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-4xl text-center">
+            <span className="inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-black text-slate-600 shadow-sm">
+              ✦ Welcome to Axyon
+            </span>
+
+            <h2 className="mt-7 text-5xl font-black leading-[0.95] tracking-tight sm:text-6xl lg:text-7xl">
+              One platform.
+              <br />
+              <span className="text-green-600">
+                Connected student experiences.
+              </span>
+            </h2>
+
+            <p className="mx-auto mt-7 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+              Axyon is a student-focused digital ecosystem with separate
+              experiences for school students, college students and education
+              services such as Home Tuition.
+            </p>
+          </div>
+
+          <div className="mx-auto mt-12 grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2">
+            <a
+              href="/school-marketplace"
+              className="group relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 p-7 text-white shadow-2xl shadow-indigo-200 transition duration-300 hover:-translate-y-2 hover:shadow-indigo-300 sm:p-9"
+            >
+              <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
+
+              <div className="relative">
+                <div className="flex items-start justify-between">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 text-3xl backdrop-blur">
+                    🏫
+                  </div>
+
+                  <span className="rounded-full bg-white/15 px-4 py-2 text-[11px] font-black uppercase tracking-wider">
+                    Classes 9–12
+                  </span>
+                </div>
+
+                <h3 className="mt-8 text-3xl font-black sm:text-4xl">
+                  School Marketplace
+                </h3>
+
+                <p className="mt-4 max-w-md text-sm leading-7 text-indigo-100 sm:text-base">
+                  A dedicated student marketplace for Classes 9–12. Buy, sell,
+                  discover and connect with verified school students across
+                  Axyon.
+                </p>
+
+                <div className="mt-8 flex items-center justify-between">
+                  <span className="font-black">Enter School Marketplace</span>
+                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-lg font-black text-indigo-600 transition group-hover:translate-x-1">
+                    →
+                  </span>
+                </div>
+              </div>
+            </a>
 
             <a
               href="/marketplace"
-              className="hidden sm:block text-green-600 font-black"
+              className="group relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-green-600 via-emerald-600 to-teal-600 p-7 text-white shadow-2xl shadow-green-200 transition duration-300 hover:-translate-y-2 hover:shadow-green-300 sm:p-9"
             >
-              Open marketplace →
+              <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
+
+              <div className="relative">
+                <div className="flex items-start justify-between">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 text-3xl backdrop-blur">
+                    🎓
+                  </div>
+
+                  <span className="rounded-full bg-white/15 px-4 py-2 text-[11px] font-black uppercase tracking-wider">
+                    College
+                  </span>
+                </div>
+
+                <h3 className="mt-8 text-3xl font-black sm:text-4xl">
+                  Campus Marketplace
+                </h3>
+
+                <p className="mt-4 max-w-md text-sm leading-7 text-green-100 sm:text-base">
+                  The Axyon college marketplace for buying, selling,
+                  accommodation, barter, chat and student connections.
+                </p>
+
+                <div className="mt-8 flex items-center justify-between">
+                  <span className="font-black">Enter Campus Marketplace</span>
+                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-lg font-black text-green-600 transition group-hover:translate-x-1">
+                    →
+                  </span>
+                </div>
+              </div>
             </a>
           </div>
 
-          <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            {categories.map((item) => (
-              <a
-                key={item.title}
-                href={item.href}
-                className="bg-slate-50 border border-slate-200 rounded-3xl p-5 hover:border-green-400 hover:-translate-y-1 transition"
-              >
-                <div className="w-12 h-12 rounded-2xl bg-green-100 flex items-center justify-center text-2xl">
-                  {item.icon}
+          <div className="mx-auto mt-6 max-w-5xl">
+            <Link
+              href="/home-tuition"
+              className="group relative block overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-7 text-white shadow-2xl transition duration-300 hover:-translate-y-1 sm:p-9"
+            >
+              <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
+
+              <div className="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+                <div>
+                  <div className="inline-flex rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-indigo-200">
+                    Axyon Home Tuition
+                  </div>
+
+                  <h3 className="mt-5 text-3xl font-black sm:text-4xl">
+                    Discover tutors. Build a verified tutoring profile.
+                  </h3>
+
+                  <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+                    Home Tuition connects students with verified Campus tutors.
+                    Tutors can create a profile, choose their subjects and
+                    teaching preferences, and purchase a subscription for
+                    profile publication and access to the Axyon tutoring
+                    marketplace.
+                  </p>
+
+                  <div className="mt-6 flex flex-wrap gap-3 text-xs font-bold text-slate-300">
+                    <span className="rounded-full bg-white/10 px-3 py-2">
+                      Verified tutors
+                    </span>
+                    <span className="rounded-full bg-white/10 px-3 py-2">
+                      Online & offline options
+                    </span>
+                    <span className="rounded-full bg-white/10 px-3 py-2">
+                      Transparent subscription pricing
+                    </span>
+                  </div>
                 </div>
 
-                <p className="mt-4 font-black text-slate-900">{item.title}</p>
-
-                <p className="mt-1 text-xs text-slate-500 leading-5">
-                  {item.desc}
-                </p>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="px-4 sm:px-6 lg:px-10 py-16">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center">
-            <p className="text-green-600 font-black text-sm">How Axyon Works</p>
-
-            <h2 className="text-3xl sm:text-5xl font-black mt-2">
-              Built around student trust.
-            </h2>
+                <span className="inline-flex h-12 items-center justify-center rounded-xl bg-white px-6 text-sm font-black text-slate-950 transition group-hover:bg-indigo-50">
+                  Explore Home Tuition →
+                </span>
+              </div>
+            </Link>
           </div>
 
-          <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-5">
-            {steps.map((step) => (
+          <div className="mx-auto mt-10 grid max-w-5xl grid-cols-1 gap-3 sm:grid-cols-3">
+            {[
+              [
+                "🔐",
+                "Verified Communities",
+                "Student identity verification helps keep relevant communities trusted.",
+              ],
+              [
+                "🤝",
+                "Student First",
+                "Axyon brings practical student-focused experiences together.",
+              ],
+              [
+                "💳",
+                "Secure Payments",
+                "Paid Axyon services clearly display applicable plans and pricing before payment.",
+              ],
+            ].map(([icon, title, description]) => (
               <div
-                key={step.number}
-                className="bg-white border border-slate-200 rounded-[2rem] p-7 shadow-sm hover:-translate-y-1 hover:shadow-xl transition"
+                key={title}
+                className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm"
               >
-                <p className="text-5xl font-black text-green-600">
-                  {step.number}
-                </p>
-
-                <h3 className="mt-5 text-xl font-black">{step.title}</h3>
-
-                <p className="mt-3 text-slate-500 leading-7">
-                  {step.description}
+                <div className="text-2xl">{icon}</div>
+                <p className="mt-2 text-sm font-black">{title}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  {description}
                 </p>
               </div>
             ))}
@@ -341,43 +194,133 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="px-4 sm:px-6 lg:px-10 pb-28">
-        <div className="max-w-6xl mx-auto rounded-[2rem] bg-slate-950 text-white p-8 sm:p-12 text-center overflow-hidden relative">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(34,197,94,0.35),_transparent_35%)]" />
+      <section className="border-y border-slate-200 bg-white px-5 py-16 sm:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid gap-8 md:grid-cols-2">
+            <div>
+              <p className="text-sm font-black text-green-600">ABOUT AXYON</p>
 
-          <div className="relative">
-            <h2 className="text-3xl sm:text-5xl font-black">
-              Your campus has people. Axyon connects everything else.
+              <h2 className="mt-3 text-3xl font-black sm:text-4xl">
+                A student-focused digital ecosystem.
+              </h2>
+            </div>
+
+            <div className="space-y-5 text-base leading-8 text-slate-600">
+              <p>
+                Axyon is designed to make everyday student interactions more
+                organized, accessible and community-driven.
+              </p>
+
+              <p>
+                The platform maintains separate experiences for school and
+                college students while also providing services such as Home
+                Tuition for students and verified Campus tutors.
+              </p>
+
+              <p>
+                Axyon uses verification, community separation and platform
+                controls to provide a more relevant and trusted experience for
+                its users.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="px-5 py-16 sm:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="text-center">
+            <p className="text-sm font-black text-green-600">HOW AXYON WORKS</p>
+
+            <h2 className="mt-3 text-3xl font-black sm:text-4xl">
+              Different services. One ecosystem.
             </h2>
 
-            <p className="mt-4 text-slate-300 max-w-2xl mx-auto">
-              Join the student ecosystem built for safer deals, smarter sharing,
-              and stronger campus communities.
+            <p className="mx-auto mt-4 max-w-2xl leading-7 text-slate-500">
+              Each Axyon experience has a clear purpose and access flow.
             </p>
+          </div>
 
-            <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-              <a
-                href="/marketplace"
-                className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-full font-black"
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              [
+                "🏫",
+                "School Marketplace",
+                "A dedicated marketplace for verified Classes 9–12 students.",
+              ],
+              [
+                "🎓",
+                "Campus Marketplace",
+                "A college-focused marketplace for student buying, selling and connections.",
+              ],
+              [
+                "📚",
+                "Home Tuition",
+                "A tutoring marketplace connecting students with verified Campus tutors.",
+              ],
+              [
+                "🔐",
+                "Verification",
+                "Relevant student and tutor verification supports safer community participation.",
+              ],
+            ].map(([icon, title, description]) => (
+              <div
+                key={title}
+                className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
               >
-                Marketplace
-              </a>
+                <div className="text-3xl">{icon}</div>
+                <h3 className="mt-4 font-black">{title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  {description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-              <a
-                href="/rooms"
-                className="bg-white text-slate-950 px-8 py-4 rounded-full font-black"
+      <section className="bg-slate-950 px-5 py-16 text-white sm:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid gap-10 md:grid-cols-2">
+            <div>
+              <p className="text-sm font-black text-green-400">
+                AXYON SUPPORT
+              </p>
+
+              <h2 className="mt-3 text-3xl font-black sm:text-4xl">
+                Need help with Axyon?
+              </h2>
+
+              <p className="mt-5 max-w-xl leading-8 text-slate-300">
+                For account, platform, Home Tuition or payment-related
+                questions, contact Axyon using the support details provided
+                below.
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-7">
+              <p className="text-sm font-black text-slate-400">
+                CONTACT & SUPPORT
+              </p>
+
+              <Link
+                href="/contact"
+                className="mt-4 inline-flex rounded-xl bg-white px-5 py-3 text-sm font-black text-slate-950"
               >
-                Accommodation
-              </a>
+                Contact Axyon
+              </Link>
 
-              {!isAdmin && (
-                <a
-                  href={isLoggedIn ? "/create-product" : "/register"}
-                  className="bg-white text-slate-950 px-8 py-4 rounded-full font-black"
-                >
-                  {isLoggedIn ? "Post Listing" : "Join Campus"}
-                </a>
-              )}
+              <div className="mt-6 grid gap-3 border-t border-white/10 pt-5 text-sm text-slate-300">
+                <Link href="/about" className="hover:text-white">
+                  About Axyon →
+                </Link>
+                <Link href="/terms" className="hover:text-white">
+                  Terms & Conditions →
+                </Link>
+                <Link href="/refund-policy" className="hover:text-white">
+                  Refund & Cancellation Policy →
+                </Link>
+              </div>
             </div>
           </div>
         </div>

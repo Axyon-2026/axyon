@@ -49,6 +49,9 @@ export async function GET() {
         email: user.email,
         role: user.role,
 
+        marketplaceType:
+          user.marketplaceType,
+
         emailVerified:
           user.emailVerified,
 
@@ -60,10 +63,10 @@ export async function GET() {
 
         college:
           user.college,
-          
+
         phone:
           user.phone,
-      
+
         profileImageUrl:
           user.profileImageUrl,
 
@@ -73,6 +76,30 @@ export async function GET() {
         collegeIdImageUrl:
           user.collegeIdImageUrl,
 
+        schoolId:
+          user.schoolId,
+
+        schoolName:
+          user.schoolName,
+
+        schoolCity:
+          user.schoolCity,
+
+        classLevel:
+          user.classLevel,
+
+        schoolVerified:
+          user.schoolVerified,
+
+        schoolVerificationStatus:
+          user.schoolVerificationStatus,
+
+        schoolStudentPhotoUrl:
+          user.schoolStudentPhotoUrl,
+
+        schoolIdImageUrl:
+          user.schoolIdImageUrl,
+
         isSuspended:
           user.isSuspended,
 
@@ -80,9 +107,7 @@ export async function GET() {
           user.createdAt,
       },
     });
-
   } catch (error) {
-
     console.log(
       "AUTH ME ERROR:",
       error
@@ -97,6 +122,5 @@ export async function GET() {
         status: 500,
       }
     );
-
   }
 }

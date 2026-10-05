@@ -63,44 +63,34 @@ export default function ChatPage() {
   }
 
   return (
-    <main className="h-[100dvh] overflow-hidden bg-[#020817] text-white">
+    <main className="flex h-[100dvh] flex-col overflow-hidden bg-[#020817] text-white">
       <Navbar />
 
-      <section
-        className="
-          flex
-          h-[calc(100dvh-80px)]
-          min-h-0
-          overflow-hidden
-        "
-      >
-        <div
-          className="
-            h-full
-            min-h-0
-            w-full
-            md:w-[360px]
-            md:shrink-0
-            lg:w-[380px]
-          "
-        >
-          <ChatSidebar
-            conversations={conversations}
-            currentUser={currentUser}
-            selectedConversation={null}
-            setSelectedConversation={openConversation}
-            status={
-              loading
-                ? "Loading chats..."
-                : error
-                  ? error
-                  : ""
-            }
-          />
+      <section className="flex min-h-0 flex-1 overflow-hidden">
+        {/* CHAT SIDEBAR */}
+        <div className="h-full min-h-0 w-full shrink-0 md:w-[360px] lg:w-[380px]">
+          <div className="h-full overflow-hidden border-r border-white/10 bg-[#071019]">
+            <ChatSidebar
+              conversations={conversations}
+              currentUser={currentUser}
+              selectedConversation={null}
+              setSelectedConversation={openConversation}
+              status={
+                loading
+                  ? "Loading chats..."
+                  : error
+                    ? error
+                    : ""
+              }
+            />
+          </div>
         </div>
 
+        {/* DESKTOP EMPTY STATE */}
         <div className="hidden min-h-0 min-w-0 flex-1 md:block">
-          <EmptyChat />
+          <div className="h-full bg-[#020817]">
+            <EmptyChat />
+          </div>
         </div>
       </section>
     </main>

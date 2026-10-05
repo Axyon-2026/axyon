@@ -7,33 +7,48 @@ datasource db {
 }
 
 model User {
-  id                        String    @id @default(cuid())
-  name                      String
-  email                     String    @unique
-  password                  String
-  role                      Role      @default(STUDENT)
-  college                   String?
-  phone                     String?
-  isVerified                Boolean   @default(false)
-  createdAt                 DateTime  @default(now())
-  updatedAt                 DateTime  @updatedAt
-  emailVerified             Boolean   @default(false)
-  verifyToken               String?
-  resetExpiresAt            DateTime?
-  resetToken                String?
-  profileImageUrl           String?
-  isSuspended               Boolean   @default(false)
-  strikeCount               Int       @default(0)
-  collegeIdImageUrl         String?
-  collegeIdNumber           String?
-  studentVerificationStatus String    @default("NOT_SUBMITTED")
-  studentVerified           Boolean   @default(false)
-  selfieImageUrl            String?
+  id                         String              @id @default(cuid())
+  name                       String
+  email                      String              @unique
+  password                   String
+  role                       Role                @default(STUDENT)
+  college                    String?
+  phone                      String?
+  isVerified                 Boolean             @default(false)
+  createdAt                  DateTime            @default(now())
+  updatedAt                  DateTime            @updatedAt
+  emailVerified              Boolean             @default(false)
+  verifyToken                String?
+  resetExpiresAt             DateTime?
+  resetToken                 String?
+  profileImageUrl            String?
+  isSuspended                Boolean             @default(false)
+  strikeCount                Int                 @default(0)
+  collegeIdImageUrl          String?
+  collegeIdNumber            String?
+  studentVerificationStatus  String              @default("NOT_SUBMITTED")
+  studentVerified            Boolean             @default(false)
+  selfieImageUrl             String?
+  classLevel                 String?
+  marketplaceType            MarketplaceType     @default(CAMPUS)
+  schoolCity                 String?
+  schoolId                   String?
+  schoolIdImageUrl           String?
+  schoolName                 String?
+  schoolStudentPhotoUrl      String?
+  schoolVerificationStatus   String              @default("NOT_SUBMITTED")
+  schoolVerified              Boolean             @default(false)
 
-  buyerDeals  Deal[]    @relation("BuyerDeals")
-  sellerDeals Deal[]    @relation("SellerDeals")
-  products    Product[]
-  rooms       Room[]
+  tutorConversationsAsBuyer  Conversation[]      @relation("TutorBuyerConversations")
+  tutorConversationsAsSeller Conversation[]      @relation("TutorSellerConversations")
+  buyerDeals                 Deal[]              @relation("BuyerDeals")
+  sellerDeals                Deal[]              @relation("SellerDeals")
+  products                   Product[]
+  rooms                      Room[]
+  tutorInvoices              TutorInvoice[]      @relation("TutorInvoiceUser")
+  tutorProfile               TutorProfile?       @relation("TutorProfileUser")
+  tutorReviewsGiven          TutorReview[]       @relation("TutorReviewReviewer")
+  tutorSubscriptions         TutorSubscription[] @relation("TutorSubscriptionUser")
 }
 
 model College {
@@ -47,65 +62,81 @@ model College {
 }
 
 model CollegeRequest {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   collegeName String
   userEmail   String
-  status      String   @default("PENDING")
-  createdAt   DateTime @default(now())
+  status      String    @default("PENDING")
+  createdAt   DateTime  @default(now())
   updatedAt   DateTime? @updatedAt
 }
 
-model Product {
-  id            String        @id @default(cuid())
-  title         String
-  description   String
-  price         Int
-  category      String
-  condition     String
-  status        ProductStatus @default(AVAILABLE)
-  sellerId      String
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  imageUrls     String[]
-  buyerId       String?
-  finalPrice    Int?
-  invoiceId     String?
-  soldAt        DateTime?
+model School {
+  id         String   @id @default(cuid())
+  name       String
+  city       String
+  isApproved Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  deals          Deal[]
-  conversations  Conversation[]
-  seller         User         @relation(fields: [sellerId], references: [id])
+  @@unique([name, city])
+  @@index([name])
+  @@index([city])
+}
+
+model Product {
+  id              String          @id @default(cuid())
+  title           String
+  description     String
+  price           Int
+  category        String
+  condition       String
+  status          ProductStatus   @default(AVAILABLE)
+  sellerId        String
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  imageUrls       String[]
+  buyerId         String?
+  finalPrice      Int?
+  invoiceId       String?
+  soldAt          DateTime?
+  marketplaceType MarketplaceType @default(CAMPUS)
+  schoolCity      String?
+  schoolId        String?
+  schoolName      String?
+
+  conversations Conversation[]
+  deals         Deal[]
+  seller        User           @relation(fields: [sellerId], references: [id])
+
+  @@index([sellerId])
+  @@index([marketplaceType])
+  @@index([schoolId])
+  @@index([schoolName])
+  @@index([schoolCity])
+  @@index([status])
 }
 
 model Room {
-  id            String     @id @default(cuid())
+  id            String         @id @default(cuid())
   ownerId       String
-  owner         User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-
   title         String
   description   String
   roomType      RoomType
-
   rent          Int
   deposit       Int?
-
   address       String
   landmark      String?
   college       String
-
-  contactNumber String?
-
   imageUrls     String[]
   amenities     String[]
-
   availableFrom DateTime?
-
-  status        RoomStatus @default(AVAILABLE)
-
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  status        RoomStatus     @default(AVAILABLE)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  contactNumber String?
 
   conversations Conversation[]
+  owner         User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   @@index([ownerId])
   @@index([college])
@@ -129,28 +160,30 @@ model Order {
 }
 
 model Conversation {
-  id         String   @id @default(cuid())
+  id              String          @id @default(cuid())
+  buyerId         String
+  sellerId        String
+  productId       String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  isArchived      Boolean         @default(false)
+  roomId          String?
+  marketplaceType MarketplaceType @default(CAMPUS)
+  tutorProfileId  String?
 
-  buyerId    String
-  sellerId   String
-
-  productId  String?
-  product    Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  roomId     String?
-  room       Room?    @relation(fields: [roomId], references: [id], onDelete: Cascade)
-
-  isArchived Boolean  @default(false)
-
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  messages   Message[]
+  tutorBuyer   User          @relation("TutorBuyerConversations", fields: [buyerId], references: [id], onDelete: Cascade)
+  product      Product?      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  room         Room?         @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  tutorSeller  User          @relation("TutorSellerConversations", fields: [sellerId], references: [id], onDelete: Cascade)
+  tutorProfile TutorProfile? @relation("TutorConversations", fields: [tutorProfileId], references: [id], onDelete: Cascade)
+  messages     Message[]
 
   @@index([buyerId])
   @@index([sellerId])
   @@index([productId])
   @@index([roomId])
+  @@index([tutorProfileId])
+  @@index([marketplaceType])
 }
 
 model Message {
@@ -162,7 +195,7 @@ model Message {
   readByBuyer    Boolean      @default(false)
   readBySeller   Boolean      @default(false)
 
-  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  conversation Conversation @relation(fields: [conversationId], references: [id])
 }
 
 model SupportTicket {
@@ -228,34 +261,237 @@ model AdBanner {
 model Deal {
   id              String     @id @default(cuid())
   productId       String
-  product         Product    @relation(fields: [productId], references: [id])
-
   buyerId         String
-  buyer           User       @relation("BuyerDeals", fields: [buyerId], references: [id])
-
   sellerId        String
-  seller           User      @relation("SellerDeals", fields: [sellerId], references: [id])
-
   originalPrice   Int
   finalPrice      Int
-
   invoiceId       String     @unique
   paymentMethod   String
-
-  status          DealStatus @default(PENDING)
-
-  sellerConfirmed Boolean    @default(true)
   buyerConfirmed  Boolean    @default(false)
-
+  sellerConfirmed Boolean    @default(true)
+  completedAt     DateTime?
+  createdAt       DateTime   @default(now())
+  status          DealStatus @default(PENDING)
   completedBy     String?
-  confirmedAt    DateTime?
-  completedAt    DateTime?
-  createdAt      DateTime    @default(now())
+  confirmedAt     DateTime?
+
+  buyer   User    @relation("BuyerDeals", fields: [buyerId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+  seller  User    @relation("SellerDeals", fields: [sellerId], references: [id])
+}
+
+model TutorProfile {
+  id                       String             @id @default(cuid())
+  userId                   String             @unique
+  displayName              String
+  photoUrl                 String?
+  institution              String?
+  college                  String?
+  bio                      String
+  subjects                 String[]
+  classes                  String[]
+  teachingMode             TutorTeachingMode  @default(BOTH)
+  location                String?
+  maxTravelDistance       Int?
+  availability             String
+  languages               String[]
+  hourlyFee                Int
+  demoAvailable            Boolean            @default(false)
+  demoDetails              String?
+  publicPhone              String?
+  phoneVisibilityConfirmed Boolean            @default(false)
+  status                   TutorProfileStatus  @default(DRAFT)
+  termsAcceptedAt         DateTime?
+  termsVersion             String?
+  safetyAcceptedAt         DateTime?
+  safetyVersion            String?
+  publishedAt              DateTime?
+  pausedAt                 DateTime?
+  deletedAt                DateTime?
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+
+  conversations Conversation[]      @relation("TutorConversations")
+  user          User               @relation("TutorProfileUser", fields: [userId], references: [id], onDelete: Cascade)
+  reviews       TutorReview[]
+  subscriptions TutorSubscription[]
+
+  @@index([status])
+  @@index([teachingMode])
+  @@index([location])
+  @@index([hourlyFee])
+}
+
+model TutorReview {
+  id             String       @id @default(cuid())
+  tutorProfileId String
+  reviewerId     String
+  rating         Int
+  comment        String
+  isPublished    Boolean      @default(true)
+  isRemoved      Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  reviewer     User         @relation("TutorReviewReviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+  tutorProfile TutorProfile @relation(fields: [tutorProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([tutorProfileId, reviewerId])
+  @@index([tutorProfileId])
+  @@index([reviewerId])
+  @@index([rating])
+}
+
+model TutorSubscriptionPlan {
+  id              String                   @id @default(cuid())
+  name            String
+  type            TutorSubscriptionPlanType
+  price           Int
+  durationDays    Int
+  description     String?
+
+  offerEnabled    Boolean                  @default(false)
+  discountPercent Int?
+  offerPrice      Int?
+  offerStartsAt   DateTime?
+  offerEndsAt     DateTime?
+  offerMessage    String?
+
+  isActive        Boolean                  @default(true)
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+
+  subscriptions TutorSubscription[]
+
+  @@index([type])
+  @@index([isActive])
+  @@index([offerEnabled])
+  @@index([offerStartsAt])
+  @@index([offerEndsAt])
+}
+
+model TutorSubscription {
+  id                String                   @id @default(cuid())
+  tutorProfileId    String
+  userId            String
+  planId            String
+  purchasedPlanType TutorSubscriptionPlanType
+  purchasedPrice    Int
+  durationDays      Int
+  status            TutorSubscriptionStatus   @default(PENDING)
+  startsAt          DateTime?
+  expiresAt         DateTime?
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  razorpaySignature String?
+  activatedAt       DateTime?
+  cancelledAt       DateTime?
+  expiredAt         DateTime?
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+
+  invoice      TutorInvoice?          @relation("TutorInvoiceSubscription")
+  payments     TutorPayment[]
+  plan         TutorSubscriptionPlan @relation(fields: [planId], references: [id])
+  tutorProfile TutorProfile           @relation(fields: [tutorProfileId], references: [id], onDelete: Cascade)
+  user         User                   @relation("TutorSubscriptionUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tutorProfileId])
+  @@index([userId])
+  @@index([planId])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([razorpayOrderId])
+  @@index([razorpayPaymentId])
+}
+
+model TutorPayment {
+  id                String             @id @default(cuid())
+  subscriptionId    String
+  userId            String
+  amount            Int
+  currency          String             @default("INR")
+  status            TutorPaymentStatus  @default(PENDING)
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  razorpaySignature String?
+  failureReason     String?
+  verifiedAt        DateTime?
+  activatedAt       DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  invoice      TutorInvoice?     @relation("TutorInvoicePayment")
+  subscription TutorSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+  @@index([userId])
+  @@index([status])
+  @@index([razorpayOrderId])
+  @@index([razorpayPaymentId])
+}
+
+model TutorInvoice {
+  id                String                   @id @default(cuid())
+  invoiceNumber     String                   @unique
+  userId            String
+  subscriptionId    String                   @unique
+  paymentId         String                   @unique
+  tutorName         String
+  tutorEmail        String
+  planName          String
+  planType          TutorSubscriptionPlanType
+  amount            Int
+  currency          String                   @default("INR")
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  issuedAt          DateTime                 @default(now())
+  tutorEmailSentAt  DateTime?
+  adminEmailSentAt  DateTime?
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+
+  payment       TutorPayment       @relation("TutorInvoicePayment", fields: [paymentId], references: [id], onDelete: Cascade)
+  subscription  TutorSubscription  @relation("TutorInvoiceSubscription", fields: [subscriptionId], references: [id], onDelete: Cascade)
+  user          User               @relation("TutorInvoiceUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tutorEmail])
+  @@index([issuedAt])
+}
+
+model SiteAnnouncement {
+  id          String   @id @default(cuid())
+  eyebrow     String?
+  title       String
+  description String?
+
+  ctaText     String?
+  ctaHref     String?
+
+  imageUrl    String?
+  style       String   @default("AURORA")
+
+  isActive    Boolean  @default(false)
+  startsAt    DateTime?
+  endsAt      DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([startsAt])
+  @@index([endsAt])
 }
 
 enum Role {
   STUDENT
   ADMIN
+}
+
+enum MarketplaceType {
+  CAMPUS
+  SCHOOL
 }
 
 enum ProductStatus {
@@ -283,4 +519,39 @@ enum RoomStatus {
   AVAILABLE
   OCCUPIED
   REMOVED
+}
+
+enum TutorTeachingMode {
+  ONLINE
+  OFFLINE
+  BOTH
+}
+
+enum TutorProfileStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  SUSPENDED
+  DELETED
+}
+
+enum TutorSubscriptionPlanType {
+  MONTHLY
+  YEARLY
+}
+
+enum TutorSubscriptionStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum TutorPaymentStatus {
+  PENDING
+  PAID
+  ACTIVATED
+  FAILED
+  REFUND_PENDING
+  REFUNDED
 }

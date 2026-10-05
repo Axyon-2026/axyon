@@ -48,6 +48,36 @@ export default function ChatScreen({
   const messages = selectedConversation?.messages || [];
   const messageCount = messages.length;
 
+  /*
+   * Determine what this conversation is about.
+   *
+   * Product conversation:
+   *   productId + product
+   *
+   * Accommodation conversation:
+   *   roomId + room
+   */
+  const isAccommodation = Boolean(
+    selectedConversation?.roomId || selectedConversation?.room
+  );
+
+  const isItem = Boolean(
+    selectedConversation?.productId || selectedConversation?.product
+  );
+
+  const productTitle =
+    selectedConversation?.product?.title ||
+    selectedConversation?.product?.name ||
+    "Item";
+
+  const roomTitle =
+    selectedConversation?.room?.title ||
+    selectedConversation?.room?.name ||
+    selectedConversation?.room?.roomType ||
+    "Accommodation";
+
+  const contextTitle = isAccommodation ? roomTitle : productTitle;
+
   useEffect(() => {
     if (!conversationId) return;
 
@@ -138,18 +168,8 @@ export default function ChatScreen({
   }
 
   return (
-    <section
-      className="
-        flex
-        h-full
-        min-h-0
-        min-w-0
-        flex-col
-        overflow-hidden
-        bg-[#020817]
-      "
-    >
-      {/* Never part of message scrolling */}
+    <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-[#020817]">
+      {/* Header + listing context never participate in message scrolling */}
       <div className="shrink-0">
         <ChatHeader
           conversation={selectedConversation}
@@ -157,12 +177,48 @@ export default function ChatScreen({
           onBack={() => setSelectedConversation(null)}
         />
 
-        <CompactProductCard
-          product={selectedConversation.product}
-          conversation={selectedConversation}
-          currentUser={currentUser}
-          onCompleteSale={() => setShowDealModal(true)}
-        />
+        {/* Conversation context */}
+        <div className="border-b border-white/[0.07] bg-[#071019] px-3 py-2.5 sm:px-5">
+          <div className="mx-auto flex w-full max-w-4xl items-center gap-3">
+            <div
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${
+                isAccommodation
+                  ? "border-amber-400/15 bg-amber-400/10"
+                  : "border-sky-400/15 bg-sky-400/10"
+              }`}
+            >
+              <span className="text-base">
+                {isAccommodation ? "🏠" : "📦"}
+              </span>
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">
+                {isAccommodation
+                  ? "Accommodation conversation"
+                  : "Item conversation"}
+              </p>
+
+              <p className="truncate text-sm font-bold text-white">
+                {contextTitle}
+              </p>
+            </div>
+
+            <div className="hidden shrink-0 rounded-full border border-white/[0.07] bg-white/[0.03] px-2.5 py-1 text-[10px] font-bold text-slate-400 sm:block">
+              {isAccommodation ? "🏠 Accommodation" : "📦 Item"}
+            </div>
+          </div>
+        </div>
+
+        {/* Existing product card is shown only for item conversations. */}
+        {isItem && !isAccommodation && (
+          <CompactProductCard
+            product={selectedConversation.product}
+            conversation={selectedConversation}
+            currentUser={currentUser}
+            onCompleteSale={() => setShowDealModal(true)}
+          />
+        )}
       </div>
 
       {/* ONLY this section scrolls */}
@@ -184,15 +240,21 @@ export default function ChatScreen({
       >
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-3">
           {messages.length === 0 && (
-            <div className="py-10 text-center">
-              <div className="text-3xl">👋</div>
+            <div className="my-4 rounded-2xl border border-white/[0.07] bg-white/[0.025] px-5 py-8 text-center shadow-[0_12px_40px_rgba(0,0,0,0.15)] sm:my-8">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.04] text-2xl">
+                {isAccommodation ? "🏠" : "👋"}
+              </div>
 
-              <p className="mt-3 font-bold text-white">
-                Start the conversation
+              <p className="mt-4 font-bold text-white">
+                {isAccommodation
+                  ? "Ask about this accommodation"
+                  : "Start the conversation"}
               </p>
 
-              <p className="mt-1 text-sm text-slate-400">
-                Ask about availability, price or where to meet.
+              <p className="mx-auto mt-1.5 max-w-md text-sm leading-6 text-slate-400">
+                {isAccommodation
+                  ? "Ask about availability, rent, location or when you can meet."
+                  : "Ask about availability, price or where to meet."}
               </p>
             </div>
           )}
@@ -211,22 +273,26 @@ export default function ChatScreen({
       </div>
 
       {/* Composer stays outside the scrolling region */}
-      <div className="relative z-20 shrink-0 bg-[#071019]">
-        <QuickReplies
-          replies={quickReplies}
-          onSelect={(reply) => setMessage(reply)}
-        />
+      <div className="relative z-20 shrink-0 border-t border-white/[0.06] bg-[#071019] pb-[env(safe-area-inset-bottom)]">
+        <div className="mx-auto w-full max-w-4xl">
+          <QuickReplies
+            replies={quickReplies}
+            onSelect={(reply) => setMessage(reply)}
+          />
 
-        <ChatInput
-          message={message}
-          setMessage={setMessage}
-          sending={sending}
-          sendMessage={sendMessage}
-        />
+          <ChatInput
+            message={message}
+            setMessage={setMessage}
+            sending={sending}
+            sendMessage={sendMessage}
+          />
+        </div>
       </div>
 
+      {/* Complete-sale flow remains unchanged and is only meaningful
+          for product/item conversations. */}
       <CompleteDealModal
-        open={showDealModal}
+        open={showDealModal && isItem && !isAccommodation}
         onClose={() => {
           if (!creatingDeal) {
             setShowDealModal(false);
