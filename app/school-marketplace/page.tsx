@@ -66,7 +66,7 @@ export default function SchoolMarketplacePage() {
         <div className="text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white p-1">
             <img
-              src="/logo.png"
+              src="/icon.png"
               alt="Axyon"
               className="h-full w-full object-contain"
             />
@@ -101,7 +101,7 @@ export default function SchoolMarketplacePage() {
           >
             <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-white p-1">
               <img
-                src="/logo.png"
+                src="/icon.png"
                 alt="Axyon"
                 className="h-full w-full object-contain"
               />

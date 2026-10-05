@@ -58,10 +58,8 @@ export default function Navbar() {
 
       const data = await res.json();
 
-      const unread = (
-        data.notifications || []
-      ).filter(
-        (item: any) => !item.isRead
+      const unread = (data.notifications || []).filter(
+        (item: any) => !item.isRead,
       ).length;
 
       setUnreadCount(unread);
@@ -75,10 +73,7 @@ export default function Navbar() {
 
     fetchUnreadNotifications();
 
-    const interval = setInterval(
-      fetchUnreadNotifications,
-      5000
-    );
+    const interval = setInterval(fetchUnreadNotifications, 5000);
 
     return () => clearInterval(interval);
   }, [user]);
@@ -98,42 +93,34 @@ export default function Navbar() {
 
   const isLoggedIn = !!user;
   const isAdmin = user?.role === "ADMIN";
-  const isSchool =
-    user?.marketplaceType === "SCHOOL";
-  const isCampus =
-    user?.marketplaceType === "CAMPUS";
+  const isSchool = user?.marketplaceType === "SCHOOL";
+  const isCampus = user?.marketplaceType === "CAMPUS";
 
-  const profileHref = isSchool
-    ? "/school-marketplace/profile"
-    : "/profile";
+  const profileHref = isSchool ? "/school-marketplace/profile" : "/profile";
 
   const profileImage =
-    user?.profileImageUrl ||
-    user?.schoolStudentPhotoUrl ||
-    "";
+    user?.profileImageUrl || user?.schoolStudentPhotoUrl || "";
 
   return (
     <nav className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 text-slate-900 shadow-[0_8px_30px_rgba(15,23,42,0.05)] backdrop-blur-2xl">
       <div className="mx-auto max-w-[1500px] px-4 sm:px-6 lg:px-8">
-
         <div className="flex min-h-[76px] items-center gap-4">
-
           {/* BRAND */}
           <a
             href={
               isAdmin
                 ? "/admin"
                 : isSchool
-                ? "/school-marketplace/home"
-                : isCampus
-                ? "/marketplace-home"
-                : "/"
+                  ? "/school-marketplace/home"
+                  : isCampus
+                    ? "/marketplace-home"
+                    : "/"
             }
             className="flex shrink-0 items-center gap-3"
           >
             <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-white p-1 shadow-[0_6px_20px_rgba(79,70,229,0.16)] ring-1 ring-slate-200">
               <img
-                src="/logo.png"
+                src="/icon.png"
                 alt="Axyon Logo"
                 className="h-full w-full object-contain"
               />
@@ -148,28 +135,21 @@ export default function Navbar() {
                 {isAdmin
                   ? "Admin Control Center"
                   : isSchool
-                  ? "School Marketplace"
-                  : isCampus
-                  ? "Campus Marketplace"
-                  : "Smart Student Ecosystem"}
+                    ? "School Marketplace"
+                    : isCampus
+                      ? "Campus Marketplace"
+                      : "Smart Student Ecosystem"}
               </p>
             </div>
           </a>
 
           {/* DESKTOP NAVIGATION */}
           <div className="ml-auto hidden items-center gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1.5 lg:flex">
-
             {!isLoggedIn && (
               <>
-                <NavLink
-                  href="/"
-                  label="Home"
-                />
+                <NavLink href="/" label="Home" />
 
-                <NavLink
-                  href="/marketplace-home"
-                  label="Campus"
-                />
+                <NavLink href="/marketplace-home" label="Campus" />
 
                 <NavLink
                   href="/school-marketplace"
@@ -182,30 +162,23 @@ export default function Navbar() {
             {/* CAMPUS */}
             {isCampus && !isAdmin && (
               <>
-                <NavLink
-                  href="/marketplace-home"
-                  label="Campus Home"
-                />
+                <NavLink href="/marketplace-home" label="Campus Home" />
+
+                <NavLink href="/marketplace" label="Marketplace" />
+
+                <NavLink href="/rooms" label="Accommodation" />
 
                 <NavLink
-                  href="/marketplace"
-                  label="Marketplace"
+                  href="/home-tuition"
+                  label="Home Tuition"
+                  accent="indigo"
                 />
 
-                <NavLink
-                  href="/rooms"
-                  label="Accommodation"
-                />
+                <NavLink href="/dashboard" label="Dashboard" />
 
-                <NavLink
-                  href="/chat"
-                  label="Chat"
-                />
+                <NavLink href="/chat" label="Chat" />
 
-                <NavLink
-                  href="/support"
-                  label="Support"
-                />
+                <NavLink href="/support" label="Support" />
               </>
             )}
 
@@ -230,28 +203,16 @@ export default function Navbar() {
                   accent="indigo"
                 />
 
-                <NavLink
-                  href="/support"
-                  label="Support"
-                  accent="indigo"
-                />
+                <NavLink href="/support" label="Support" accent="indigo" />
               </>
             )}
 
             {/* ADMIN */}
             {isAdmin && (
               <>
-                <NavLink
-                  href="/admin"
-                  label="Dashboard"
-                  accent="indigo"
-                />
+                <NavLink href="/admin" label="Dashboard" accent="indigo" />
 
-                <NavLink
-                  href="/admin/users"
-                  label="Users"
-                  accent="indigo"
-                />
+                <NavLink href="/admin/users" label="Users" accent="indigo" />
 
                 <NavLink
                   href="/admin/listings"
@@ -274,11 +235,7 @@ export default function Navbar() {
                 <div className="relative">
                   <button
                     type="button"
-                    onClick={() =>
-                      setAdminMoreOpen(
-                        (value) => !value
-                      )
-                    }
+                    onClick={() => setAdminMoreOpen((value) => !value)}
                     className="rounded-xl px-4 py-2.5 text-sm font-bold text-slate-500 transition hover:bg-indigo-50 hover:text-indigo-700"
                   >
                     More ▾
@@ -291,25 +248,16 @@ export default function Navbar() {
                         label="School Verification"
                       />
 
-                      <AdminMoreLink
-                        href="/admin/ads"
-                        label="Ad Banners"
-                      />
+                      <AdminMoreLink href="/admin/ads" label="Ad Banners" />
 
-                      <AdminMoreLink
-                        href="/admin/support"
-                        label="Support"
-                      />
+                      <AdminMoreLink href="/admin/support" label="Support" />
 
                       <AdminMoreLink
                         href="/admin/analytics"
                         label="Analytics"
                       />
 
-                      <AdminMoreLink
-                        href="/admin/logs"
-                        label="Admin Logs"
-                      />
+                      <AdminMoreLink href="/admin/logs" label="Admin Logs" />
                     </div>
                   )}
                 </div>
@@ -319,7 +267,6 @@ export default function Navbar() {
 
           {/* DESKTOP ACTIONS */}
           <div className="hidden items-center gap-2 lg:flex">
-
             {!loading && !isLoggedIn && (
               <>
                 <a
@@ -347,12 +294,9 @@ export default function Navbar() {
                   className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-sm shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                 >
                   🔔
-
                   {unreadCount > 0 && (
                     <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-600 px-1 text-[10px] font-black text-white">
-                      {unreadCount > 9
-                        ? "9+"
-                        : unreadCount}
+                      {unreadCount > 9 ? "9+" : unreadCount}
                     </span>
                   )}
                 </a>
@@ -392,9 +336,7 @@ export default function Navbar() {
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <span className="text-lg">
-                        👤
-                      </span>
+                      <span className="text-lg">👤</span>
                     )}
                   </a>
                 )}
@@ -421,9 +363,7 @@ export default function Navbar() {
           {/* MOBILE MENU BUTTON */}
           <button
             type="button"
-            onClick={() =>
-              setMenuOpen((value) => !value)
-            }
+            onClick={() => setMenuOpen((value) => !value)}
             aria-label="Open menu"
             className="ml-auto flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl shadow-sm lg:hidden"
           >
@@ -435,13 +375,9 @@ export default function Navbar() {
         {menuOpen && (
           <div className="pb-5 lg:hidden">
             <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl">
-
               {!isLoggedIn && (
                 <>
-                  <MobileLink
-                    href="/"
-                    label="Axyon Home"
-                  />
+                  <MobileLink href="/" label="Axyon Home" />
 
                   <MobileLink
                     href="/marketplace-home"
@@ -453,10 +389,7 @@ export default function Navbar() {
                     label="School Marketplace"
                   />
 
-                  <MobileLink
-                    href="/login"
-                    label="Campus Login"
-                  />
+                  <MobileLink href="/login" label="Campus Login" />
 
                   <MobileLink
                     href="/school-marketplace/login"
@@ -468,45 +401,24 @@ export default function Navbar() {
               {/* CAMPUS MOBILE */}
               {isCampus && !isAdmin && (
                 <>
-                  <MobileLink
-                    href="/marketplace-home"
-                    label="Campus Home"
-                  />
+                  <MobileLink href="/marketplace-home" label="Campus Home" />
 
-                  <MobileLink
-                    href="/marketplace"
-                    label="Marketplace"
-                  />
+                  <MobileLink href="/marketplace" label="Marketplace" />
 
-                  <MobileLink
-                    href="/rooms"
-                    label="Accommodation"
-                  />
+                  <MobileLink href="/rooms" label="Accommodation" />
+                  <MobileLink href="/home-tuition" label="Home Tuition" />
 
-                  <MobileLink
-                    href="/chat"
-                    label="Chat"
-                  />
+                  <MobileLink href="/dashboard" label="Dashboard" />
 
-                  <MobileLink
-                    href="/support"
-                    label="Support"
-                  />
+                  <MobileLink href="/chat" label="Chat" />
 
-                  <MobileLink
-                    href="/profile"
-                    label="Profile"
-                  />
+                  <MobileLink href="/support" label="Support" />
 
-                  <MobileLink
-                    href="/create-product"
-                    label="Sell Product"
-                  />
+                  <MobileLink href="/profile" label="Profile" />
 
-                  <MobileLink
-                    href="/create-room"
-                    label="List Room"
-                  />
+                  <MobileLink href="/create-product" label="Sell Product" />
+
+                  <MobileLink href="/create-room" label="List Room" />
                 </>
               )}
 
@@ -528,15 +440,9 @@ export default function Navbar() {
                     label="Sell Item"
                   />
 
-                  <MobileLink
-                    href="/school-marketplace/chat"
-                    label="Chat"
-                  />
+                  <MobileLink href="/school-marketplace/chat" label="Chat" />
 
-                  <MobileLink
-                    href="/support"
-                    label="Support"
-                  />
+                  <MobileLink href="/support" label="Support" />
 
                   <MobileLink
                     href="/school-marketplace/profile"
@@ -550,30 +456,15 @@ export default function Navbar() {
                 <>
                   <MobileSection title="Admin Control Center" />
 
-                  <MobileLink
-                    href="/admin"
-                    label="Dashboard"
-                  />
+                  <MobileLink href="/admin" label="Dashboard" />
 
-                  <MobileLink
-                    href="/admin/users"
-                    label="Users"
-                  />
+                  <MobileLink href="/admin/users" label="Users" />
 
-                  <MobileLink
-                    href="/admin/listings"
-                    label="Listings"
-                  />
+                  <MobileLink href="/admin/listings" label="Listings" />
 
-                  <MobileLink
-                    href="/admin/rooms"
-                    label="Accommodation"
-                  />
+                  <MobileLink href="/admin/rooms" label="Accommodation" />
 
-                  <MobileLink
-                    href="/admin/reports"
-                    label="Reports"
-                  />
+                  <MobileLink href="/admin/reports" label="Reports" />
 
                   <MobileSection title="Management" />
 
@@ -582,25 +473,13 @@ export default function Navbar() {
                     label="School Verification"
                   />
 
-                  <MobileLink
-                    href="/admin/ads"
-                    label="Ad Banners"
-                  />
+                  <MobileLink href="/admin/ads" label="Ad Banners" />
 
-                  <MobileLink
-                    href="/admin/support"
-                    label="Support"
-                  />
+                  <MobileLink href="/admin/support" label="Support" />
 
-                  <MobileLink
-                    href="/admin/analytics"
-                    label="Analytics"
-                  />
+                  <MobileLink href="/admin/analytics" label="Analytics" />
 
-                  <MobileLink
-                    href="/admin/logs"
-                    label="Admin Logs"
-                  />
+                  <MobileLink href="/admin/logs" label="Admin Logs" />
                 </>
               )}
 
@@ -611,9 +490,7 @@ export default function Navbar() {
                     label={
                       unreadCount > 0
                         ? `Notifications (${
-                            unreadCount > 9
-                              ? "9+"
-                              : unreadCount
+                            unreadCount > 9 ? "9+" : unreadCount
                           })`
                         : "Notifications"
                     }
@@ -660,13 +537,7 @@ function NavLink({
   );
 }
 
-function AdminMoreLink({
-  href,
-  label,
-}: {
-  href: string;
-  label: string;
-}) {
+function AdminMoreLink({ href, label }: { href: string; label: string }) {
   return (
     <a
       href={href}
@@ -677,13 +548,7 @@ function AdminMoreLink({
   );
 }
 
-function MobileLink({
-  href,
-  label,
-}: {
-  href: string;
-  label: string;
-}) {
+function MobileLink({ href, label }: { href: string; label: string }) {
   return (
     <a
       href={href}
@@ -694,11 +559,7 @@ function MobileLink({
   );
 }
 
-function MobileSection({
-  title,
-}: {
-  title: string;
-}) {
+function MobileSection({ title }: { title: string }) {
   return (
     <div className="px-2 pb-1 pt-3 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
       {title}

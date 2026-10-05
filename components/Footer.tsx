@@ -13,13 +13,7 @@ function InstagramIcon() {
     >
       <rect x="3" y="3" width="18" height="18" rx="5" />
       <circle cx="12" cy="12" r="4" />
-      <circle
-        cx="17.5"
-        cy="6.5"
-        r="1"
-        fill="currentColor"
-        stroke="none"
-      />
+      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -57,8 +51,12 @@ export default function Footer() {
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-sm font-black text-slate-950">
-                AX
+              <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-white p-1">
+                <img
+                  src="/icon.png"
+                  alt="Axyon Logo"
+                  className="h-full w-full object-contain"
+                />
               </div>
 
               <div>
@@ -70,28 +68,27 @@ export default function Footer() {
             </div>
 
             <p className="mt-5 max-w-md text-sm leading-7 text-slate-400">
-              A student-focused digital ecosystem connecting school and
-              college communities through dedicated marketplaces and services,
-              including Axyon Home Tuition.
+              A student-focused digital ecosystem connecting school and college
+              communities through dedicated marketplaces and services, including
+              Axyon Home Tuition.
             </p>
 
             <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4">
               <p className="text-xs font-black uppercase tracking-wider text-slate-500">
                 Home Tuition
               </p>
-
               <p className="mt-2 text-sm leading-6 text-slate-300">
                 Verified Campus tutors can publish tutoring profiles through
                 applicable Axyon subscription plans. Students can discover
                 available tutors and review their profiles.
               </p>
-
               <Link
                 href="/home-tuition"
                 className="mt-3 inline-flex text-sm font-bold text-white hover:text-indigo-300"
               >
                 Explore Home Tuition →
               </Link>
+              ``
             </div>
           </div>
 
@@ -128,10 +125,7 @@ export default function Footer() {
                 Home Tuition
               </Link>
 
-              <Link
-                className="transition hover:text-white"
-                href="/marketplace"
-              >
+              <Link className="transition hover:text-white" href="/marketplace">
                 Campus Marketplace
               </Link>
 

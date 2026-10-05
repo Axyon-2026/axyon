@@ -135,7 +135,7 @@ export default function SchoolChatPage() {
           <div className="text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-white p-1 shadow-lg">
               <img
-                src="/logo.png"
+                src="/icon.png"
                 alt="Axyon"
                 className="h-full w-full object-contain"
               />
@@ -164,7 +164,7 @@ export default function SchoolChatPage() {
             >
               <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white p-1 shadow-lg sm:h-11 sm:w-11 sm:rounded-2xl">
                 <img
-                  src="/logo.png"
+                  src="/icon.png"
                   alt="Axyon"
                   className="h-full w-full object-contain"
                 />

@@ -27,9 +27,7 @@ export default function DashboardPage() {
             return;
           }
 
-          setMessage(
-            dashboardData.message || "Failed to load dashboard"
-          );
+          setMessage(dashboardData.message || "Failed to load dashboard");
           return;
         }
 
@@ -45,7 +43,7 @@ export default function DashboardPage() {
 
         if (dashboardData.user?.marketplaceType !== "CAMPUS") {
           setMessage(
-            "This dashboard is only available for Campus Marketplace accounts."
+            "This dashboard is only available for Campus Marketplace accounts.",
           );
           return;
         }
@@ -121,6 +119,12 @@ export default function DashboardPage() {
                     className="rounded-xl border border-white/[0.09] bg-white/[0.04] px-4 py-2.5 text-xs font-black text-slate-300 transition hover:bg-white/[0.08] active:scale-95 sm:px-5"
                   >
                     💬 Chat
+                  </a>
+                  <a
+                    href="/home-tuition"
+                    className="rounded-xl border border-indigo-400/20 bg-indigo-500/10 px-4 py-2.5 text-xs font-black text-indigo-300 transition hover:bg-indigo-500/20 active:scale-95 sm:px-5"
+                  >
+                    🏠 Home Tuition
                   </a>
                 </div>
               </div>
@@ -203,9 +207,7 @@ export default function DashboardPage() {
                       <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-400/70">
                         Account
                       </p>
-                      <h2 className="mt-1 text-xl font-black">
-                        Profile
-                      </h2>
+                      <h2 className="mt-1 text-xl font-black">Profile</h2>
                     </div>
 
                     <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-400/10 text-xl">
@@ -247,9 +249,7 @@ export default function DashboardPage() {
                       </p>
                       <p className="mt-1 text-sm font-bold text-slate-200">
                         {data.user?.createdAt
-                          ? new Date(
-                              data.user.createdAt
-                            ).toLocaleDateString()
+                          ? new Date(data.user.createdAt).toLocaleDateString()
                           : "—"}
                       </p>
                     </div>
@@ -519,9 +519,7 @@ export default function DashboardPage() {
                       <p className="text-[10px] font-black uppercase tracking-[0.16em] text-sky-400/70">
                         Messages
                       </p>
-                      <h2 className="mt-1 text-xl font-black">
-                        Recent Chats
-                      </h2>
+                      <h2 className="mt-1 text-xl font-black">Recent Chats</h2>
                     </div>
 
                     <a
@@ -541,23 +539,21 @@ export default function DashboardPage() {
                       </div>
                     )}
 
-                    {data.conversations?.slice(0, 5).map(
-                      (conversation: any) => {
+                    {data.conversations
+                      ?.slice(0, 5)
+                      .map((conversation: any) => {
                         const lastMessage =
                           conversation.messages?.[
                             conversation.messages.length - 1
                           ];
 
                         const isAccommodation = Boolean(
-                          conversation.roomId ||
-                            conversation.room
+                          conversation.roomId || conversation.room,
                         );
 
                         const contextTitle = isAccommodation
-                          ? conversation.room?.title ||
-                            "Accommodation"
-                          : conversation.product?.title ||
-                            "Marketplace item";
+                          ? conversation.room?.title || "Accommodation"
+                          : conversation.product?.title || "Marketplace item";
 
                         return (
                           <a
@@ -566,29 +562,23 @@ export default function DashboardPage() {
                             className="block rounded-xl border border-white/[0.05] bg-white/[0.025] p-3.5 transition hover:bg-white/[0.05]"
                           >
                             <div className="flex items-center gap-2">
-                              <span>
-                                {isAccommodation ? "🏠" : "📦"}
-                              </span>
+                              <span>{isAccommodation ? "🏠" : "📦"}</span>
 
                               <p className="min-w-0 flex-1 truncate text-xs font-black text-slate-300">
                                 {contextTitle}
                               </p>
 
                               <span className="text-[9px] text-slate-600">
-                                {isAccommodation
-                                  ? "Accommodation"
-                                  : "Item"}
+                                {isAccommodation ? "Accommodation" : "Item"}
                               </span>
                             </div>
 
                             <p className="mt-2 line-clamp-1 text-xs text-slate-500">
-                              {lastMessage?.text ||
-                                "Start the conversation"}
+                              {lastMessage?.text || "Start the conversation"}
                             </p>
                           </a>
                         );
-                      }
-                    )}
+                      })}
                   </div>
                 </div>
               </div>

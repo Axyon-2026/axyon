@@ -49,7 +49,7 @@ export default function CampusMarketplaceHome() {
           <div className="text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white p-2 shadow-xl ring-1 ring-slate-200">
               <img
-                src="/logo.png"
+                src="/icon.png"
                 alt="Axyon"
                 className="h-full w-full object-contain"
               />
@@ -70,7 +70,6 @@ export default function CampusMarketplaceHome() {
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#f6f8f7] text-slate-950">
-
       {/* =========================================================
           HERO
       ========================================================= */}
@@ -81,7 +80,6 @@ export default function CampusMarketplaceHome() {
 
         <div className="relative mx-auto max-w-[1500px] px-5 py-12 sm:px-8 sm:py-16 lg:px-10 lg:py-24">
           <div className="max-w-5xl">
-
             {/* BADGE */}
             <div className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-green-700">
               <span className="h-2 w-2 rounded-full bg-green-500" />
@@ -92,32 +90,26 @@ export default function CampusMarketplaceHome() {
             <h1 className="mt-7 max-w-5xl text-5xl font-black leading-[0.94] tracking-[-0.05em] sm:text-6xl lg:text-8xl">
               Campus life,
               <br />
-              <span className="text-green-600">
-                made easier.
-              </span>
+              <span className="text-green-600">made easier.</span>
             </h1>
 
             {/* DESCRIPTION */}
             <p className="mt-7 max-w-3xl text-base leading-8 text-slate-500 sm:text-lg">
-              Buy and sell useful student essentials,
-              discover accommodation, connect with
-              other students, and find better campus
-              deals in one place.
+              Buy and sell useful student essentials, discover accommodation,
+              connect with other students, and find better campus deals in one
+              place.
             </p>
 
             {/* WELCOME */}
             {user?.name && (
               <p className="mt-5 text-sm font-black text-slate-400">
-                Welcome back{" "}
-                <span className="text-slate-700">
-                  {user.name}
-                </span>
+                Welcome back <span className="text-slate-700">{user.name}</span>
                 .
               </p>
             )}
 
             {/* ACTIONS */}
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <a
                 href="/marketplace"
                 className="rounded-2xl bg-slate-950 px-8 py-4 text-center text-sm font-black text-white shadow-xl shadow-slate-900/10 transition hover:-translate-y-0.5 hover:bg-slate-800"
@@ -132,7 +124,21 @@ export default function CampusMarketplaceHome() {
                 Find Accommodation
               </a>
 
-              {!user && (
+              <a
+                href="/home-tuition"
+                className="rounded-2xl border border-indigo-200 bg-indigo-50 px-8 py-4 text-center text-sm font-black text-indigo-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-100"
+              >
+                Home Tuition
+              </a>
+
+              {user ? (
+                <a
+                  href="/dashboard"
+                  className="rounded-2xl border border-slate-200 bg-white px-8 py-4 text-center text-sm font-black text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-100"
+                >
+                  Dashboard
+                </a>
+              ) : (
                 <a
                   href="/register"
                   className="rounded-2xl border border-green-200 bg-green-50 px-8 py-4 text-center text-sm font-black text-green-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-green-100"
@@ -149,7 +155,6 @@ export default function CampusMarketplaceHome() {
               <span>✓ Direct chat</span>
               <span>✓ Verified student community</span>
             </div>
-
           </div>
         </div>
       </section>
@@ -163,7 +168,6 @@ export default function CampusMarketplaceHome() {
           FEATURES
       ========================================================= */}
       <section className="mx-auto max-w-[1500px] px-5 py-16 sm:px-8 lg:px-10">
-
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-green-600">
@@ -176,13 +180,11 @@ export default function CampusMarketplaceHome() {
           </div>
 
           <p className="max-w-md text-sm leading-6 text-slate-400">
-            Everything students use most, organised into
-            simple experiences.
+            Everything students use most, organised into simple experiences.
           </p>
         </div>
 
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-
           <FeatureCard
             icon="🛍️"
             title="Buy & Sell"
@@ -217,7 +219,6 @@ export default function CampusMarketplaceHome() {
             action="Coming soon"
             comingSoon
           />
-
         </div>
       </section>
 
@@ -225,13 +226,10 @@ export default function CampusMarketplaceHome() {
           ACCOMMODATION
       ========================================================= */}
       <section className="mx-auto max-w-[1500px] px-5 pb-16 sm:px-8 lg:px-10">
-
         <div className="relative overflow-hidden rounded-[2.5rem] border border-emerald-100 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
-
           <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-green-100 blur-3xl" />
 
           <div className="relative grid gap-8 p-7 sm:p-10 lg:grid-cols-[1fr_auto] lg:items-center">
-
             <div>
               <div className="inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-green-700">
                 <span>🏠</span>
@@ -243,8 +241,8 @@ export default function CampusMarketplaceHome() {
               </h2>
 
               <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-500 sm:text-base">
-                Explore student rooms, PGs, hostels and shared
-                accommodation around your campus.
+                Explore student rooms, PGs, hostels and shared accommodation
+                around your campus.
               </p>
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -276,7 +274,6 @@ export default function CampusMarketplaceHome() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3 lg:w-[430px] lg:grid-cols-1">
-
               <AccommodationPoint
                 icon="📍"
                 title="Nearby"
@@ -294,9 +291,7 @@ export default function CampusMarketplaceHome() {
                 title="Direct contact"
                 text="Connect directly with the owner."
               />
-
             </div>
-
           </div>
         </div>
       </section>
@@ -305,11 +300,8 @@ export default function CampusMarketplaceHome() {
           VALUE STRIP
       ========================================================= */}
       <section className="mx-auto max-w-[1500px] px-5 pb-16 sm:px-8 lg:px-10">
-
         <div className="overflow-hidden rounded-[2.5rem] bg-slate-950 p-7 text-white shadow-[0_25px_70px_rgba(15,23,42,0.12)] sm:p-10">
-
           <div className="grid gap-10 lg:grid-cols-[1fr_auto] lg:items-center">
-
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.22em] text-green-400">
                 Why students use Axyon
@@ -322,15 +314,12 @@ export default function CampusMarketplaceHome() {
               </h2>
 
               <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-400">
-                Axyon brings campus buying, selling,
-                accommodation and student connections
-                together without making the experience
-                complicated.
+                Axyon brings campus buying, selling, accommodation and student
+                connections together without making the experience complicated.
               </p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3 lg:w-[560px]">
-
               <ValueCard
                 icon="🛡️"
                 title="Trust"
@@ -348,7 +337,6 @@ export default function CampusMarketplaceHome() {
                 title="Connect"
                 text="Chat directly with students."
               />
-
             </div>
           </div>
         </div>
@@ -358,15 +346,12 @@ export default function CampusMarketplaceHome() {
           HOW IT WORKS
       ========================================================= */}
       <section className="mx-auto max-w-[1500px] px-5 pb-16 sm:px-8 lg:px-10">
-
         <div className="rounded-[2.5rem] border border-green-100 bg-gradient-to-br from-green-50 via-white to-emerald-50 p-7 sm:p-10">
-
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-green-700">
             How Axyon works
           </p>
 
           <div className="mt-8 grid gap-8 md:grid-cols-3">
-
             <Step
               number="01"
               icon="🔎"
@@ -387,7 +372,6 @@ export default function CampusMarketplaceHome() {
               title="Exchange"
               text="Meet, exchange or complete your transaction responsibly."
             />
-
           </div>
         </div>
       </section>
@@ -396,13 +380,10 @@ export default function CampusMarketplaceHome() {
           CTA
       ========================================================= */}
       <section className="mx-auto max-w-[1500px] px-5 pb-20 sm:px-8 lg:px-10">
-
         <div className="relative overflow-hidden rounded-[2.5rem] bg-green-500 p-8 sm:p-12">
-
           <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/20 blur-3xl" />
 
           <div className="relative flex flex-col justify-between gap-8 lg:flex-row lg:items-center">
-
             <div>
               <p className="text-xs font-black uppercase tracking-[0.2em] text-green-950">
                 Start exploring
@@ -413,9 +394,8 @@ export default function CampusMarketplaceHome() {
               </h2>
 
               <p className="mt-3 max-w-xl text-sm leading-7 text-green-950/70">
-                Explore listings from the Axyon campus
-                community and discover what students
-                around you are offering.
+                Explore listings from the Axyon campus community and discover
+                what students around you are offering.
               </p>
             </div>
 
@@ -425,7 +405,6 @@ export default function CampusMarketplaceHome() {
             >
               Explore Marketplace →
             </a>
-
           </div>
         </div>
       </section>
@@ -433,7 +412,6 @@ export default function CampusMarketplaceHome() {
       <footer className="border-t border-slate-200 bg-white px-5 py-8 text-center text-xs font-medium text-slate-400">
         Axyon Campus Marketplace · Built for student life
       </footer>
-
     </main>
   );
 }
@@ -480,9 +458,7 @@ function FeatureCard({
         {icon}
       </div>
 
-      <h3 className="mt-6 text-xl font-black text-slate-950">
-        {title}
-      </h3>
+      <h3 className="mt-6 text-xl font-black text-slate-950">{title}</h3>
 
       <p className="mt-3 min-h-[72px] text-sm leading-6 text-slate-500">
         {text}
@@ -490,9 +466,7 @@ function FeatureCard({
 
       <p
         className={`mt-6 text-xs font-black ${
-          comingSoon
-            ? "text-slate-400"
-            : "text-green-600"
+          comingSoon ? "text-slate-400" : "text-green-600"
         }`}
       >
         {action} →
@@ -516,13 +490,9 @@ function AccommodationPoint({
         {icon}
       </div>
 
-      <h3 className="mt-3 text-sm font-black text-slate-950">
-        {title}
-      </h3>
+      <h3 className="mt-3 text-sm font-black text-slate-950">{title}</h3>
 
-      <p className="mt-1 text-xs leading-5 text-slate-500">
-        {text}
-      </p>
+      <p className="mt-1 text-xs leading-5 text-slate-500">{text}</p>
     </div>
   );
 }
@@ -540,13 +510,9 @@ function ValueCard({
     <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-5">
       <div className="text-xl">{icon}</div>
 
-      <p className="mt-3 text-sm font-black text-white">
-        {title}
-      </p>
+      <p className="mt-3 text-sm font-black text-white">{title}</p>
 
-      <p className="mt-1 text-xs leading-5 text-slate-500">
-        {text}
-      </p>
+      <p className="mt-1 text-xs leading-5 text-slate-500">{text}</p>
     </div>
   );
 }
@@ -573,13 +539,9 @@ function Step({
           {number}
         </span>
 
-        <h3 className="mt-1 text-lg font-black text-slate-950">
-          {title}
-        </h3>
+        <h3 className="mt-1 text-lg font-black text-slate-950">{title}</h3>
 
-        <p className="mt-2 text-sm leading-6 text-slate-500">
-          {text}
-        </p>
+        <p className="mt-2 text-sm leading-6 text-slate-500">{text}</p>
       </div>
     </div>
   );

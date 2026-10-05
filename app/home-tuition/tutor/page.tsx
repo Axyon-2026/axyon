@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -79,9 +80,13 @@ export default function TutorOnboardingPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [step, setStep] = useState(1);
+
+  const router = useRouter();
 
   useEffect(() => {
     async function loadProfile() {
@@ -140,6 +145,7 @@ export default function TutorOnboardingPage() {
       ...current,
       [key]: value,
     }));
+
     setMessage("");
     setError("");
   }
@@ -238,13 +244,63 @@ export default function TutorOnboardingPage() {
 
     setError("");
     setStep((current) => Math.min(4, current + 1));
-    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   }
 
   function previousStep() {
     setError("");
     setStep((current) => Math.max(1, current - 1));
-    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }
+
+  async function uploadPhoto(file: File) {
+    if (!file.type.startsWith("image/")) {
+      setPhotoError("Please select an image file.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setPhotoError("Image must be 5 MB or smaller.");
+      return;
+    }
+
+    try {
+      setPhotoUploading(true);
+      setPhotoError("");
+      setMessage("");
+      setError("");
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/home-tuition/profile/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to upload photo.");
+      }
+
+      update("photoUrl", data.url);
+      setMessage("Profile photo uploaded successfully.");
+    } catch (err) {
+      setPhotoError(
+        err instanceof Error ? err.message : "Unable to upload photo.",
+      );
+    } finally {
+      setPhotoUploading(false);
+    }
   }
 
   async function saveProfile() {
@@ -294,9 +350,11 @@ export default function TutorOnboardingPage() {
         }));
       }
 
-      setMessage(
-        "Your tutor profile has been saved. You can now continue to subscription.",
-      );
+      setMessage("Tutor profile saved successfully.");
+
+      setTimeout(() => {
+        router.push("/home-tuition/tutor/subscription");
+      }, 500);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Unable to save tutor profile.",
@@ -331,7 +389,10 @@ export default function TutorOnboardingPage() {
       }
 
       const activeSubscription = subscriptionsData.subscriptions?.find(
-        (subscription: { status: string; expiresAt: string | null }) =>
+        (subscription: {
+          status: string;
+          expiresAt: string | null;
+        }) =>
           subscription.status === "ACTIVE" &&
           subscription.expiresAt &&
           new Date(subscription.expiresAt).getTime() > Date.now(),
@@ -436,7 +497,6 @@ export default function TutorOnboardingPage() {
           </p>
         </div>
 
-        {/* Progress */}
         <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between gap-4">
             <div className="flex min-w-0 flex-1 gap-2">
@@ -526,25 +586,63 @@ export default function TutorOnboardingPage() {
                   </div>
 
                   <div>
-                    <label className="text-sm font-bold">
-                      Profile photo URL
-                    </label>
-                    <input
-                      value={profile.photoUrl}
-                      onChange={(e) => update("photoUrl", e.target.value)}
-                      placeholder="https://..."
-                      className="mt-2 h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100"
-                    />
-                    <p className="mt-1.5 text-xs text-slate-400">
-                      Use a clear photo. Image upload can be connected to the
-                      existing upload infrastructure later if required.
-                    </p>
+                    <label className="text-sm font-bold">Profile photo</label>
+
+                    <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center">
+                      <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-100 text-2xl font-black text-slate-400">
+                        {profile.photoUrl ? (
+                          <img
+                            src={profile.photoUrl}
+                            alt="Tutor profile"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          profile.displayName?.charAt(0)?.toUpperCase() || "A"
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <label className="inline-flex cursor-pointer items-center rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white transition hover:bg-indigo-600">
+                          {photoUploading
+                            ? "Uploading..."
+                            : "Upload photo"}
+
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            disabled={photoUploading}
+                            onChange={(event) => {
+                              const file = event.target.files?.[0];
+
+                              if (file) {
+                                void uploadPhoto(file);
+                              }
+
+                              event.currentTarget.value = "";
+                            }}
+                            className="hidden"
+                          />
+                        </label>
+
+                        <p className="mt-2 text-xs leading-5 text-slate-400">
+                          JPG, PNG or WebP. Maximum 5 MB. Use a clear, recent
+                          photo.
+                        </p>
+
+                        {photoError && (
+                          <p className="mt-2 text-xs font-semibold text-red-600">
+                            {photoError}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                   <div>
                     <label className="text-sm font-bold">
                       About you <span className="text-red-500">*</span>
                     </label>
+
                     <textarea
                       value={profile.bio}
                       onChange={(e) => update("bio", e.target.value)}
@@ -553,6 +651,7 @@ export default function TutorOnboardingPage() {
                       placeholder="Describe your academic background, teaching experience and the kind of students you enjoy helping..."
                       className="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100"
                     />
+
                     <p className="mt-1 text-right text-xs text-slate-400">
                       {profile.bio.length}/1500
                     </p>
@@ -643,6 +742,7 @@ export default function TutorOnboardingPage() {
                     <label className="text-sm font-bold">
                       Availability <span className="text-red-500">*</span>
                     </label>
+
                     <textarea
                       value={profile.availability}
                       onChange={(e) => update("availability", e.target.value)}
@@ -715,6 +815,7 @@ export default function TutorOnboardingPage() {
 
                     <div className="mt-3 flex items-start gap-3 rounded-xl bg-amber-50 p-4">
                       <span className="mt-0.5">🔒</span>
+
                       <p className="text-xs leading-5 text-amber-900">
                         Your phone number will not be displayed as text.
                         Students can use Call or WhatsApp buttons when your
@@ -737,6 +838,7 @@ export default function TutorOnboardingPage() {
                       <span className="block text-sm font-bold">
                         Allow private contact access
                       </span>
+
                       <span className="mt-1 block text-xs leading-5 text-slate-500">
                         I understand that verified students may use the
                         protected Call / WhatsApp contact actions while my tutor
@@ -749,6 +851,7 @@ export default function TutorOnboardingPage() {
                     <div className="flex items-center justify-between gap-4">
                       <div>
                         <p className="font-bold">Demo session</p>
+
                         <p className="mt-1 text-xs text-slate-500">
                           Let students know if you offer a demo.
                         </p>
@@ -849,6 +952,7 @@ export default function TutorOnboardingPage() {
                           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-black text-white">
                             {index + 1}
                           </span>
+
                           <p className="text-sm leading-6 text-indigo-900">
                             {item}
                           </p>
@@ -939,9 +1043,11 @@ function StepHeading({
       <p className="text-xs font-black uppercase tracking-widest text-indigo-600">
         {eyebrow}
       </p>
+
       <h2 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">
         {title}
       </h2>
+
       <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
         {description}
       </p>
@@ -1057,6 +1163,7 @@ function AcceptanceCard({
 
       <span>
         <span className="block font-bold">{title}</span>
+
         <span className="mt-1 block text-sm leading-6 text-slate-500">
           {description}
         </span>

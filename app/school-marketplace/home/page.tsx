@@ -116,7 +116,7 @@ export default function SchoolHomePage() {
         <div className="px-5 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white p-1 shadow-xl ring-1 ring-slate-200">
             <img
-              src="/logo.png"
+              src="/icon.png"
               alt="Axyon"
               className="h-full w-full object-contain"
             />
@@ -153,7 +153,7 @@ export default function SchoolHomePage() {
             >
               <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-white p-1 shadow-[0_8px_24px_rgba(79,70,229,0.15)] ring-1 ring-slate-200">
                 <img
-                  src="/logo.png"
+                  src="/icon.png"
                   alt="Axyon"
                   className="h-full w-full object-contain"
                 />

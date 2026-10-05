@@ -134,7 +134,7 @@ export default function SchoolLoginPage() {
         <div className="mt-10 rounded-[2rem] border border-white/10 bg-white/[0.04] p-7 sm:p-9">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white p-1">
             <img
-              src="/logo.png"
+              src="/icon.png"
               alt="Axyon"
               className="h-full w-full object-contain"
             />

@@ -237,7 +237,7 @@ export default function SchoolSellPage() {
         <div className="text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-white p-1 shadow-lg">
             <img
-              src="/logo.png"
+              src="/icon.png"
               alt="Axyon"
               className="h-full w-full object-contain"
             />
