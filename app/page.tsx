@@ -8,9 +8,11 @@ export default function HomePage() {
       <header className="border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-center px-5 py-5 sm:px-8">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-xl font-black text-white shadow-lg">
-              AX
-            </div>
+            <img
+              src="/icon.png"
+              alt="Axyon"
+              className="h-12 w-12 rounded-2xl object-contain shadow-lg"
+            />
             <div>
               <h1 className="text-2xl font-black tracking-tight">Axyon</h1>
               <p className="text-xs font-semibold text-slate-500">
@@ -283,9 +285,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-10 md:grid-cols-2">
             <div>
-              <p className="text-sm font-black text-green-400">
-                AXYON SUPPORT
-              </p>
+              <p className="text-sm font-black text-green-400">AXYON SUPPORT</p>
 
               <h2 className="mt-3 text-3xl font-black sm:text-4xl">
                 Need help with Axyon?

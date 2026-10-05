@@ -180,8 +180,8 @@ export default function TutorOnboardingPage() {
         return false;
       }
 
-      if (!profile.institution.trim() && !profile.college.trim()) {
-        setError("Add your institution or college.");
+      if (!profile.college.trim()) {
+        setError("Add your college or institution.");
         return false;
       }
     }
@@ -389,10 +389,7 @@ export default function TutorOnboardingPage() {
       }
 
       const activeSubscription = subscriptionsData.subscriptions?.find(
-        (subscription: {
-          status: string;
-          expiresAt: string | null;
-        }) =>
+        (subscription: { status: string; expiresAt: string | null }) =>
           subscription.status === "ACTIVE" &&
           subscription.expiresAt &&
           new Date(subscription.expiresAt).getTime() > Date.now(),
@@ -468,10 +465,12 @@ export default function TutorOnboardingPage() {
             href="/home-tuition"
             className="flex items-center gap-2 text-lg font-black"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-950 text-sm text-white">
-              A
-            </span>
-            Axyon
+            <img
+              src="/icon.png"
+              alt="Axyon"
+              className="h-9 w-9 rounded-xl object-contain"
+            />
+            <span>Axyon</span>
           </Link>
 
           <Link
@@ -576,13 +575,6 @@ export default function TutorOnboardingPage() {
                       onChange={(value) => update("college", value)}
                       placeholder="e.g. University name"
                     />
-
-                    <Field
-                      label="Institution / school"
-                      value={profile.institution}
-                      onChange={(value) => update("institution", value)}
-                      placeholder="Optional"
-                    />
                   </div>
 
                   <div>
@@ -603,9 +595,7 @@ export default function TutorOnboardingPage() {
 
                       <div className="min-w-0 flex-1">
                         <label className="inline-flex cursor-pointer items-center rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white transition hover:bg-indigo-600">
-                          {photoUploading
-                            ? "Uploading..."
-                            : "Upload photo"}
+                          {photoUploading ? "Uploading..." : "Upload photo"}
 
                           <input
                             type="file"

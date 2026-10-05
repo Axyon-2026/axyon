@@ -103,7 +103,7 @@ export default function HomeTuitionPage() {
 
       const response = await fetch(
         `/api/home-tuition/tutors?${params.toString()}`,
-        { cache: "no-store" }
+        { cache: "no-store" },
       );
 
       const data: ApiResponse = await response.json();
@@ -115,9 +115,7 @@ export default function HomeTuitionPage() {
       setTutors(data.tutors || []);
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to load tutors right now."
+        err instanceof Error ? err.message : "Unable to load tutors right now.",
       );
     } finally {
       setLoading(false);
@@ -135,16 +133,10 @@ export default function HomeTuitionPage() {
       const data: PlansResponse = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.error || "Failed to load subscription plans"
-        );
+        throw new Error(data.error || "Failed to load subscription plans");
       }
 
-      setPlans(
-        (data.plans || []).filter(
-          (plan) => plan.isActive !== false
-        )
-      );
+      setPlans((data.plans || []).filter((plan) => plan.isActive !== false));
     } catch {
       setPlans([]);
     } finally {
@@ -182,9 +174,11 @@ export default function HomeTuitionPage() {
             href="/"
             className="flex items-center gap-2 text-lg font-black tracking-tight"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-950 text-sm text-white">
-              A
-            </span>
+            <img
+              src="/icon.png"
+              alt="Axyon"
+              className="h-9 w-9 rounded-xl object-contain"
+            />
             <span>Axyon</span>
           </Link>
 
@@ -307,9 +301,7 @@ export default function HomeTuitionPage() {
 
               <input
                 value={maxFee}
-                onChange={(e) =>
-                  setMaxFee(e.target.value.replace(/\D/g, ""))
-                }
+                onChange={(e) => setMaxFee(e.target.value.replace(/\D/g, ""))}
                 inputMode="numeric"
                 placeholder="e.g. 500"
                 className="h-9 w-32 rounded-lg border border-slate-200 bg-white px-3 text-xs outline-none focus:border-indigo-400"
@@ -337,8 +329,8 @@ export default function HomeTuitionPage() {
 
           <p className="mt-3 text-sm leading-6 text-slate-500 sm:text-base">
             Axyon Home Tuition connects students with verified Campus tutors.
-            Tutors purchase a subscription when they want their tutoring
-            profile published and available through the Axyon service.
+            Tutors purchase a subscription when they want their tutoring profile
+            published and available through the Axyon service.
           </p>
         </div>
 
@@ -457,8 +449,7 @@ export default function HomeTuitionPage() {
                   plan.originalPrice !== undefined &&
                   plan.originalPrice > plan.price;
 
-                const originalPrice =
-                  plan.originalPrice ?? plan.price;
+                const originalPrice = plan.originalPrice ?? plan.price;
 
                 const expiry = offerActive
                   ? formatDate(plan.offerEndsAt)
@@ -544,9 +535,7 @@ export default function HomeTuitionPage() {
                         className="mt-7 flex h-11 items-center justify-center rounded-xl bg-slate-950 text-sm font-bold text-white transition hover:bg-indigo-600"
                       >
                         {offerActive
-                          ? `Get offer · ₹${plan.price.toLocaleString(
-                              "en-IN"
-                            )}`
+                          ? `Get offer · ₹${plan.price.toLocaleString("en-IN")}`
                           : "Choose this plan"}
                       </Link>
                     </div>
@@ -673,9 +662,7 @@ export default function HomeTuitionPage() {
                         <span className="font-bold text-amber-500">★</span>
 
                         <span className="font-bold">
-                          {tutor.rating > 0
-                            ? tutor.rating.toFixed(1)
-                            : "New"}
+                          {tutor.rating > 0 ? tutor.rating.toFixed(1) : "New"}
                         </span>
 
                         {tutor.reviewCount > 0 && (
@@ -731,8 +718,8 @@ export default function HomeTuitionPage() {
                       {tutor.teachingMode === "BOTH"
                         ? "Online + Offline"
                         : tutor.teachingMode === "ONLINE"
-                        ? "Online"
-                        : "Offline"}
+                          ? "Online"
+                          : "Offline"}
                     </span>
 
                     {tutor.demoAvailable && (
@@ -822,16 +809,10 @@ export default function HomeTuitionPage() {
                 <Link className="hover:text-indigo-600" href="/terms">
                   Terms
                 </Link>
-                <Link
-                  className="hover:text-indigo-600"
-                  href="/privacy"
-                >
+                <Link className="hover:text-indigo-600" href="/privacy">
                   Privacy
                 </Link>
-                <Link
-                  className="hover:text-indigo-600"
-                  href="/refund-policy"
-                >
+                <Link className="hover:text-indigo-600" href="/refund-policy">
                   Refund Policy
                 </Link>
               </div>
