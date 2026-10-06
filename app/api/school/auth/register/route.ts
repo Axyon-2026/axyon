@@ -2,16 +2,13 @@ import { prisma } from "@/lib/prisma";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
+import { createNotification } from "@/lib/notifications";
 
 const ALLOWED_CLASSES = ["9", "10", "11", "12"];
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-const ALLOWED_IMAGE_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-];
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -46,7 +43,7 @@ export async function POST(req: Request) {
         {
           error: "Please fill all required fields.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -55,7 +52,7 @@ export async function POST(req: Request) {
         {
           error: "Please enter a valid email address.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -64,7 +61,7 @@ export async function POST(req: Request) {
         {
           error: "Password must be at least 6 characters.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -73,7 +70,7 @@ export async function POST(req: Request) {
         {
           error: "School Marketplace is available for Classes 9–12 only.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -82,7 +79,7 @@ export async function POST(req: Request) {
         {
           error: "Please upload your student photo.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -91,7 +88,7 @@ export async function POST(req: Request) {
         {
           error: "Please upload your school ID.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -100,7 +97,7 @@ export async function POST(req: Request) {
         {
           error: "Student photo must be JPG, PNG, or WEBP.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -109,7 +106,7 @@ export async function POST(req: Request) {
         {
           error: "School ID must be JPG, PNG, or WEBP.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -118,7 +115,7 @@ export async function POST(req: Request) {
         {
           error: "Student photo must be smaller than 5 MB.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -127,7 +124,7 @@ export async function POST(req: Request) {
         {
           error: "School ID must be smaller than 5 MB.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -142,28 +139,24 @@ export async function POST(req: Request) {
         {
           error: "An account with this email already exists.",
         },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const studentPhotoBuffer = Buffer.from(
-      await studentPhoto.arrayBuffer()
-    );
+    const studentPhotoBuffer = Buffer.from(await studentPhoto.arrayBuffer());
 
-    const schoolIdBuffer = Buffer.from(
-      await schoolIdFile.arrayBuffer()
-    );
+    const schoolIdBuffer = Buffer.from(await schoolIdFile.arrayBuffer());
 
     const studentPhotoUpload = await uploadToCloudinary(
       studentPhotoBuffer,
-      "axyon/school/students"
+      "axyon/school/students",
     );
 
     const schoolIdUpload = await uploadToCloudinary(
       schoolIdBuffer,
-      "axyon/school/ids"
+      "axyon/school/ids",
     );
 
     const school = await prisma.school.upsert({
@@ -203,7 +196,25 @@ export async function POST(req: Request) {
         isVerified: false,
       },
     });
+    const admin = await prisma.user.findUnique({
+      where: {
+        email: "asa.axyon@gmail.com",
+      },
+      select: {
+        id: true,
+      },
+    });
 
+    if (admin) {
+      await createNotification({
+        userId: admin.id,
+        title: "New School Verification Submitted",
+        message: `${user.name} has submitted a School Marketplace verification request for ${school.name}, ${school.city}, Class ${classLevel}. Please review the student's documents.`,
+        type: "SCHOOL_VERIFICATION",
+        link: "/admin",
+        sendEmail: true,
+      });
+    }
     return NextResponse.json(
       {
         message:
@@ -216,11 +227,10 @@ export async function POST(req: Request) {
           schoolName: user.schoolName,
           schoolCity: user.schoolCity,
           classLevel: user.classLevel,
-          schoolVerificationStatus:
-            user.schoolVerificationStatus,
+          schoolVerificationStatus: user.schoolVerificationStatus,
         },
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("SCHOOL REGISTER ERROR:", error);
@@ -230,7 +240,7 @@ export async function POST(req: Request) {
         error:
           "Unable to create your School Account right now. Please try again later.",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

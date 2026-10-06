@@ -201,8 +201,8 @@ export default function AdminDashboard() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-950">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
+    <main className="min-h-screen w-full min-w-0 bg-slate-50 text-slate-950">
+      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
         {/* HEADER */}
 
         <div className="rounded-[2rem] bg-slate-950 p-6 text-white shadow-xl sm:p-8">

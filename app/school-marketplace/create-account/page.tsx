@@ -1,20 +1,11 @@
 "use client";
 
-import {
-  ChangeEvent,
-  FormEvent,
-  useEffect,
-  useState,
-} from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 function validateImage(file: File) {
-  const allowed = [
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-  ];
+  const allowed = ["image/jpeg", "image/png", "image/webp"];
 
   if (!allowed.includes(file.type)) {
     return "Only JPG, PNG or WEBP images are allowed.";
@@ -37,17 +28,13 @@ export default function SchoolCreateAccountPage() {
   const [schoolCity, setSchoolCity] = useState("");
   const [classLevel, setClassLevel] = useState("");
 
-  const [studentPhoto, setStudentPhoto] =
-    useState<File | null>(null);
+  const [studentPhoto, setStudentPhoto] = useState<File | null>(null);
 
-  const [schoolId, setSchoolId] =
-    useState<File | null>(null);
+  const [schoolId, setSchoolId] = useState<File | null>(null);
 
-  const [studentPhotoPreview, setStudentPhotoPreview] =
-    useState("");
+  const [studentPhotoPreview, setStudentPhotoPreview] = useState("");
 
-  const [schoolIdPreview, setSchoolIdPreview] =
-    useState("");
+  const [schoolIdPreview, setSchoolIdPreview] = useState("");
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -65,33 +52,24 @@ export default function SchoolCreateAccountPage() {
           const user = data.user;
 
           if (user?.marketplaceType === "CAMPUS") {
-            window.location.replace(
-              "/marketplace-home"
-            );
+            window.location.replace("/marketplace-home");
             return;
           }
 
           if (user?.marketplaceType === "SCHOOL") {
             if (
               user.schoolVerified === true &&
-              user.schoolVerificationStatus ===
-                "APPROVED"
+              user.schoolVerificationStatus === "APPROVED"
             ) {
-              window.location.replace(
-                "/school-marketplace/home"
-              );
+              window.location.replace("/school-marketplace/home");
               return;
             }
 
             if (
-              user.schoolVerificationStatus ===
-                "PENDING" ||
-              user.schoolVerificationStatus ===
-                "REJECTED"
+              user.schoolVerificationStatus === "PENDING" ||
+              user.schoolVerificationStatus === "REJECTED"
             ) {
-              window.location.replace(
-                "/school-marketplace"
-              );
+              window.location.replace("/school-marketplace");
               return;
             }
           }
@@ -106,9 +84,7 @@ export default function SchoolCreateAccountPage() {
     checkExistingSession();
   }, []);
 
-  function handleStudentPhoto(
-    event: ChangeEvent<HTMLInputElement>
-  ) {
+  function handleStudentPhoto(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
 
     if (!file) return;
@@ -122,14 +98,10 @@ export default function SchoolCreateAccountPage() {
 
     setError("");
     setStudentPhoto(file);
-    setStudentPhotoPreview(
-      URL.createObjectURL(file)
-    );
+    setStudentPhotoPreview(URL.createObjectURL(file));
   }
 
-  function handleSchoolId(
-    event: ChangeEvent<HTMLInputElement>
-  ) {
+  function handleSchoolId(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
 
     if (!file) return;
@@ -143,37 +115,27 @@ export default function SchoolCreateAccountPage() {
 
     setError("");
     setSchoolId(file);
-    setSchoolIdPreview(
-      URL.createObjectURL(file)
-    );
+    setSchoolIdPreview(URL.createObjectURL(file));
   }
 
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>
-  ) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setError("");
     setSuccess("");
 
     if (!studentPhoto) {
-      setError(
-        "Please upload your student photo."
-      );
+      setError("Please upload your student photo.");
       return;
     }
 
     if (!schoolId) {
-      setError(
-        "Please upload your School ID."
-      );
+      setError("Please upload your School ID.");
       return;
     }
 
     if (!classLevel) {
-      setError(
-        "Please select your class."
-      );
+      setError("Please select your class.");
       return;
     }
 
@@ -185,54 +147,35 @@ export default function SchoolCreateAccountPage() {
       formData.append("name", name.trim());
       formData.append("email", email.trim());
       formData.append("password", password);
-      formData.append(
-        "schoolName",
-        schoolName.trim()
-      );
-      formData.append(
-        "schoolCity",
-        schoolCity.trim()
-      );
-      formData.append(
-        "classLevel",
-        classLevel
-      );
-      formData.append(
-        "studentPhoto",
-        studentPhoto
-      );
-      formData.append(
-        "schoolId",
-        schoolId
-      );
+      formData.append("schoolName", schoolName.trim());
+      formData.append("schoolCity", schoolCity.trim());
+      formData.append("classLevel", classLevel);
+      formData.append("studentPhoto", studentPhoto);
+      formData.append("schoolId", schoolId);
 
-      const response = await fetch(
-        "/api/school/auth/register",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const response = await fetch("/api/school/auth/register", {
+        method: "POST",
+        body: formData,
+      });
 
       const data = await response.json();
 
       if (!response.ok) {
         setError(
-          data.message ||
-            "Unable to create your School account."
+          data.message || 
+          data.error || 
+          "Unable to create your School account.",
         );
         return;
       }
 
       setSuccess(
-        "School account created successfully. Your verification is now under review by Axyon."
+        "School account created successfully. Your verification is now under review by Axyon.",
       );
 
       setPassword("");
     } catch {
-      setError(
-        "Something went wrong. Please try again."
-      );
+      setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -241,9 +184,7 @@ export default function SchoolCreateAccountPage() {
   if (checking) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#070b14] text-white">
-        <p className="text-sm font-bold text-slate-500">
-          Checking account...
-        </p>
+        <p className="text-sm font-bold text-slate-500">Checking account...</p>
       </main>
     );
   }
@@ -251,7 +192,6 @@ export default function SchoolCreateAccountPage() {
   return (
     <main className="min-h-screen bg-[#070b14] px-5 py-8 text-white sm:py-12">
       <div className="mx-auto max-w-2xl">
-
         <a
           href="/school-marketplace"
           className="text-sm font-bold text-slate-500"
@@ -260,7 +200,6 @@ export default function SchoolCreateAccountPage() {
         </a>
 
         <div className="mt-8 rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 shadow-2xl sm:p-9">
-
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white p-1">
             <img
               src="/icon.png"
@@ -279,9 +218,8 @@ export default function SchoolCreateAccountPage() {
             </h1>
 
             <p className="mt-3 text-sm leading-6 text-slate-500">
-              One-time verification. Once approved,
-              your account unlocks the complete School
-              Marketplace.
+              One-time verification. Once approved, your account unlocks the
+              complete School Marketplace.
             </p>
           </div>
 
@@ -304,12 +242,8 @@ export default function SchoolCreateAccountPage() {
             </div>
           )}
 
-          <form
-            onSubmit={handleSubmit}
-            className="mt-8 space-y-6"
-          >
+          <form onSubmit={handleSubmit} className="mt-8 space-y-6">
             <div className="grid gap-4 sm:grid-cols-2">
-
               <Field
                 label="Full Name"
                 value={name}
@@ -324,7 +258,6 @@ export default function SchoolCreateAccountPage() {
                 onChange={setEmail}
                 placeholder="you@example.com"
               />
-
             </div>
 
             <Field
@@ -336,7 +269,6 @@ export default function SchoolCreateAccountPage() {
             />
 
             <div className="grid gap-4 sm:grid-cols-2">
-
               <Field
                 label="School Name"
                 value={schoolName}
@@ -350,7 +282,6 @@ export default function SchoolCreateAccountPage() {
                 onChange={setSchoolCity}
                 placeholder="School city"
               />
-
             </div>
 
             <div>
@@ -360,29 +291,15 @@ export default function SchoolCreateAccountPage() {
 
               <select
                 value={classLevel}
-                onChange={(event) =>
-                  setClassLevel(
-                    event.target.value
-                  )
-                }
+                onChange={(event) => setClassLevel(event.target.value)}
                 required
                 className="w-full rounded-2xl border border-white/10 bg-[#0b111d] px-4 py-4 text-sm text-white outline-none focus:border-indigo-400/50"
               >
-                <option value="">
-                  Select your class
-                </option>
-                <option value="9">
-                  Class 9
-                </option>
-                <option value="10">
-                  Class 10
-                </option>
-                <option value="11">
-                  Class 11
-                </option>
-                <option value="12">
-                  Class 12
-                </option>
+                <option value="">Select your class</option>
+                <option value="9">Class 9</option>
+                <option value="10">Class 10</option>
+                <option value="11">Class 11</option>
+                <option value="12">Class 12</option>
               </select>
             </div>
 
@@ -407,9 +324,7 @@ export default function SchoolCreateAccountPage() {
               disabled={loading}
               className="w-full rounded-2xl bg-indigo-600 px-6 py-4 text-sm font-black transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading
-                ? "Creating Account..."
-                : "Create School Account"}
+              {loading ? "Creating Account..." : "Create School Account"}
             </button>
           </form>
 
@@ -425,7 +340,6 @@ export default function SchoolCreateAccountPage() {
               School Login →
             </a>
           </div>
-
         </div>
       </div>
     </main>
@@ -454,9 +368,7 @@ function Field({
       <input
         type={type}
         value={value}
-        onChange={(event) =>
-          onChange(event.target.value)
-        }
+        onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         required
         className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-4 text-sm outline-none placeholder:text-slate-700 focus:border-indigo-400/50"
@@ -476,9 +388,7 @@ function UploadBox({
   description: string;
   preview: string;
   inputId: string;
-  onChange: (
-    event: ChangeEvent<HTMLInputElement>
-  ) => void;
+  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
     <div>
@@ -500,17 +410,11 @@ function UploadBox({
           </div>
         ) : (
           <div className="py-7 text-center">
-            <div className="text-3xl">
-              📷
-            </div>
+            <div className="text-3xl">📷</div>
 
-            <p className="mt-3 text-sm font-black">
-              {title}
-            </p>
+            <p className="mt-3 text-sm font-black">{title}</p>
 
-            <p className="mt-1 text-xs text-slate-600">
-              {description}
-            </p>
+            <p className="mt-1 text-xs text-slate-600">{description}</p>
 
             <p className="mt-3 text-[10px] font-bold text-slate-700">
               JPG · PNG · WEBP · MAX 5MB

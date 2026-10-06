@@ -20,8 +20,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="min-h-full bg-black text-white">
-        <main className="pb-24">
+      <body className="min-h-full w-full overflow-x-hidden bg-black text-white">
+        <main className="w-full min-w-0 pb-24">
           <SiteAnnouncement />
           {children}
           <Footer />
