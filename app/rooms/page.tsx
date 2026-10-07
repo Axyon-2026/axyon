@@ -17,6 +17,13 @@ type Room = {
   amenities?: string[];
   availableFrom?: string | null;
   status?: string;
+  owner?: {
+    id?: string;
+    name?: string;
+    college?: string | null;
+    city?: string | null;
+    studentVerified?: boolean;
+  };
 };
 
 export default function RoomsPage() {
@@ -55,12 +62,13 @@ export default function RoomsPage() {
 
     return rooms.filter((room) => {
       const matchesSearch =
-        !query ||
-        room.title?.toLowerCase().includes(query) ||
-        room.college?.toLowerCase().includes(query) ||
-        room.address?.toLowerCase().includes(query) ||
-        room.landmark?.toLowerCase().includes(query) ||
-        room.roomType?.toLowerCase().includes(query);
+  !query ||
+  room.title?.toLowerCase().includes(query) ||
+  room.college?.toLowerCase().includes(query) ||
+  room.address?.toLowerCase().includes(query) ||
+  room.landmark?.toLowerCase().includes(query) ||
+  room.roomType?.toLowerCase().includes(query) ||
+  room.owner?.city?.toLowerCase().includes(query);
 
       const matchesType =
         roomType === "ALL" ||

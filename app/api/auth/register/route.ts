@@ -14,9 +14,9 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const { name, email, phone, college, password } = body;
+    const { name, email, phone, city, college, password } = body;
 
-    if (!name || !email || !phone || !college || !password) {
+    if (!name || !email || !phone || !city || !college || !password) {
       return NextResponse.json(
         { message: "Please fill all fields" },
         { status: 400 }
@@ -79,6 +79,7 @@ if (/^(\d)\1+$/.test(phone)) {
         name,
         email,
         phone,
+        city: city.trim(),
         college,
         password: hashedPassword,
         verifyToken,

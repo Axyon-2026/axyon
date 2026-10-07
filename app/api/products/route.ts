@@ -45,6 +45,7 @@ export async function GET() {
             name: true,
             email: true,
             college: true,
+            city: true,
             studentVerified: true,
           },
         },

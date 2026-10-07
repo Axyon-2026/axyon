@@ -44,6 +44,7 @@ export async function GET() {
             id: true,
             name: true,
             college: true,
+            city: true,
             studentVerified: true,
           },
         },

@@ -7,7 +7,7 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-
+  const [city, setCity] = useState("");
   const [college, setCollege] = useState("");
   const [otherCollege, setOtherCollege] = useState("");
 
@@ -67,9 +67,7 @@ export default function RegisterPage() {
         const state = collegeItem.state?.toLowerCase() || "";
 
         return (
-          name.includes(query) ||
-          city.includes(query) ||
-          state.includes(query)
+          name.includes(query) || city.includes(query) || state.includes(query)
         );
       })
       .slice(0, 30);
@@ -92,16 +90,9 @@ export default function RegisterPage() {
     e.preventDefault();
     setMessage("");
 
-    const finalCollege =
-      college === "OTHER" ? otherCollege.trim() : college;
+    const finalCollege = college === "OTHER" ? otherCollege.trim() : college;
 
-    if (
-      !name ||
-      !email ||
-      !phone ||
-      !finalCollege ||
-      !password
-    ) {
+    if (!name || !email || !phone || !city || !finalCollege || !password) {
       setMessage("Please fill all fields");
       return;
     }
@@ -133,6 +124,7 @@ export default function RegisterPage() {
           name,
           email,
           phone,
+          city: city.trim(),
           college: finalCollege,
           collegeRequest: college === "OTHER",
           password,
@@ -147,12 +139,13 @@ export default function RegisterPage() {
       }
 
       setMessage(
-        "Account created successfully. Please check your email to verify your account."
+        "Account created successfully. Please check your email to verify your account.",
       );
 
       setName("");
       setEmail("");
       setPhone("");
+      setCity("");
       setCollege("");
       setCollegeSearch("");
       setOtherCollege("");
@@ -184,8 +177,8 @@ export default function RegisterPage() {
             </h1>
 
             <p className="mt-6 max-w-lg text-lg leading-8 text-slate-600">
-              Create your Axyon account, verify your student identity, and
-              start buying or selling with trusted students from your college.
+              Create your Axyon account, verify your student identity, and start
+              buying or selling with trusted students from your college.
             </p>
 
             <div className="mt-8 max-w-lg space-y-4">
@@ -345,7 +338,34 @@ export default function RegisterPage() {
                     />
                   </div>
                 </div>
+                <div>
+                  <label className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-500">
+                    City
+                  </label>
 
+                  <input
+                    type="text"
+                    placeholder="Your city"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    autoComplete="address-level2"
+                    className="
+                    w-full
+                    rounded-2xl
+                    border border-slate-200
+                    bg-slate-100
+                    px-5 py-4
+                    text-sm
+                    outline-none
+                    transition
+                    placeholder:text-slate-400
+                    focus:border-green-500
+                    focus:bg-white
+                    focus:ring-4
+                    focus:ring-green-500/10
+                  "
+                  />
+                </div>
                 {/* COLLEGE SEARCH */}
 
                 <div ref={collegeRef} className="relative">
@@ -425,9 +445,7 @@ export default function RegisterPage() {
                             <button
                               key={collegeItem.id}
                               type="button"
-                              onClick={() =>
-                                selectCollege(collegeItem.name)
-                              }
+                              onClick={() => selectCollege(collegeItem.name)}
                               className="
                                 w-full
                                 rounded-xl

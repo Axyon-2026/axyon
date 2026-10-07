@@ -115,7 +115,8 @@ export default function MarketplacePage() {
         !searchText ||
         product.title?.toLowerCase().includes(searchText) ||
         product.description?.toLowerCase().includes(searchText) ||
-        product.seller?.college?.toLowerCase().includes(searchText);
+        product.seller?.college?.toLowerCase().includes(searchText) ||
+        product.seller?.city?.toLowerCase().includes(searchText);
       const matchesCategory =
         category === "All" ? true : product.category === category;
 
