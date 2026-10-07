@@ -10,9 +10,7 @@ async function getAdmin() {
   const cookieStore = await cookies();
   const token = cookieStore.get("axyon_token")?.value;
 
-  if (!token) {
-    return null;
-  }
+  if (!token) return null;
 
   try {
     const decoded = verifyToken(token);
@@ -56,7 +54,6 @@ export async function GET() {
     const students = await prisma.user.findMany({
       where: {
         marketplaceType: "SCHOOL",
-        schoolVerificationStatus: "PENDING",
       },
       select: {
         id: true,
@@ -73,12 +70,41 @@ export async function GET() {
         createdAt: true,
       },
       orderBy: {
-        createdAt: "asc",
+        createdAt: "desc",
       },
     });
 
+    const pending = students.filter(
+      (student) =>
+        student.schoolVerificationStatus === "PENDING"
+    ).length;
+
+    const approved = students.filter(
+      (student) =>
+        student.schoolVerificationStatus === "APPROVED" &&
+        student.schoolVerified
+    ).length;
+
+    const rejected = students.filter(
+      (student) =>
+        student.schoolVerificationStatus === "REJECTED" ||
+        (!student.schoolVerified &&
+          student.schoolVerificationStatus !== "PENDING")
+    ).length;
+
+    const suspended = students.filter(
+      (student) => student.isSuspended
+    ).length;
+
     return NextResponse.json({
       students,
+      stats: {
+        total: students.length,
+        pending,
+        approved,
+        rejected,
+        suspended,
+      },
     });
   } catch (error) {
     console.error(
@@ -89,7 +115,7 @@ export async function GET() {
     return NextResponse.json(
       {
         error:
-          "Unable to load School verification requests.",
+          "Unable to load School Marketplace users.",
       },
       { status: 500 }
     );
@@ -124,7 +150,9 @@ export async function PATCH(req: Request) {
 
     const action = String(
       body.action || ""
-    ).toUpperCase();
+    )
+      .trim()
+      .toUpperCase();
 
     if (!userId) {
       return NextResponse.json(
@@ -134,12 +162,17 @@ export async function PATCH(req: Request) {
     }
 
     if (
-      !["APPROVE", "REJECT"].includes(action)
+      ![
+        "APPROVE",
+        "REJECT",
+        "SUSPEND",
+        "UNSUSPEND",
+      ].includes(action)
     ) {
       return NextResponse.json(
         {
           error:
-            "Invalid verification action.",
+            "Invalid School Marketplace action.",
         },
         { status: 400 }
       );
@@ -156,7 +189,7 @@ export async function PATCH(req: Request) {
       return NextResponse.json(
         {
           error:
-            "Student account not found.",
+            "School student account not found.",
         },
         { status: 404 }
       );
@@ -174,28 +207,88 @@ export async function PATCH(req: Request) {
       );
     }
 
+    if (action === "SUSPEND") {
+      const updatedStudent =
+        await prisma.user.update({
+          where: {
+            id: userId,
+          },
+          data: {
+            isSuspended: true,
+          },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            schoolVerificationStatus: true,
+            schoolVerified: true,
+            isSuspended: true,
+          },
+        });
+
+      await prisma.adminLog.create({
+        data: {
+          adminId: admin.id,
+          adminEmail: admin.email,
+          action: "SUSPENDED SCHOOL STUDENT",
+          targetType: "SCHOOL_USER",
+          targetId: student.id,
+          details: `Suspended School Marketplace account for ${student.name} (${student.email}).`,
+        },
+      });
+
+      return NextResponse.json({
+        message:
+          "School student suspended.",
+        student: updatedStudent,
+      });
+    }
+
+    if (action === "UNSUSPEND") {
+      const updatedStudent =
+        await prisma.user.update({
+          where: {
+            id: userId,
+          },
+          data: {
+            isSuspended: false,
+          },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            schoolVerificationStatus: true,
+            schoolVerified: true,
+            isSuspended: true,
+          },
+        });
+
+      await prisma.adminLog.create({
+        data: {
+          adminId: admin.id,
+          adminEmail: admin.email,
+          action:
+            "UNSUSPENDED SCHOOL STUDENT",
+          targetType: "SCHOOL_USER",
+          targetId: student.id,
+          details: `Unsuspended School Marketplace account for ${student.name} (${student.email}).`,
+        },
+      });
+
+      return NextResponse.json({
+        message:
+          "School student unsuspended.",
+        student: updatedStudent,
+      });
+    }
+
     if (student.isSuspended) {
       return NextResponse.json(
         {
           error:
-            "This School account is suspended.",
+            "Unsuspend this School account before changing verification.",
         },
         { status: 400 }
-      );
-    }
-
-    if (
-      student.schoolVerificationStatus !==
-      "PENDING"
-    ) {
-      return NextResponse.json(
-        {
-          error: `This verification request is already ${String(
-            student.schoolVerificationStatus ||
-              "processed"
-          ).toLowerCase()}.`,
-        },
-        { status: 409 }
       );
     }
 
@@ -232,6 +325,7 @@ export async function PATCH(req: Request) {
             classLevel: true,
             schoolVerificationStatus: true,
             schoolVerified: true,
+            isSuspended: true,
           },
         });
 
@@ -251,7 +345,7 @@ export async function PATCH(req: Request) {
         data: {
           userId: student.id,
           title:
-            "School Account Approved 🎉",
+            "School Account Approved",
           message:
             "Your School Marketplace verification has been approved. You can now enter the School Marketplace.",
           type:
@@ -261,7 +355,6 @@ export async function PATCH(req: Request) {
         },
       });
 
-      // Email the student.
       try {
         if (process.env.RESEND_API_KEY) {
           await resend.emails.send({
@@ -269,26 +362,18 @@ export async function PATCH(req: Request) {
               "Axyon Support <support@axyon.in>",
             to: student.email,
             subject:
-              "Your Axyon School Account Has Been Approved 🎉",
+              "Your Axyon School Account Has Been Approved",
             html: `
               <div style="font-family:Arial,sans-serif;padding:24px;color:#111827;line-height:1.6">
-                <h2 style="margin-bottom:8px">
-                  School Account Approved 🎉
-                </h2>
-
+                <h2>School Account Approved</h2>
                 <p>Hi ${student.name},</p>
-
                 <p>
-                  Your Axyon School Marketplace
-                  verification has been
+                  Your Axyon School Marketplace verification has been
                   <strong>approved</strong>.
                 </p>
-
                 <p>
-                  You can now log in and access
-                  the School Marketplace.
+                  You can now log in and access the School Marketplace.
                 </p>
-
                 <p style="margin-top:24px">
                   Thanks,<br/>
                   Axyon Team
@@ -330,6 +415,7 @@ export async function PATCH(req: Request) {
           classLevel: true,
           schoolVerificationStatus: true,
           schoolVerified: true,
+          isSuspended: true,
         },
       });
 
@@ -359,7 +445,6 @@ export async function PATCH(req: Request) {
       },
     });
 
-    // Email the student.
     try {
       if (process.env.RESEND_API_KEY) {
         await resend.emails.send({
@@ -370,26 +455,16 @@ export async function PATCH(req: Request) {
             "Axyon School Verification Update",
           html: `
             <div style="font-family:Arial,sans-serif;padding:24px;color:#111827;line-height:1.6">
-              <h2 style="margin-bottom:8px">
-                School Verification Update
-              </h2>
-
+              <h2>School Verification Update</h2>
               <p>Hi ${student.name},</p>
-
               <p>
-                Your Axyon School Marketplace
-                verification request was
+                Your Axyon School Marketplace verification request was
                 <strong>not approved</strong>.
               </p>
-
               <p>
-                Please review your submitted
-                information and documents.
-                If you believe this was incorrect
-                or need assistance, please contact
-                Axyon Support.
+                Please review your submitted information and documents.
+                If you need assistance, please contact Axyon Support.
               </p>
-
               <p style="margin-top:24px">
                 Thanks,<br/>
                 Axyon Support Team
@@ -419,7 +494,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json(
       {
         error:
-          "Unable to update School verification.",
+          "Unable to update School Marketplace user.",
       },
       { status: 500 }
     );

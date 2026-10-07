@@ -114,8 +114,8 @@ export default function MarketplacePage() {
       const matchesSearch =
         !searchText ||
         product.title?.toLowerCase().includes(searchText) ||
-        product.description?.toLowerCase().includes(searchText);
-
+        product.description?.toLowerCase().includes(searchText) ||
+        product.seller?.college?.toLowerCase().includes(searchText);
       const matchesCategory =
         category === "All" ? true : product.category === category;
 
@@ -209,7 +209,7 @@ export default function MarketplacePage() {
 
               <input
                 type="text"
-                placeholder="Search books, laptops, notes..."
+                placeholder="Search products, college or location..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="h-13 w-full rounded-2xl border border-white/10 bg-black/20 py-4 pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-green-500/50 focus:bg-black/30"

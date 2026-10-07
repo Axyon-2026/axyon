@@ -17,13 +17,31 @@ type Student = {
   createdAt: string;
 };
 
+type Stats = {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+  suspended: number;
+};
+
+const EMPTY_STATS: Stats = {
+  total: 0,
+  pending: 0,
+  approved: 0,
+  rejected: 0,
+  suspended: 0,
+};
+
 export default function SchoolVerificationPage() {
   const [students, setStudents] = useState<Student[]>([]);
+  const [stats, setStats] = useState<Stats>(EMPTY_STATS);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] =
-    useState("");
+  const [actionLoading, setActionLoading] = useState("");
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] =
+    useState("ALL");
 
   async function loadStudents() {
     try {
@@ -42,15 +60,16 @@ export default function SchoolVerificationPage() {
       if (!response.ok) {
         setError(
           data.error ||
-            "Unable to load verification requests."
+            "Unable to load School Marketplace users."
         );
         return;
       }
 
       setStudents(data.students || []);
+      setStats(data.stats || EMPTY_STATS);
     } catch {
       setError(
-        "Unable to load verification requests."
+        "Unable to load School Marketplace users."
       );
     } finally {
       setLoading(false);
@@ -63,20 +82,30 @@ export default function SchoolVerificationPage() {
 
   async function handleAction(
     userId: string,
-    action: "APPROVE" | "REJECT"
+    action:
+      | "APPROVE"
+      | "REJECT"
+      | "SUSPEND"
+      | "UNSUSPEND"
   ) {
-    const confirmation =
-      action === "APPROVE"
-        ? "Approve this student's School Marketplace verification?"
-        : "Reject this student's School Marketplace verification?";
+    const messages = {
+      APPROVE:
+        "Approve this student's School Marketplace verification?",
+      REJECT:
+        "Reject this student's School Marketplace verification?",
+      SUSPEND:
+        "Suspend this School Marketplace account?",
+      UNSUSPEND:
+        "Unsuspend this School Marketplace account?",
+    };
 
-    if (!window.confirm(confirmation)) {
+    if (!window.confirm(messages[action])) {
       return;
     }
 
-    setActionLoading(
-      `${userId}-${action}`
-    );
+    const key = `${userId}-${action}`;
+
+    setActionLoading(key);
     setError("");
 
     try {
@@ -95,26 +124,20 @@ export default function SchoolVerificationPage() {
         }
       );
 
-      const data =
-        await response.json();
+      const data = await response.json();
 
       if (!response.ok) {
         setError(
           data.error ||
-            "Unable to update verification."
+            "Unable to update School Marketplace user."
         );
         return;
       }
 
-      setStudents((current) =>
-        current.filter(
-          (student) =>
-            student.id !== userId
-        )
-      );
+      await loadStudents();
     } catch {
       setError(
-        "Unable to update verification."
+        "Unable to update School Marketplace user."
       );
     } finally {
       setActionLoading("");
@@ -126,10 +149,9 @@ export default function SchoolVerificationPage() {
       .toLowerCase()
       .trim();
 
-    if (!query) return students;
-
-    return students.filter(
-      (student) =>
+    return students.filter((student) => {
+      const matchesSearch =
+        !query ||
         student.name
           ?.toLowerCase()
           .includes(query) ||
@@ -144,452 +166,414 @@ export default function SchoolVerificationPage() {
           .includes(query) ||
         student.classLevel
           ?.toLowerCase()
-          .includes(query)
-    );
-  }, [students, search]);
+          .includes(query);
+
+      const status =
+        student.isSuspended
+          ? "SUSPENDED"
+          : student.schoolVerificationStatus;
+
+      const matchesStatus =
+        statusFilter === "ALL" ||
+        status === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [students, search, statusFilter]);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <section className="px-4 py-6 pb-28 sm:px-6 lg:px-10 lg:py-10">
-        <div className="mx-auto max-w-7xl">
-          {/* HERO */}
-          <div className="relative overflow-hidden rounded-[2rem] border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/30 p-6 shadow-2xl sm:p-8 lg:p-10">
-            <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-indigo-500/10 blur-3xl" />
-
-            <div className="relative">
-              <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1.5 text-xs font-black uppercase tracking-wider text-indigo-400">
-                <span className="h-2 w-2 rounded-full bg-indigo-400" />
-                Axyon Admin
-              </div>
-
-              <div className="mt-5 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-                <div>
-                  <h1 className="text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
-                    School Verification
-                  </h1>
-
-                  <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">
-                    Review School Marketplace accounts
-                    and verify student identity before
-                    granting marketplace access.
-                  </p>
-                </div>
-
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <button
-                    type="button"
-                    onClick={loadStudents}
-                    disabled={loading}
-                    className="rounded-full border border-slate-700 bg-slate-950/70 px-5 py-3 text-sm font-black text-slate-300 transition hover:border-indigo-500/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {loading
-                      ? "Refreshing..."
-                      : "↻ Refresh"}
-                  </button>
-
-                  <a
-                    href="/admin"
-                    className="rounded-full border border-slate-700 bg-slate-950/70 px-5 py-3 text-center text-sm font-black text-slate-300 transition hover:border-indigo-500/50 hover:text-white"
-                  >
-                    ← Admin Dashboard
-                  </a>
-                </div>
-              </div>
-
-              {/* STATS */}
-              <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4">
-                  <p className="text-[9px] font-black uppercase tracking-wider text-amber-400">
-                    Pending
-                  </p>
-
-                  <p className="mt-1 text-2xl font-black text-amber-300">
-                    {students.length}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-4">
-                  <p className="text-[9px] font-black uppercase tracking-wider text-indigo-400">
-                    Visible
-                  </p>
-
-                  <p className="mt-1 text-2xl font-black text-indigo-300">
-                    {filteredStudents.length}
-                  </p>
-                </div>
-
-                <div className="col-span-2 rounded-2xl border border-slate-800 bg-black/20 p-4 sm:col-span-1">
-                  <p className="text-[9px] font-black uppercase tracking-wider text-slate-500">
-                    Review Queue
-                  </p>
-
-                  <p className="mt-1 text-sm font-black text-slate-300">
-                    Identity + School ID
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* INFO */}
-          <div className="mt-6 rounded-[1.75rem] border border-indigo-500/20 bg-indigo-500/5 p-5 shadow-xl">
-            <div className="flex items-start gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-500/10 text-xl">
-                🔐
-              </div>
-
+    <main className="min-h-screen w-full overflow-x-hidden bg-slate-950 text-white">
+      <section className="w-full px-4 py-6 pb-28 sm:px-6 lg:px-10 lg:py-10">
+        <div className="mx-auto w-full max-w-7xl">
+          <div className="rounded-[2rem] border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/30 p-6 shadow-2xl sm:p-8 lg:p-10">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h2 className="font-black">
-                  School verification review
-                </h2>
+                <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1.5 text-xs font-black uppercase tracking-wider text-indigo-400">
+                  <span className="h-2 w-2 rounded-full bg-indigo-400" />
+                  Axyon Admin
+                </div>
 
-                <p className="mt-1 text-sm leading-6 text-slate-500">
-                  Review the submitted student photo,
-                  school ID, school information, and
-                  class before approving access.
+                <h1 className="mt-5 text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+                  School Marketplace
+                </h1>
+
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">
+                  Manage School Marketplace students,
+                  verification status and account access.
                 </p>
               </div>
-            </div>
-          </div>
-
-          {/* SEARCH */}
-          <div className="mt-6 rounded-[1.75rem] border border-slate-800 bg-slate-900 p-4 shadow-xl sm:p-5">
-            <div className="relative">
-              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
-                🔎
-              </span>
-
-              <input
-                type="text"
-                placeholder="Search student, email, school, city, or class..."
-                value={search}
-                onChange={(e) =>
-                  setSearch(e.target.value)
-                }
-                className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-11 py-3.5 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/10"
-              />
-            </div>
-
-            {search && (
-              <div className="mt-3 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSearch("")
-                  }
-                  className="text-xs font-bold text-indigo-400 transition hover:text-indigo-300"
-                >
-                  Clear search
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* ERROR */}
-          {error && (
-            <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-red-200">
-                {error}
-              </p>
 
               <button
                 type="button"
                 onClick={loadStudents}
-                className="w-fit rounded-full border border-red-400/20 px-4 py-2 text-xs font-black text-red-300 transition hover:bg-red-500/10"
+                disabled={loading}
+                className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-5 py-3 text-sm font-black text-slate-300 transition hover:border-indigo-500/50 hover:text-white disabled:opacity-50 sm:w-auto"
               >
-                Try Again
+                {loading
+                  ? "Refreshing..."
+                  : "Refresh"}
               </button>
+            </div>
+          </div>
+
+          {error && (
+            <div className="mt-5 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-300">
+              {error}
             </div>
           )}
 
-          {/* CONTENT */}
-          <section className="mt-6">
-            {loading ? (
-              <div className="rounded-[2rem] border border-slate-800 bg-slate-900 p-10 text-center shadow-xl">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-800 text-2xl">
-                  ⏳
-                </div>
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {[
+              ["Total", stats.total, "text-white"],
+              ["Pending", stats.pending, "text-amber-400"],
+              ["Verified", stats.approved, "text-emerald-400"],
+              ["Rejected", stats.rejected, "text-red-400"],
+              ["Suspended", stats.suspended, "text-orange-400"],
+            ].map(([label, value, textColor]) => (
+              <div
+                key={String(label)}
+                className="rounded-3xl border border-slate-800 bg-slate-900 p-5 shadow-xl"
+              >
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                  {label}
+                </p>
 
-                <p className="mt-4 font-bold text-slate-400">
-                  Loading verification requests...
+                <p
+                  className={`mt-2 text-3xl font-black ${textColor}`}
+                >
+                  {value}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 rounded-3xl border border-slate-800 bg-slate-900 p-4 sm:p-5">
+            <div className="grid gap-3 lg:grid-cols-[1fr_auto]">
+              <input
+                value={search}
+                onChange={(event) =>
+                  setSearch(event.target.value)
+                }
+                placeholder="Search student, email, school, city or class..."
+                className="h-12 w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 text-sm text-white outline-none placeholder:text-slate-600 focus:border-indigo-500/60"
+              />
+
+              <select
+                value={statusFilter}
+                onChange={(event) =>
+                  setStatusFilter(event.target.value)
+                }
+                className="h-12 rounded-2xl border border-slate-700 bg-slate-950 px-4 text-sm font-bold text-white outline-none focus:border-indigo-500/60"
+              >
+                <option value="ALL">
+                  All Students
+                </option>
+                <option value="PENDING">
+                  Pending
+                </option>
+                <option value="APPROVED">
+                  Verified
+                </option>
+                <option value="REJECTED">
+                  Rejected
+                </option>
+                <option value="SUSPENDED">
+                  Suspended
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            {loading ? (
+              <div className="rounded-3xl border border-slate-800 bg-slate-900 p-10 text-center">
+                <p className="font-bold text-slate-400">
+                  Loading School Marketplace users...
                 </p>
               </div>
             ) : filteredStudents.length === 0 ? (
-              <div className="rounded-[2rem] border border-slate-800 bg-slate-900 p-10 text-center shadow-xl sm:p-14">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-3xl">
-                  ✓
-                </div>
-
-                <h2 className="mt-5 text-2xl font-black">
-                  {search
-                    ? "No Matching Requests"
-                    : "No Pending Requests"}
+              <div className="rounded-3xl border border-slate-800 bg-slate-900 p-10 text-center sm:p-14">
+                <h2 className="text-2xl font-black">
+                  No students found
                 </h2>
 
-                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-                  {search
-                    ? "No verification requests match your current search."
-                    : "All School Marketplace verification requests have been reviewed."}
+                <p className="mt-2 text-sm text-slate-500">
+                  Try another search or status filter.
                 </p>
               </div>
             ) : (
-              <div className="space-y-6">
-                {filteredStudents.map(
-                  (student) => {
-                    const approveKey = `${student.id}-APPROVE`;
-                    const rejectKey = `${student.id}-REJECT`;
+              <div className="space-y-5">
+                {filteredStudents.map((student) => {
+                  const status = student.isSuspended
+                    ? "SUSPENDED"
+                    : student.schoolVerificationStatus;
 
-                    return (
-                      <article
-                        key={student.id}
-                        className="overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-900 shadow-2xl"
-                      >
-                        {/* STUDENT HEADER */}
-                        <div className="border-b border-slate-800 bg-slate-950/40 p-5 sm:p-7">
-                          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-                            <div className="flex min-w-0 items-center gap-4">
-                              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-indigo-500/10 text-2xl">
-                                🎓
-                              </div>
+                  return (
+                    <article
+                      key={student.id}
+                      className="overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-900 shadow-2xl"
+                    >
+                      <div className="border-b border-slate-800 bg-slate-950/40 p-5 sm:p-7">
+                        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h2 className="break-words text-xl font-black sm:text-2xl">
+                                {student.name}
+                              </h2>
 
-                              <div className="min-w-0">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <h2 className="break-words text-xl font-black sm:text-2xl">
-                                    {student.name}
-                                  </h2>
-
-                                  <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-[9px] font-black uppercase tracking-wider text-amber-400">
-                                    Pending
-                                  </span>
-                                </div>
-
-                                <p className="mt-1 break-all text-sm text-slate-500">
-                                  {student.email}
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3 sm:flex">
-                              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
-                                <p className="text-[9px] font-black uppercase tracking-wider text-slate-600">
-                                  Class
-                                </p>
-
-                                <p className="mt-1 text-lg font-black text-slate-200">
-                                  {student.classLevel
-                                    ? `Class ${student.classLevel}`
-                                    : "N/A"}
-                                </p>
-                              </div>
-
-                              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
-                                <p className="text-[9px] font-black uppercase tracking-wider text-slate-600">
-                                  Status
-                                </p>
-
-                                <p className="mt-1 text-lg font-black text-amber-400">
-                                  PENDING
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* DETAILS */}
-                        <div className="grid gap-6 p-5 sm:p-7 lg:grid-cols-[0.8fr_1.2fr]">
-                          {/* SCHOOL */}
-                          <div>
-                            <p className="text-xs font-black uppercase tracking-wider text-indigo-400">
-                              School Information
-                            </p>
-
-                            <div className="mt-4 space-y-3">
-                              <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-                                <p className="text-[9px] font-black uppercase tracking-wider text-slate-600">
-                                  School Name
-                                </p>
-
-                                <p className="mt-1 break-words text-sm font-bold text-slate-300">
-                                  {student.schoolName ||
-                                    "Not provided"}
-                                </p>
-                              </div>
-
-                              <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-                                <p className="text-[9px] font-black uppercase tracking-wider text-slate-600">
-                                  City
-                                </p>
-
-                                <p className="mt-1 text-sm font-bold text-slate-300">
-                                  {student.schoolCity ||
-                                    "Not provided"}
-                                </p>
-                              </div>
-
-                              <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-                                <p className="text-[9px] font-black uppercase tracking-wider text-slate-600">
-                                  Submitted
-                                </p>
-
-                                <p className="mt-1 text-sm font-bold leading-6 text-slate-300">
-                                  {new Date(
-                                    student.createdAt
-                                  ).toLocaleString()}
-                                </p>
-                              </div>
-
-                              <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-                                <p className="text-[9px] font-black uppercase tracking-wider text-slate-600">
-                                  Verification Status
-                                </p>
-
-                                <p className="mt-1 text-sm font-bold text-amber-400">
-                                  {student.schoolVerificationStatus ||
-                                    "PENDING"}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* DOCUMENTS */}
-                          <div>
-                            <div className="flex items-center justify-between gap-4">
-                              <p className="text-xs font-black uppercase tracking-wider text-indigo-400">
-                                Verification Documents
-                              </p>
-
-                              <span className="text-[9px] font-black uppercase tracking-wider text-slate-600">
-                                Click image to inspect
+                              <span
+                                className={`rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-wider ${
+                                  status === "APPROVED"
+                                    ? "bg-emerald-500/10 text-emerald-400"
+                                    : status === "REJECTED"
+                                      ? "bg-red-500/10 text-red-400"
+                                      : status === "SUSPENDED"
+                                        ? "bg-orange-500/10 text-orange-400"
+                                        : "bg-amber-500/10 text-amber-400"
+                                }`}
+                              >
+                                {status}
                               </span>
                             </div>
 
-                            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                              {/* PHOTO */}
-                              <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/60">
-                                <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
-                                  <p className="text-sm font-black">
-                                    Student Photo
-                                  </p>
+                            <p className="mt-1 break-all text-sm text-slate-500">
+                              {student.email}
+                            </p>
+                          </div>
 
-                                  {student.schoolStudentPhotoUrl && (
-                                    <span className="text-xs text-emerald-400">
-                                      ✓
-                                    </span>
-                                  )}
-                                </div>
+                          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                            <div className="rounded-2xl border border-slate-800 bg-slate-950 p-4">
+                              <p className="text-[9px] font-black uppercase tracking-wider text-slate-600">
+                                Class
+                              </p>
 
-                                {student.schoolStudentPhotoUrl ? (
-                                  <a
-                                    href={
-                                      student.schoolStudentPhotoUrl
-                                    }
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="block bg-black"
-                                  >
-                                    <img
-                                      src={
-                                        student.schoolStudentPhotoUrl
-                                      }
-                                      alt="Student verification"
-                                      className="h-64 w-full object-cover transition duration-300 hover:scale-[1.02]"
-                                    />
-                                  </a>
-                                ) : (
-                                  <div className="flex h-64 items-center justify-center text-sm text-slate-600">
-                                    No photo submitted
-                                  </div>
-                                )}
-                              </div>
+                              <p className="mt-1 text-lg font-black text-slate-200">
+                                {student.classLevel
+                                  ? `Class ${student.classLevel}`
+                                  : "N/A"}
+                              </p>
+                            </div>
 
-                              {/* SCHOOL ID */}
-                              <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/60">
-                                <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
-                                  <p className="text-sm font-black">
-                                    School ID
-                                  </p>
+                            <div className="rounded-2xl border border-slate-800 bg-slate-950 p-4">
+                              <p className="text-[9px] font-black uppercase tracking-wider text-slate-600">
+                                School
+                              </p>
 
-                                  {student.schoolIdImageUrl && (
-                                    <span className="text-xs text-emerald-400">
-                                      ✓
-                                    </span>
-                                  )}
-                                </div>
+                              <p className="mt-1 max-w-40 truncate text-sm font-black text-slate-200">
+                                {student.schoolName ||
+                                  "N/A"}
+                              </p>
+                            </div>
 
-                                {student.schoolIdImageUrl ? (
-                                  <a
-                                    href={
-                                      student.schoolIdImageUrl
-                                    }
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="block bg-black"
-                                  >
-                                    <img
-                                      src={
-                                        student.schoolIdImageUrl
-                                      }
-                                      alt="School ID verification"
-                                      className="h-64 w-full object-cover transition duration-300 hover:scale-[1.02]"
-                                    />
-                                  </a>
-                                ) : (
-                                  <div className="flex h-64 items-center justify-center text-sm text-slate-600">
-                                    No school ID submitted
-                                  </div>
-                                )}
-                              </div>
+                            <div className="rounded-2xl border border-slate-800 bg-slate-950 p-4">
+                              <p className="text-[9px] font-black uppercase tracking-wider text-slate-600">
+                                City
+                              </p>
+
+                              <p className="mt-1 text-sm font-black text-slate-200">
+                                {student.schoolCity ||
+                                  "N/A"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid gap-6 p-5 sm:p-7 lg:grid-cols-[0.8fr_1.2fr]">
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-wider text-indigo-400">
+                            Account Information
+                          </p>
+
+                          <div className="mt-4 space-y-3">
+                            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+                              <p className="text-[9px] font-black uppercase tracking-wider text-slate-600">
+                                Verification
+                              </p>
+
+                              <p className="mt-1 text-sm font-bold text-slate-300">
+                                {student.schoolVerificationStatus}
+                              </p>
+                            </div>
+
+                            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+                              <p className="text-[9px] font-black uppercase tracking-wider text-slate-600">
+                                Verified
+                              </p>
+
+                              <p className="mt-1 text-sm font-bold text-slate-300">
+                                {student.schoolVerified
+                                  ? "Yes"
+                                  : "No"}
+                              </p>
+                            </div>
+
+                            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+                              <p className="text-[9px] font-black uppercase tracking-wider text-slate-600">
+                                Submitted
+                              </p>
+
+                              <p className="mt-1 text-sm font-bold leading-6 text-slate-300">
+                                {new Date(
+                                  student.createdAt
+                                ).toLocaleString()}
+                              </p>
                             </div>
                           </div>
                         </div>
 
-                        {/* ACTIONS */}
-                        <div className="flex flex-col gap-3 border-t border-slate-800 bg-slate-950/40 p-5 sm:flex-row sm:justify-end sm:p-6">
-                          <button
-                            type="button"
-                            disabled={
-                              !!actionLoading
-                            }
-                            onClick={() =>
-                              handleAction(
-                                student.id,
-                                "REJECT"
-                              )
-                            }
-                            className="rounded-2xl border border-red-500/20 bg-red-500/5 px-7 py-3.5 text-sm font-black text-red-400 transition hover:border-red-500/40 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            {actionLoading ===
-                            rejectKey
-                              ? "Rejecting..."
-                              : "Reject Request"}
-                          </button>
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-wider text-indigo-400">
+                            Verification Documents
+                          </p>
 
+                          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                            <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/60">
+                              <div className="border-b border-slate-800 px-4 py-3">
+                                <p className="text-sm font-black">
+                                  Student Photo
+                                </p>
+                              </div>
+
+                              {student.schoolStudentPhotoUrl ? (
+                                <a
+                                  href={
+                                    student.schoolStudentPhotoUrl
+                                  }
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="block bg-black"
+                                >
+                                  <img
+                                    src={
+                                      student.schoolStudentPhotoUrl
+                                    }
+                                    alt="Student verification"
+                                    className="h-64 w-full object-cover"
+                                  />
+                                </a>
+                              ) : (
+                                <div className="flex h-64 items-center justify-center text-sm text-slate-600">
+                                  No photo
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/60">
+                              <div className="border-b border-slate-800 px-4 py-3">
+                                <p className="text-sm font-black">
+                                  School ID
+                                </p>
+                              </div>
+
+                              {student.schoolIdImageUrl ? (
+                                <a
+                                  href={
+                                    student.schoolIdImageUrl
+                                  }
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="block bg-black"
+                                >
+                                  <img
+                                    src={
+                                      student.schoolIdImageUrl
+                                    }
+                                    alt="School ID verification"
+                                    className="h-64 w-full object-cover"
+                                  />
+                                </a>
+                              ) : (
+                                <div className="flex h-64 items-center justify-center text-sm text-slate-600">
+                                  No school ID
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-3 border-t border-slate-800 bg-slate-950/40 p-5 sm:flex-row sm:justify-end sm:p-6">
+                        {status === "PENDING" && (
+                          <>
+                            <button
+                              type="button"
+                              disabled={!!actionLoading}
+                              onClick={() =>
+                                handleAction(
+                                  student.id,
+                                  "REJECT"
+                                )
+                              }
+                              className="rounded-2xl border border-red-500/20 bg-red-500/5 px-6 py-3.5 text-sm font-black text-red-400 hover:bg-red-500/10 disabled:opacity-50"
+                            >
+                              {actionLoading ===
+                              `${student.id}-REJECT`
+                                ? "Rejecting..."
+                                : "Reject"}
+                            </button>
+
+                            <button
+                              type="button"
+                              disabled={!!actionLoading}
+                              onClick={() =>
+                                handleAction(
+                                  student.id,
+                                  "APPROVE"
+                                )
+                              }
+                              className="rounded-2xl bg-emerald-500 px-6 py-3.5 text-sm font-black text-slate-950 hover:bg-emerald-400 disabled:opacity-50"
+                            >
+                              {actionLoading ===
+                              `${student.id}-APPROVE`
+                                ? "Approving..."
+                                : "Approve"}
+                            </button>
+                          </>
+                        )}
+
+                        {status !== "SUSPENDED" ? (
                           <button
                             type="button"
-                            disabled={
-                              !!actionLoading
-                            }
+                            disabled={!!actionLoading}
                             onClick={() =>
                               handleAction(
                                 student.id,
-                                "APPROVE"
+                                "SUSPEND"
                               )
                             }
-                            className="rounded-2xl bg-emerald-500 px-7 py-3.5 text-sm font-black text-slate-950 shadow-lg shadow-emerald-500/10 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="rounded-2xl border border-orange-500/20 bg-orange-500/5 px-6 py-3.5 text-sm font-black text-orange-400 hover:bg-orange-500/10 disabled:opacity-50"
                           >
                             {actionLoading ===
-                            approveKey
-                              ? "Approving..."
-                              : "✓ Approve Student"}
+                            `${student.id}-SUSPEND`
+                              ? "Suspending..."
+                              : "Suspend"}
                           </button>
-                        </div>
-                      </article>
-                    );
-                  }
-                )}
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={!!actionLoading}
+                            onClick={() =>
+                              handleAction(
+                                student.id,
+                                "UNSUSPEND"
+                              )
+                            }
+                            className="rounded-2xl bg-blue-500 px-6 py-3.5 text-sm font-black text-white hover:bg-blue-400 disabled:opacity-50"
+                          >
+                            {actionLoading ===
+                            `${student.id}-UNSUSPEND`
+                              ? "Unsuspending..."
+                              : "Unsuspend"}
+                          </button>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             )}
-          </section>
+          </div>
         </div>
       </section>
     </main>
