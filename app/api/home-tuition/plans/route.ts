@@ -1,3 +1,4 @@
+
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminUser } from "@/lib/admin";
@@ -62,17 +63,11 @@ function validateOffer(
     };
   }
 
-  if (
-    body.offerStartsAt &&
-    !offerStartsAt
-  ) {
+  if (body.offerStartsAt && !offerStartsAt) {
     return { error: "Invalid offer start date" };
   }
 
-  if (
-    body.offerEndsAt &&
-    !offerEndsAt
-  ) {
+  if (body.offerEndsAt && !offerEndsAt) {
     return { error: "Invalid offer end date" };
   }
 
@@ -137,10 +132,17 @@ export async function GET() {
       },
     });
 
-    const plansWithPricing = plans.map((plan) => ({
-      ...plan,
-      ...getEffectivePlanPrice(plan),
-    }));
+    const plansWithPricing = plans.map((plan) => {
+      const pricing = getEffectivePlanPrice(plan);
+
+      return {
+        ...pricing,
+        ...plan,
+        effectivePrice: pricing.effectivePrice,
+        originalPrice: pricing.originalPrice,
+        offerActive: pricing.offerActive,
+      };
+    });
 
     return NextResponse.json({
       plans: plansWithPricing,
@@ -256,11 +258,16 @@ export async function POST(request: Request) {
       },
     });
 
+    const pricing = getEffectivePlanPrice(plan);
+
     return NextResponse.json(
       {
         plan: {
+          ...pricing,
           ...plan,
-          ...getEffectivePlanPrice(plan),
+          effectivePrice: pricing.effectivePrice,
+          originalPrice: pricing.originalPrice,
+          offerActive: pricing.offerActive,
         },
       },
       { status: 201 }

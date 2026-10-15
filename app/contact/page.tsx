@@ -1,4 +1,5 @@
-﻿import Link from "next/link";
+﻿
+import Link from "next/link";
 import { siteConfig } from "@/lib/site";
 
 export default function ContactPage() {
@@ -70,6 +71,20 @@ export default function ContactPage() {
                 Contact the Axyon team for platform-related assistance.
               </p>
             </a>
+          </div>
+
+          <div className="mt-5 rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
+            <p className="text-sm font-bold text-slate-500">
+              Business Address
+            </p>
+
+            <p className="mt-2 text-base font-bold leading-7 text-slate-950">
+              {siteConfig.companyName}
+            </p>
+
+            <address className="mt-2 not-italic leading-7 text-slate-600">
+              {siteConfig.address}
+            </address>
           </div>
 
           <div className="mt-8 rounded-3xl border border-indigo-100 bg-indigo-50 p-7">

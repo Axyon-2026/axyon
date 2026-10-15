@@ -1,3 +1,4 @@
+
 export type HomeTuitionPlanPricing = {
   price: number;
   offerEnabled: boolean;
@@ -17,45 +18,38 @@ export function getEffectivePlanPrice(
     (!plan.offerStartsAt || plan.offerStartsAt <= now) &&
     (!plan.offerEndsAt || plan.offerEndsAt >= now);
 
-  if (!offerActive) {
-    return {
-      price: plan.price,
-      originalPrice: plan.price,
-      offerActive: false,
-      discountPercent: 0,
-      offerMessage: null,
-      offerEndsAt: null,
-    };
-  }
-
   let effectivePrice = plan.price;
 
-  if (plan.offerPrice !== null && plan.offerPrice !== undefined) {
-    effectivePrice = Math.max(1, Math.floor(plan.offerPrice));
-  } else if (
-    plan.discountPercent !== null &&
-    plan.discountPercent !== undefined
-  ) {
-    effectivePrice = Math.max(
-      1,
-      Math.round(plan.price * (1 - plan.discountPercent / 100))
-    );
+  if (offerActive) {
+    if (plan.offerPrice != null) {
+      effectivePrice = Math.max(1, Math.floor(plan.offerPrice));
+    } else if (plan.discountPercent != null) {
+      effectivePrice = Math.max(
+        1,
+        Math.round(
+          plan.price * (1 - plan.discountPercent / 100)
+        )
+      );
+    }
   }
 
   const actualDiscount =
-    plan.price > 0
-      ? Math.max(
-          0,
-          Math.round(((plan.price - effectivePrice) / plan.price) * 100)
+    plan.price > 0 && effectivePrice < plan.price
+      ? Math.round(
+          ((plan.price - effectivePrice) / plan.price) * 100
         )
       : 0;
 
+  const hasActiveDiscount =
+    offerActive && effectivePrice < plan.price;
+
   return {
-    price: effectivePrice,
+    price: plan.price,
+    effectivePrice,
     originalPrice: plan.price,
-    offerActive: effectivePrice < plan.price,
+    offerActive: hasActiveDiscount,
     discountPercent: actualDiscount,
-    offerMessage: plan.offerMessage,
-    offerEndsAt: plan.offerEndsAt,
+    offerMessage: hasActiveDiscount ? plan.offerMessage : null,
+    offerEndsAt: hasActiveDiscount ? plan.offerEndsAt : null,
   };
 }

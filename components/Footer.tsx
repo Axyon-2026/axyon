@@ -88,7 +88,6 @@ export default function Footer() {
               >
                 Explore Home Tuition →
               </Link>
-              ``
             </div>
           </div>
 
@@ -186,6 +185,7 @@ export default function Footer() {
               >
                 +91 {siteConfig.phone}
               </a>
+              <p className="max-w-sm leading-6">{siteConfig.address}</p>
             </div>
           </div>
 

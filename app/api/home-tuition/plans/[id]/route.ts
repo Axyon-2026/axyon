@@ -1,3 +1,4 @@
+
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminUser } from "@/lib/admin";
@@ -105,8 +106,7 @@ export async function PATCH(
       if (type !== "MONTHLY" && type !== "YEARLY") {
         return NextResponse.json(
           {
-            error:
-              "Type must be MONTHLY or YEARLY",
+            error: "Type must be MONTHLY or YEARLY",
           },
           { status: 400 }
         );
@@ -128,8 +128,7 @@ export async function PATCH(
       ) {
         return NextResponse.json(
           {
-            error:
-              "Duration must be a positive integer",
+            error: "Duration must be a positive integer",
           },
           { status: 400 }
         );
@@ -147,8 +146,7 @@ export async function PATCH(
       if (description && description.length > 1000) {
         return NextResponse.json(
           {
-            error:
-              "Description cannot exceed 1000 characters",
+            error: "Description cannot exceed 1000 characters",
           },
           { status: 400 }
         );
@@ -274,8 +272,7 @@ export async function PATCH(
       ) {
         return NextResponse.json(
           {
-            error:
-              "Offer start date must be before the end date",
+            error: "Offer start date must be before the end date",
           },
           { status: 400 }
         );
@@ -284,8 +281,7 @@ export async function PATCH(
       if (offerMessage && offerMessage.length > 300) {
         return NextResponse.json(
           {
-            error:
-              "Offer message cannot exceed 300 characters",
+            error: "Offer message cannot exceed 300 characters",
           },
           { status: 400 }
         );
@@ -329,17 +325,19 @@ export async function PATCH(
         },
       });
 
+    const pricing = getEffectivePlanPrice(plan);
+
     return NextResponse.json({
       plan: {
+        ...pricing,
         ...plan,
-        ...getEffectivePlanPrice(plan),
+        effectivePrice: pricing.effectivePrice,
+        originalPrice: pricing.originalPrice,
+        offerActive: pricing.offerActive,
       },
     });
   } catch (error) {
-    console.error(
-      "Home Tuition plan PATCH error:",
-      error
-    );
+    console.error("Home Tuition plan PATCH error:", error);
 
     return NextResponse.json(
       { error: "Failed to update subscription plan" },
@@ -434,10 +432,7 @@ export async function DELETE(
       message: "Subscription plan deactivated",
     });
   } catch (error) {
-    console.error(
-      "Home Tuition plan DELETE error:",
-      error
-    );
+    console.error("Home Tuition plan DELETE error:", error);
 
     return NextResponse.json(
       { error: "Failed to deactivate subscription plan" },

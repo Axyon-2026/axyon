@@ -8,6 +8,9 @@ type Plan = {
   name: string;
   type: "MONTHLY" | "YEARLY";
   price: number;
+  effectivePrice?: number;
+  originalPrice?: number;
+  offerActive?: boolean;
   durationDays: number;
   description: string | null;
   offerEnabled: boolean;
@@ -48,17 +51,11 @@ function isOfferCurrentlyActive(plan: Plan) {
 
   const now = Date.now();
 
-  if (
-    plan.offerStartsAt &&
-    new Date(plan.offerStartsAt).getTime() > now
-  ) {
+  if (plan.offerStartsAt && new Date(plan.offerStartsAt).getTime() > now) {
     return false;
   }
 
-  if (
-    plan.offerEndsAt &&
-    new Date(plan.offerEndsAt).getTime() < now
-  ) {
+  if (plan.offerEndsAt && new Date(plan.offerEndsAt).getTime() < now) {
     return false;
   }
 
@@ -66,41 +63,34 @@ function isOfferCurrentlyActive(plan: Plan) {
 }
 
 function getEffectivePrice(plan: Plan) {
-  if (!isOfferCurrentlyActive(plan)) {
-    return {
-      price: plan.price,
-      originalPrice: plan.price,
-      offerActive: false,
-      discountPercent: 0,
-    };
-  }
+  const originalPrice = plan.originalPrice ?? plan.price;
 
-  const discountedPrice =
-    plan.offerPrice !== null && plan.offerPrice !== undefined
-      ? plan.offerPrice
-      : plan.discountPercent > 0
-      ? Math.max(
-          1,
-          Math.round(
-            plan.price * (1 - plan.discountPercent / 100)
-          )
-        )
-      : plan.price;
+  const effectivePrice =
+    plan.effectivePrice ??
+    (isOfferCurrentlyActive(plan)
+      ? plan.offerPrice != null
+        ? Math.max(1, Math.floor(plan.offerPrice))
+        : plan.discountPercent > 0
+          ? Math.max(
+              1,
+              Math.round(originalPrice * (1 - plan.discountPercent / 100)),
+            )
+          : originalPrice
+      : originalPrice);
+
+  const offerActive =
+    (plan.offerActive ?? isOfferCurrentlyActive(plan)) &&
+    effectivePrice < originalPrice;
 
   const actualDiscount =
-    plan.price > 0
-      ? Math.max(
-          0,
-          Math.round(
-            ((plan.price - discountedPrice) / plan.price) * 100
-          )
-        )
+    originalPrice > 0 && offerActive
+      ? Math.round(((originalPrice - effectivePrice) / originalPrice) * 100)
       : 0;
 
   return {
-    price: discountedPrice,
-    originalPrice: plan.price,
-    offerActive: discountedPrice < plan.price,
+    price: effectivePrice,
+    originalPrice,
+    offerActive,
     discountPercent: actualDiscount,
   };
 }
@@ -154,8 +144,7 @@ export default function HomeTuitionSubscribePage() {
         ]);
 
       if (profileResponse.status === 401) {
-        window.location.href =
-          "/login?next=/home-tuition/subscribe";
+        window.location.href = "/login?next=/home-tuition/subscribe";
         return;
       }
 
@@ -165,20 +154,17 @@ export default function HomeTuitionSubscribePage() {
 
       if (!plansResponse.ok) {
         throw new Error(
-          plansData.error || "Unable to load subscription plans."
+          plansData.error || "Unable to load subscription plans.",
         );
       }
 
       if (!profileResponse.ok) {
-        throw new Error(
-          profileData.error || "Unable to load tutor profile."
-        );
+        throw new Error(profileData.error || "Unable to load tutor profile.");
       }
 
       if (!subscriptionsResponse.ok) {
         throw new Error(
-          subscriptionsData.error ||
-            "Unable to load subscriptions."
+          subscriptionsData.error || "Unable to load subscriptions.",
         );
       }
 
@@ -193,7 +179,7 @@ export default function HomeTuitionSubscribePage() {
       setError(
         err instanceof Error
           ? err.message
-          : "Unable to load subscription information."
+          : "Unable to load subscription information.",
       );
     } finally {
       setLoading(false);
@@ -201,16 +187,14 @@ export default function HomeTuitionSubscribePage() {
   }
 
   const activeSubscription = subscriptions.find(
-    (subscription) => subscription.status === "ACTIVE"
+    (subscription) => subscription.status === "ACTIVE",
   );
 
   const pendingSubscription = subscriptions.find(
-    (subscription) => subscription.status === "PENDING"
+    (subscription) => subscription.status === "PENDING",
   );
 
-  const selectedPlanData = plans.find(
-    (plan) => plan.id === selectedPlan
-  );
+  const selectedPlanData = plans.find((plan) => plan.id === selectedPlan);
 
   const selectedPricing = selectedPlanData
     ? getEffectivePrice(selectedPlanData)
@@ -234,21 +218,19 @@ export default function HomeTuitionSubscribePage() {
       profile.safetyVersion !== "1.0"
     ) {
       setError(
-        "Current Terms and Safety requirements must be accepted in your tutor profile."
+        "Current Terms and Safety requirements must be accepted in your tutor profile.",
       );
       return;
     }
 
     if (activeSubscription) {
-      setError(
-        "You already have an active Home Tuition subscription."
-      );
+      setError("You already have an active Home Tuition subscription.");
       return;
     }
 
     if (pendingSubscription) {
       setError(
-        "You already have a pending subscription. Complete that payment before creating another one."
+        "You already have a pending subscription. Complete that payment before creating another one.",
       );
       return;
     }
@@ -268,15 +250,14 @@ export default function HomeTuitionSubscribePage() {
           body: JSON.stringify({
             planId: selectedPlanData.id,
           }),
-        }
+        },
       );
 
       const subscriptionData = await subscriptionResponse.json();
 
       if (!subscriptionResponse.ok) {
         throw new Error(
-          subscriptionData.error ||
-            "Unable to create subscription."
+          subscriptionData.error || "Unable to create subscription.",
         );
       }
 
@@ -292,15 +273,13 @@ export default function HomeTuitionSubscribePage() {
           body: JSON.stringify({
             subscriptionId: subscription.id,
           }),
-        }
+        },
       );
 
       const orderData = await orderResponse.json();
 
       if (!orderResponse.ok) {
-        throw new Error(
-          orderData.error || "Unable to create payment order."
-        );
+        throw new Error(orderData.error || "Unable to create payment order.");
       }
 
       await loadRazorpay();
@@ -326,35 +305,29 @@ export default function HomeTuitionSubscribePage() {
                 },
                 body: JSON.stringify({
                   subscriptionId: subscription.id,
-                  razorpay_order_id:
-                    response.razorpay_order_id,
-                  razorpay_payment_id:
-                    response.razorpay_payment_id,
-                  razorpay_signature:
-                    response.razorpay_signature,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
                 }),
-              }
+              },
             );
 
             const verifyData = await verifyResponse.json();
 
             if (!verifyResponse.ok) {
               throw new Error(
-                verifyData.error ||
-                  "Payment verification failed."
+                verifyData.error || "Payment verification failed.",
               );
             }
 
-            setMessage(
-              "Payment successful. Your tutor profile is now active."
-            );
+            setMessage("Payment successful. Your tutor profile is now active.");
 
             await loadData();
           } catch (err) {
             setError(
               err instanceof Error
                 ? err.message
-                : "Payment verification failed."
+                : "Payment verification failed.",
             );
           } finally {
             setPaymentLoading(false);
@@ -364,29 +337,29 @@ export default function HomeTuitionSubscribePage() {
           ondismiss: () => {
             setPaymentLoading(false);
             setMessage(
-              "Payment window closed. Your subscription remains pending."
+              "Payment window closed. Your subscription remains pending.",
             );
           },
         },
       });
 
-      razorpay.on("payment.failed", (response: any) => {
+      razorpay.on("payment.failed", async (response: any) => {
         setPaymentLoading(false);
         setError(
-          response?.error?.description ||
-            "Payment failed. Please try again."
+          response?.error?.description || "Payment failed. Please try again.",
         );
-      });
 
+        try {
+          await loadData();
+        } catch (err) {
+          console.error("Failed to refresh subscription data:", err);
+        }
+      });
       razorpay.open();
     } catch (err) {
       setPaymentLoading(false);
 
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to start payment."
-      );
+      setError(err instanceof Error ? err.message : "Unable to start payment.");
     }
   }
 
@@ -395,30 +368,25 @@ export default function HomeTuitionSubscribePage() {
 
     await new Promise<void>((resolve, reject) => {
       const existing = document.querySelector(
-        'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
+        'script[src="https://checkout.razorpay.com/v1/checkout.js"]',
       );
 
       if (existing) {
         existing.addEventListener("load", () => resolve());
         existing.addEventListener("error", () =>
-          reject(
-            new Error("Unable to load payment service.")
-          )
+          reject(new Error("Unable to load payment service.")),
         );
         return;
       }
 
       const script = document.createElement("script");
 
-      script.src =
-        "https://checkout.razorpay.com/v1/checkout.js";
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
       script.async = true;
 
       script.onload = () => resolve();
       script.onerror = () =>
-        reject(
-          new Error("Unable to load payment service.")
-        );
+        reject(new Error("Unable to load payment service."));
 
       document.body.appendChild(script);
     });
@@ -460,17 +428,15 @@ export default function HomeTuitionSubscribePage() {
 
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
         <div className="max-w-3xl">
-          <p className="text-sm font-bold text-indigo-600">
-            Home Tuition
-          </p>
+          <p className="text-sm font-bold text-indigo-600">Home Tuition</p>
 
           <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
             Choose your subscription
           </h1>
 
           <p className="mt-3 text-sm leading-6 text-slate-500 sm:text-base">
-            Activate your tutor profile and make it visible to students.
-            There is no automatic renewal.
+            Activate your tutor profile and make it visible to students. There
+            is no automatic renewal.
           </p>
         </div>
 
@@ -481,9 +447,7 @@ export default function HomeTuitionSubscribePage() {
                 Tutor profile
               </p>
 
-              <p className="mt-1 text-lg font-black">
-                {profile.displayName}
-              </p>
+              <p className="mt-1 text-lg font-black">{profile.displayName}</p>
             </div>
 
             <span
@@ -491,8 +455,8 @@ export default function HomeTuitionSubscribePage() {
                 profile.status === "ACTIVE"
                   ? "bg-emerald-50 text-emerald-700"
                   : profile.status === "PAUSED"
-                  ? "bg-amber-50 text-amber-700"
-                  : "bg-slate-100 text-slate-600"
+                    ? "bg-amber-50 text-amber-700"
+                    : "bg-slate-100 text-slate-600"
               }`}
             >
               {profile.status}
@@ -509,13 +473,14 @@ export default function HomeTuitionSubscribePage() {
             <p className="mt-1 text-sm text-emerald-800">
               Your current subscription expires on{" "}
               {activeSubscription.expiresAt
-                ? new Date(
-                    activeSubscription.expiresAt
-                  ).toLocaleDateString("en-IN", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })
+                ? new Date(activeSubscription.expiresAt).toLocaleDateString(
+                    "en-IN",
+                    {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    },
+                  )
                 : "a later date"}
               .
             </p>
@@ -531,13 +496,11 @@ export default function HomeTuitionSubscribePage() {
 
         {pendingSubscription && !activeSubscription && (
           <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-5">
-            <p className="font-black text-amber-900">
-              Payment is pending
-            </p>
+            <p className="font-black text-amber-900">Payment is pending</p>
 
             <p className="mt-1 text-sm text-amber-800">
-              A subscription is already awaiting payment. Complete that
-              payment before creating another subscription.
+              A subscription is already awaiting payment. Complete that payment
+              before creating another subscription.
             </p>
           </div>
         )}
@@ -610,9 +573,7 @@ export default function HomeTuitionSubscribePage() {
                     {selected && (
                       <span
                         className={`absolute right-5 ${
-                          pricing.offerActive
-                            ? "top-14"
-                            : "top-5"
+                          pricing.offerActive ? "top-14" : "top-5"
                         } rounded-full bg-indigo-600 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white`}
                       >
                         Selected
@@ -628,14 +589,10 @@ export default function HomeTuitionSubscribePage() {
                     </div>
 
                     <p className="mt-6 text-xs font-black uppercase tracking-widest text-slate-400">
-                      {plan.type === "YEARLY"
-                        ? "Yearly"
-                        : "Monthly"}
+                      {plan.type === "YEARLY" ? "Yearly" : "Monthly"}
                     </p>
 
-                    <h2 className="mt-1 text-2xl font-black">
-                      {plan.name}
-                    </h2>
+                    <h2 className="mt-1 text-2xl font-black">{plan.name}</h2>
 
                     <div className="mt-5">
                       {pricing.offerActive ? (
@@ -661,10 +618,7 @@ export default function HomeTuitionSubscribePage() {
                       )}
 
                       <span className="mt-1 block text-sm font-semibold text-slate-400">
-                        /{" "}
-                        {plan.type === "YEARLY"
-                          ? "year"
-                          : "month"}
+                        / {plan.type === "YEARLY" ? "year" : "month"}
                       </span>
                     </div>
 
@@ -744,8 +698,8 @@ export default function HomeTuitionSubscribePage() {
                 {paymentLoading
                   ? "Opening payment..."
                   : selectedPricing
-                  ? `Pay ₹${selectedPricing.price}`
-                  : "Select a plan"}
+                    ? `Pay ₹${selectedPricing.price}`
+                    : "Select a plan"}
               </button>
             </div>
           </section>
@@ -765,18 +719,9 @@ export default function HomeTuitionSubscribePage() {
 
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
           {[
-            [
-              "Secure payments",
-              "Payments are processed through Razorpay.",
-            ],
-            [
-              "No auto-renewal",
-              "Every subscription ends on its expiry date.",
-            ],
-            [
-              "Keep control",
-              "Pause or remove your profile whenever needed.",
-            ],
+            ["Secure payments", "Payments are processed through Razorpay."],
+            ["No auto-renewal", "Every subscription ends on its expiry date."],
+            ["Keep control", "Pause or remove your profile whenever needed."],
           ].map(([title, description]) => (
             <div
               key={title}

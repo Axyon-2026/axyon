@@ -273,7 +273,7 @@ export async function POST(request: Request) {
         // Snapshot the effective price.
         // Future offer/price changes will not affect this subscription.
         purchasedPlanType: plan.type,
-        purchasedPrice: pricing.price,
+        purchasedPrice: pricing.effectivePrice,
         durationDays: plan.durationDays,
 
         status: "PENDING",
@@ -306,7 +306,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         subscription,
-        amount: pricing.price,
+        amount: pricing.effectivePrice,
         currency: "INR",
         originalPrice: pricing.originalPrice,
         offerActive: pricing.offerActive,

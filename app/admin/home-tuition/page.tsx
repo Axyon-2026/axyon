@@ -10,6 +10,9 @@ type Plan = {
   name: string;
   type: "MONTHLY" | "YEARLY";
   price: number;
+  effectivePrice?: number;
+  originalPrice?: number;
+  offerActive?: boolean;
   durationDays: number;
   description: string | null;
 
@@ -1352,6 +1355,33 @@ export default function HomeTuitionAdminPage() {
               {plans.map((plan) => {
                 const currentOffer = offerIsCurrentlyActive(plan);
 
+                // Prefer the server-calculated price; retain a local fallback
+                // for percentage-only offers and older API responses.
+                const effectivePrice =
+                  plan.effectivePrice ??
+                  (currentOffer
+                    ? plan.offerPrice != null
+                      ? Math.max(1, Math.floor(plan.offerPrice))
+                      : plan.discountPercent != null
+                        ? Math.max(
+                            1,
+                            Math.round(
+                              plan.price * (1 - plan.discountPercent / 100),
+                            ),
+                          )
+                        : plan.price
+                    : plan.price);
+
+                const hasActiveDiscount =
+                  currentOffer && effectivePrice < plan.price;
+
+                const actualDiscountPercent =
+                  plan.price > 0 && hasActiveDiscount
+                    ? Math.round(
+                        ((plan.price - effectivePrice) / plan.price) * 100,
+                      )
+                    : 0;
+
                 return (
                   <article
                     key={plan.id}
@@ -1383,23 +1413,19 @@ export default function HomeTuitionAdminPage() {
                           )}
                         </div>
 
-                        {plan.offerEnabled &&
-                        currentOffer &&
-                        plan.offerPrice != null ? (
+                        {hasActiveDiscount ? (
                           <div className="mt-3 flex flex-wrap items-end gap-2">
                             <span className="text-2xl font-black text-emerald-700">
-                              {money(plan.offerPrice)}
+                              {money(effectivePrice)}
                             </span>
 
                             <span className="pb-0.5 text-sm font-bold text-slate-400 line-through">
                               {money(plan.price)}
                             </span>
 
-                            {plan.discountPercent != null && (
-                              <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-black text-emerald-700">
-                                {plan.discountPercent}% OFF
-                              </span>
-                            )}
+                            <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-black text-emerald-700">
+                              {actualDiscountPercent}% OFF
+                            </span>
                           </div>
                         ) : (
                           <p className="mt-2 text-2xl font-black">
@@ -1424,16 +1450,21 @@ export default function HomeTuitionAdminPage() {
                                 PROMOTION
                               </span>
 
-                              {plan.discountPercent !=
-                                null && (
+                              {plan.discountPercent != null && (
                                 <span className="text-xs font-black text-amber-900">
-                                  {plan.discountPercent}% off
+                                  {plan.discountPercent}% configured discount
                                 </span>
                               )}
 
-                              {plan.offerPrice != null && (
+                              {hasActiveDiscount && (
                                 <span className="text-xs font-black text-amber-900">
-                                  {money(plan.offerPrice)}
+                                  Current price: {money(effectivePrice)}
+                                </span>
+                              )}
+
+                              {!hasActiveDiscount && plan.offerPrice != null && (
+                                <span className="text-xs font-black text-amber-900">
+                                  Scheduled offer price: {money(plan.offerPrice)}
                                 </span>
                               )}
                             </div>

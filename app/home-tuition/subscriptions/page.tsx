@@ -98,8 +98,7 @@ export default function HomeTuitionSubscriptionsPage() {
       ]);
 
       if (subscriptionResponse.status === 401) {
-        window.location.href =
-          "/login?next=/home-tuition/subscriptions";
+        window.location.href = "/login?next=/home-tuition/subscriptions";
         return;
       }
 
@@ -107,7 +106,7 @@ export default function HomeTuitionSubscriptionsPage() {
 
       if (!subscriptionResponse.ok) {
         throw new Error(
-          subscriptionData?.error || "Unable to load subscriptions."
+          subscriptionData?.error || "Unable to load subscriptions.",
         );
       }
 
@@ -121,7 +120,7 @@ export default function HomeTuitionSubscriptionsPage() {
       setError(
         err instanceof Error
           ? err.message
-          : "Unable to load subscription information."
+          : "Unable to load subscription information.",
       );
     } finally {
       setLoading(false);
@@ -134,18 +133,18 @@ export default function HomeTuitionSubscriptionsPage() {
 
   const activeSubscription = useMemo(
     () => subscriptions.find((item) => item.status === "ACTIVE") || null,
-    [subscriptions]
+    [subscriptions],
   );
 
   const pendingSubscription = useMemo(
     () => subscriptions.find((item) => item.status === "PENDING") || null,
-    [subscriptions]
+    [subscriptions],
   );
 
   async function cancelSubscription(subscriptionId: string) {
     if (
       !window.confirm(
-        "Cancel this subscription? Your current access will be paused."
+        "Cancel this subscription? Your current access will be paused.",
       )
     ) {
       return;
@@ -167,7 +166,7 @@ export default function HomeTuitionSubscriptionsPage() {
           body: JSON.stringify({
             action: "CANCEL",
           }),
-        }
+        },
       );
 
       const data = await response.json();
@@ -180,9 +179,7 @@ export default function HomeTuitionSubscriptionsPage() {
       await loadData();
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to cancel subscription."
+        err instanceof Error ? err.message : "Unable to cancel subscription.",
       );
     } finally {
       setBusyId(null);
@@ -195,49 +192,40 @@ export default function HomeTuitionSubscriptionsPage() {
     setMessage("");
 
     try {
-      const response = await fetch(
-        "/api/home-tuition/payments/recover",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            subscriptionId,
-          }),
-        }
-      );
+      const response = await fetch("/api/home-tuition/payments/recover", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ subscriptionId }),
+      });
 
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data?.error ||
-            "Payment could not be recovered. Please try again."
+          data?.error || "Payment could not be recovered. Please try again.",
         );
       }
 
       setMessage(
-        "Verified payment found. Your subscription has been restored."
+        data?.alreadyActive
+          ? "Your subscription is already active. Payment details have been verified."
+          : "Payment verified. Your subscription has been restored.",
       );
 
       await loadData();
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to recover payment."
+        err instanceof Error ? err.message : "Unable to recover payment.",
       );
     } finally {
       setBusyId(null);
     }
   }
 
-  async function renewSubscription(
-    subscriptionId: string,
-    planId?: string
-  ) {
+  async function renewSubscription(subscriptionId: string, planId?: string) {
     setBusyId(subscriptionId);
     setError("");
     setMessage("");
@@ -251,32 +239,24 @@ export default function HomeTuitionSubscriptionsPage() {
             "Content-Type": "application/json",
           },
           credentials: "include",
-          body: JSON.stringify(
-            planId ? { planId } : {}
-          ),
-        }
+          body: JSON.stringify(planId ? { planId } : {}),
+        },
       );
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data?.error || "Unable to create renewal."
-        );
+        throw new Error(data?.error || "Unable to create renewal.");
       }
 
-      setMessage(
-        "Renewal created. Continue to payment to activate it."
-      );
+      setMessage("Renewal created. Continue to payment to activate it.");
 
       window.location.href = `/home-tuition/subscribe?subscriptionId=${encodeURIComponent(
-        data.subscription?.id || ""
+        data.subscription?.id || "",
       )}`;
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to renew subscription."
+        err instanceof Error ? err.message : "Unable to renew subscription.",
       );
       setBusyId(null);
     }
@@ -286,18 +266,13 @@ export default function HomeTuitionSubscriptionsPage() {
     <main className="min-h-screen bg-[#f6f8fc] text-slate-900">
       <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link
-            href="/home-tuition"
-            className="flex items-center gap-3"
-          >
+          <Link href="/home-tuition" className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-sm font-black text-white shadow-lg">
               A
             </div>
 
             <div>
-              <div className="text-sm font-black tracking-tight">
-                Axyon
-              </div>
+              <div className="text-sm font-black tracking-tight">Axyon</div>
               <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                 Home Tuition
               </div>
@@ -334,8 +309,8 @@ export default function HomeTuitionSubscriptionsPage() {
           </h1>
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500 sm:text-base">
-            Track access, expiry dates, renewals and payment status
-            from one place. Axyon subscriptions do not auto-renew.
+            Track access, expiry dates, renewals and payment status from one
+            place. Axyon subscriptions do not auto-renew.
           </p>
         </div>
 
@@ -370,8 +345,8 @@ export default function HomeTuitionSubscriptionsPage() {
                       {activeSubscription
                         ? "Active"
                         : pendingSubscription
-                        ? "Payment pending"
-                        : "No active plan"}
+                          ? "Payment pending"
+                          : "No active plan"}
                     </h2>
                   </div>
 
@@ -383,9 +358,7 @@ export default function HomeTuitionSubscriptionsPage() {
                 {activeSubscription ? (
                   <div className="mt-8 space-y-4">
                     <div>
-                      <p className="text-xs text-slate-400">
-                        Plan
-                      </p>
+                      <p className="text-xs text-slate-400">Plan</p>
                       <p className="mt-1 font-bold">
                         {activeSubscription.plan?.name ||
                           activeSubscription.purchasedPlanType}
@@ -394,18 +367,14 @@ export default function HomeTuitionSubscriptionsPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-xs text-slate-400">
-                          Started
-                        </p>
+                        <p className="text-xs text-slate-400">Started</p>
                         <p className="mt-1 text-sm font-semibold">
                           {date(activeSubscription.startsAt)}
                         </p>
                       </div>
 
                       <div>
-                        <p className="text-xs text-slate-400">
-                          Expires
-                        </p>
+                        <p className="text-xs text-slate-400">Expires</p>
                         <p className="mt-1 text-sm font-semibold">
                           {date(activeSubscription.expiresAt)}
                         </p>
@@ -414,8 +383,8 @@ export default function HomeTuitionSubscriptionsPage() {
                   </div>
                 ) : (
                   <p className="mt-7 text-sm leading-6 text-slate-400">
-                    Choose a Home Tuition plan to publish your tutor
-                    profile and maintain active visibility.
+                    Choose a Home Tuition plan to publish your tutor profile and
+                    maintain active visibility.
                   </p>
                 )}
               </section>
@@ -427,14 +396,11 @@ export default function HomeTuitionSubscriptionsPage() {
                       Billing
                     </p>
 
-                    <h2 className="mt-2 text-xl font-black">
-                      Plans & renewal
-                    </h2>
+                    <h2 className="mt-2 text-xl font-black">Plans & renewal</h2>
 
                     <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
-                      Select a plan when you need to renew. Your
-                      existing subscription and payment records remain
-                      preserved.
+                      Select a plan when you need to renew. Your existing
+                      subscription and payment records remain preserved.
                     </p>
                   </div>
 
@@ -453,17 +419,15 @@ export default function HomeTuitionSubscriptionsPage() {
                         Auto-renewal is off
                       </p>
                       <p className="mt-1 text-xs leading-5 text-amber-700">
-                        Renew manually before or after expiry whenever
-                        you want to continue.
+                        Renew manually before or after expiry whenever you want
+                        to continue.
                       </p>
                     </div>
 
                     <button
                       type="button"
                       disabled={busyId === activeSubscription.id}
-                      onClick={() =>
-                        renewSubscription(activeSubscription.id)
-                      }
+                      onClick={() => renewSubscription(activeSubscription.id)}
                       className="rounded-xl bg-amber-600 px-4 py-2.5 text-xs font-black text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {busyId === activeSubscription.id
@@ -503,8 +467,8 @@ export default function HomeTuitionSubscriptionsPage() {
                   </h3>
 
                   <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-                    Start with a Home Tuition plan to publish and
-                    maintain your tutor listing.
+                    Start with a Home Tuition plan to publish and maintain your
+                    tutor listing.
                   </p>
 
                   <Link
@@ -546,9 +510,7 @@ export default function HomeTuitionSubscriptionsPage() {
                                   Amount
                                 </p>
                                 <p className="mt-1 font-black">
-                                  {money(
-                                    subscription.purchasedPrice
-                                  )}
+                                  {money(subscription.purchasedPrice)}
                                 </p>
                               </div>
 
@@ -574,20 +536,17 @@ export default function HomeTuitionSubscriptionsPage() {
                             {subscription.status === "ACTIVE" && (
                               <div className="mt-4 flex flex-wrap gap-4 text-xs font-semibold text-slate-500">
                                 <span>
-                                  Started:{" "}
-                                  {date(subscription.startsAt)}
+                                  Started: {date(subscription.startsAt)}
                                 </span>
                                 <span>
-                                  Expires:{" "}
-                                  {date(subscription.expiresAt)}
+                                  Expires: {date(subscription.expiresAt)}
                                 </span>
                               </div>
                             )}
 
                             {subscription.razorpayPaymentId && (
                               <p className="mt-4 truncate text-[11px] font-mono text-slate-400">
-                                Payment:{" "}
-                                {subscription.razorpayPaymentId}
+                                Payment: {subscription.razorpayPaymentId}
                               </p>
                             )}
                           </div>
@@ -603,9 +562,7 @@ export default function HomeTuitionSubscriptionsPage() {
                                   }
                                   className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-black text-slate-800 transition hover:bg-slate-50 disabled:opacity-50"
                                 >
-                                  {isBusy
-                                    ? "Checking..."
-                                    : "Recover payment"}
+                                  {isBusy ? "Checking..." : "Recover payment"}
                                 </button>
 
                                 <Link
@@ -622,15 +579,11 @@ export default function HomeTuitionSubscriptionsPage() {
                                 type="button"
                                 disabled={isBusy}
                                 onClick={() =>
-                                  cancelSubscription(
-                                    subscription.id
-                                  )
+                                  cancelSubscription(subscription.id)
                                 }
                                 className="rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-xs font-black text-rose-600 transition hover:bg-rose-50 disabled:opacity-50"
                               >
-                                {isBusy
-                                  ? "Processing..."
-                                  : "Cancel"}
+                                {isBusy ? "Processing..." : "Cancel"}
                               </button>
                             )}
 
@@ -639,15 +592,11 @@ export default function HomeTuitionSubscriptionsPage() {
                                 type="button"
                                 disabled={isBusy}
                                 onClick={() =>
-                                  renewSubscription(
-                                    subscription.id
-                                  )
+                                  renewSubscription(subscription.id)
                                 }
                                 className="rounded-xl bg-slate-950 px-4 py-2.5 text-xs font-black text-white transition hover:bg-slate-800 disabled:opacity-50"
                               >
-                                {isBusy
-                                  ? "Processing..."
-                                  : "Renew"}
+                                {isBusy ? "Processing..." : "Renew"}
                               </button>
                             )}
                           </div>
@@ -698,14 +647,9 @@ export default function HomeTuitionSubscriptionsPage() {
                       {activeSubscription && (
                         <button
                           type="button"
-                          disabled={
-                            busyId === activeSubscription.id
-                          }
+                          disabled={busyId === activeSubscription.id}
                           onClick={() =>
-                            renewSubscription(
-                              activeSubscription.id,
-                              plan.id
-                            )
+                            renewSubscription(activeSubscription.id, plan.id)
                           }
                           className="mt-4 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-black text-slate-800 transition hover:bg-slate-50 disabled:opacity-50"
                         >

@@ -1,8 +1,11 @@
-﻿export const siteConfig = {
+﻿
+export const siteConfig = {
   companyName: "AXYON TECHNOLOGIES",
   brandName: "Axyon",
-  email: "officianaxyon@gmail.com",
+  email: "support@axyon.in",
   phone: "6299010727",
+  address:
+    "Flat No. 105, Meridian Green Apartment, Adarsh Vihar Colony, Rukunpura, Jagdeopath, Patna, Bihar 800014, India",
 
   social: {
     instagram: "https://www.instagram.com/officialaxyon/",

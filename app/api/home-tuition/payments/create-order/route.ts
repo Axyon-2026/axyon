@@ -142,11 +142,20 @@ export async function POST(request: Request) {
       currency: "INR",
       receipt: `tutor_${subscription.id}`,
       notes: {
+        business: "Axyon",
+        service: "Home Tuition Tutor Marketplace",
+        product: "Home Tuition Tutor Subscription",
+        purpose:
+          "Tutor registration and public profile visibility on Axyon",
+        paymentScope:
+          "Home Tuition tutor subscription only; not tuition fees or private tutor-student payments",
         subscriptionId: subscription.id,
         tutorProfileId: subscription.tutorProfileId,
         userId: subscription.userId,
         planId: subscription.planId,
         planType: subscription.purchasedPlanType,
+        planName: subscription.plan.name,
+        durationDays: String(subscription.durationDays),
       },
     });
 

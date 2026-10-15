@@ -27,6 +27,7 @@ type Plan = {
   name: string;
   description?: string | null;
   price: number;
+  effectivePrice?: number;
   originalPrice?: number;
   durationDays: number;
   isActive?: boolean;
@@ -444,12 +445,11 @@ export default function HomeTuitionPage() {
           {!plansLoading && plans.length > 0 && (
             <div className="mx-auto mt-9 grid max-w-4xl gap-5 sm:grid-cols-2">
               {plans.map((plan) => {
-                const offerActive =
-                  plan.offerActive === true &&
-                  plan.originalPrice !== undefined &&
-                  plan.originalPrice > plan.price;
-
+                const effectivePrice = plan.effectivePrice ?? plan.price;
                 const originalPrice = plan.originalPrice ?? plan.price;
+
+                const offerActive =
+                  plan.offerActive === true && effectivePrice < originalPrice;
 
                 const expiry = offerActive
                   ? formatDate(plan.offerEndsAt)
@@ -483,7 +483,7 @@ export default function HomeTuitionPage() {
 
                       <div className="mt-3 flex flex-wrap items-end gap-3">
                         <span className="text-4xl font-black">
-                          ₹{plan.price.toLocaleString("en-IN")}
+                          ₹{effectivePrice.toLocaleString("en-IN")}
                         </span>
 
                         {offerActive && (
@@ -535,7 +535,7 @@ export default function HomeTuitionPage() {
                         className="mt-7 flex h-11 items-center justify-center rounded-xl bg-slate-950 text-sm font-bold text-white transition hover:bg-indigo-600"
                       >
                         {offerActive
-                          ? `Get offer · ₹${plan.price.toLocaleString("en-IN")}`
+                          ? `Get offer · ₹${effectivePrice.toLocaleString("en-IN")}`
                           : "Choose this plan"}
                       </Link>
                     </div>

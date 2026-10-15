@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { cookies } from "next/headers";
+import Razorpay from "razorpay";
 import { Resend } from "resend";
 import { prisma } from "@/lib/prisma";
 import { verifyToken } from "@/lib/auth";
 import { createNotification } from "@/lib/notifications";
 import { ADMIN_EMAIL } from "@/lib/admin";
 
-const FROM_EMAIL =
-  process.env.RESEND_FROM_EMAIL ||
-  "Axyon <noreply@axyon.in>";
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "Axyon <noreply@axyon.in>";
 
 async function getCampusUser() {
   const cookieStore = await cookies();
@@ -46,23 +45,22 @@ function verifyRazorpaySignature(
   orderId: string,
   paymentId: string,
   signature: string,
-  secret: string
+  secret: string,
 ) {
-  const expected = crypto
-    .createHmac("sha256", secret)
-    .update(`${orderId}|${paymentId}`)
-    .digest("hex");
-
-  const expectedBuffer = Buffer.from(expected, "utf8");
-  const receivedBuffer = Buffer.from(signature, "utf8");
-
-  if (expectedBuffer.length !== receivedBuffer.length) {
+  if (!/^[a-fA-F0-9]{64}$/.test(signature)) {
     return false;
   }
 
-  return crypto.timingSafeEqual(
-    expectedBuffer,
-    receivedBuffer
+  const expected = crypto
+    .createHmac("sha256", secret)
+    .update(`${orderId}|${paymentId}`)
+    .digest();
+
+  const received = Buffer.from(signature, "hex");
+
+  return (
+    expected.length === received.length &&
+    crypto.timingSafeEqual(expected, received)
   );
 }
 
@@ -74,12 +72,10 @@ function createInvoiceNumber() {
     `${String(date.getMonth() + 1).padStart(2, "0")}` +
     `${String(date.getDate()).padStart(2, "0")}`;
 
-  const randomPart = crypto
+  return `AXY-HT-${datePart}-${crypto
     .randomBytes(4)
     .toString("hex")
-    .toUpperCase();
-
-  return `AXY-HT-${datePart}-${randomPart}`;
+    .toUpperCase()}`;
 }
 
 function formatMoney(amount: number, currency: string) {
@@ -97,6 +93,20 @@ function formatDate(date: Date | null | undefined) {
     day: "numeric",
     month: "long",
     year: "numeric",
+  });
+}
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (character) => {
+    const entities: Record<string, string> = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    };
+
+    return entities[character];
   });
 }
 
@@ -140,123 +150,56 @@ function invoiceEmailHtml({
 <body style="margin:0;padding:0;background:#f5f7fb;font-family:Arial,Helvetica,sans-serif;color:#172033;">
   <div style="padding:32px 16px;">
     <div style="max-width:680px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:20px;overflow:hidden;">
-      
       <div style="padding:28px 32px;background:#111827;color:#ffffff;">
-        <div style="font-size:24px;font-weight:800;letter-spacing:-0.5px;">
-          Axyon
-        </div>
-        <div style="margin-top:6px;font-size:13px;color:#cbd5e1;">
-          Home Tuition Subscription Invoice
-        </div>
+        <div style="font-size:24px;font-weight:800;letter-spacing:-0.5px;">Axyon</div>
+        <div style="margin-top:6px;font-size:13px;color:#cbd5e1;">Home Tuition Subscription Invoice</div>
       </div>
-
       <div style="padding:32px;">
         <div style="display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;">
           <div>
-            <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-weight:700;">
-              Invoice
-            </div>
-            <div style="margin-top:6px;font-size:20px;font-weight:800;">
-              ${invoiceNumber}
-            </div>
+            <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-weight:700;">Invoice</div>
+            <div style="margin-top:6px;font-size:20px;font-weight:800;">${escapeHtml(invoiceNumber)}</div>
           </div>
-
           <div style="text-align:right;">
-            <div style="font-size:12px;color:#64748b;">
-              Issued
-            </div>
-            <div style="margin-top:4px;font-weight:700;">
-              ${formatDate(issuedAt)}
-            </div>
+            <div style="font-size:12px;color:#64748b;">Issued</div>
+            <div style="margin-top:4px;font-weight:700;">${formatDate(issuedAt)}</div>
           </div>
         </div>
-
         <div style="margin-top:32px;padding:20px;border-radius:14px;background:#f8fafc;">
-          <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-weight:700;">
-            Billed to
-          </div>
-          <div style="margin-top:8px;font-size:17px;font-weight:800;">
-            ${tutorName}
-          </div>
-          <div style="margin-top:4px;color:#64748b;">
-            ${tutorEmail}
-          </div>
+          <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-weight:700;">Billed to</div>
+          <div style="margin-top:8px;font-size:17px;font-weight:800;">${escapeHtml(tutorName)}</div>
+          <div style="margin-top:4px;color:#64748b;">${escapeHtml(tutorEmail)}</div>
         </div>
-
         <div style="margin-top:28px;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;">
-          <div style="padding:16px 18px;background:#f8fafc;font-weight:800;">
-            Subscription
-          </div>
-
+          <div style="padding:16px 18px;background:#f8fafc;font-weight:800;">Subscription</div>
           <div style="padding:18px;">
             <table style="width:100%;border-collapse:collapse;">
+              <tr><td style="padding:8px 0;color:#64748b;">Plan</td><td style="padding:8px 0;text-align:right;font-weight:700;">${escapeHtml(planName)}</td></tr>
+              <tr><td style="padding:8px 0;color:#64748b;">Billing cycle</td><td style="padding:8px 0;text-align:right;font-weight:700;">${escapeHtml(planType)}</td></tr>
+              <tr><td style="padding:8px 0;color:#64748b;">Subscription ID</td><td style="padding:8px 0;text-align:right;font-family:monospace;font-size:12px;">${escapeHtml(subscriptionId)}</td></tr>
+              <tr><td style="padding:8px 0;color:#64748b;">Start date</td><td style="padding:8px 0;text-align:right;font-weight:700;">${formatDate(startsAt)}</td></tr>
+              <tr><td style="padding:8px 0;color:#64748b;">Expiry date</td><td style="padding:8px 0;text-align:right;font-weight:700;">${formatDate(expiresAt)}</td></tr>
               <tr>
-                <td style="padding:8px 0;color:#64748b;">Plan</td>
-                <td style="padding:8px 0;text-align:right;font-weight:700;">
-                  ${planName}
-                </td>
-              </tr>
-
-              <tr>
-                <td style="padding:8px 0;color:#64748b;">Billing cycle</td>
-                <td style="padding:8px 0;text-align:right;font-weight:700;">
-                  ${planType}
-                </td>
-              </tr>
-
-              <tr>
-                <td style="padding:8px 0;color:#64748b;">Subscription ID</td>
-                <td style="padding:8px 0;text-align:right;font-family:monospace;font-size:12px;">
-                  ${subscriptionId}
-                </td>
-              </tr>
-
-              <tr>
-                <td style="padding:8px 0;color:#64748b;">Start date</td>
-                <td style="padding:8px 0;text-align:right;font-weight:700;">
-                  ${formatDate(startsAt)}
-                </td>
-              </tr>
-
-              <tr>
-                <td style="padding:8px 0;color:#64748b;">Expiry date</td>
-                <td style="padding:8px 0;text-align:right;font-weight:700;">
-                  ${formatDate(expiresAt)}
-                </td>
-              </tr>
-
-              <tr>
-                <td style="padding:16px 0 8px;border-top:1px solid #e5e7eb;font-size:16px;font-weight:800;">
-                  Total paid
-                </td>
-                <td style="padding:16px 0 8px;border-top:1px solid #e5e7eb;text-align:right;font-size:18px;font-weight:800;">
-                  ${formatMoney(amount, currency)}
-                </td>
+                <td style="padding:16px 0 8px;border-top:1px solid #e5e7eb;font-size:16px;font-weight:800;">Total paid</td>
+                <td style="padding:16px 0 8px;border-top:1px solid #e5e7eb;text-align:right;font-size:18px;font-weight:800;">${formatMoney(amount, currency)}</td>
               </tr>
             </table>
           </div>
         </div>
-
         <div style="margin-top:24px;padding:18px;border-radius:14px;background:#f8fafc;font-size:12px;color:#64748b;line-height:1.7;">
           <strong style="color:#334155;">Payment details</strong><br />
-          Razorpay Order ID: ${razorpayOrderId || "—"}<br />
-          Razorpay Payment ID: ${razorpayPaymentId || "—"}
+          Razorpay Order ID: ${escapeHtml(razorpayOrderId || "—")}<br />
+          Razorpay Payment ID: ${escapeHtml(razorpayPaymentId || "—")}
         </div>
-
         <div style="margin-top:28px;font-size:12px;line-height:1.7;color:#64748b;">
-          This invoice confirms the successful payment and activation of your
-          Axyon Home Tuition subscription. Please retain it for your records.
+          This invoice confirms the successful payment and activation of your Axyon Home Tuition subscription. Please retain it for your records.
         </div>
-
-        <div style="margin-top:28px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:12px;color:#94a3b8;">
-          Axyon · Home Tuition
-        </div>
+        <div style="margin-top:28px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:12px;color:#94a3b8;">Axyon · Home Tuition</div>
       </div>
     </div>
   </div>
 </body>
-</html>
-`;
+</html>`;
 }
 
 async function createInvoiceIfNeeded({
@@ -269,64 +212,64 @@ async function createInvoiceIfNeeded({
   paymentId: string;
 }) {
   const existing = await prisma.tutorInvoice.findUnique({
-    where: {
-      subscriptionId,
+    where: { subscriptionId },
+  });
+
+  if (existing) return existing;
+
+  const details = await prisma.tutorSubscription.findUnique({
+    where: { id: subscriptionId },
+    select: {
+      id: true,
+      userId: true,
+      status: true,
+      purchasedPrice: true,
+      purchasedPlanType: true,
+      razorpayOrderId: true,
+      razorpayPaymentId: true,
+      startsAt: true,
+      expiresAt: true,
+      user: {
+        select: { id: true, name: true, email: true },
+      },
+      plan: {
+        select: { name: true },
+      },
+      payments: {
+        where: {
+          id: paymentId,
+          status: "ACTIVATED",
+        },
+        select: {
+          id: true,
+          amount: true,
+          currency: true,
+          razorpayOrderId: true,
+          razorpayPaymentId: true,
+        },
+        take: 1,
+      },
     },
   });
 
-  if (existing) {
-    return existing;
-  }
-
-  const details =
-    await prisma.tutorSubscription.findUnique({
-      where: {
-        id: subscriptionId,
-      },
-      select: {
-        id: true,
-        purchasedPrice: true,
-        purchasedPlanType: true,
-        razorpayOrderId: true,
-        razorpayPaymentId: true,
-        startsAt: true,
-        expiresAt: true,
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        plan: {
-          select: {
-            name: true,
-          },
-        },
-        payments: {
-          where: {
-            id: paymentId,
-          },
-          select: {
-            id: true,
-            amount: true,
-            currency: true,
-            razorpayOrderId: true,
-            razorpayPaymentId: true,
-          },
-          take: 1,
-        },
-      },
-    });
-
-  if (!details) {
-    throw new Error("Subscription details not found for invoice");
+  if (
+    !details ||
+    details.user.id !== userId ||
+    details.status !== "ACTIVE" ||
+    details.razorpayPaymentId !== details.payments[0]?.razorpayPaymentId
+  ) {
+    throw new Error("Subscription details are not valid for invoice");
   }
 
   const payment = details.payments[0];
 
-  if (!payment) {
-    throw new Error("Payment record not found for invoice");
+  if (
+    !payment ||
+    payment.amount !== details.purchasedPrice ||
+    payment.currency !== "INR" ||
+    payment.razorpayOrderId !== details.razorpayOrderId
+  ) {
+    throw new Error("Payment record is not valid for invoice");
   }
 
   try {
@@ -342,57 +285,40 @@ async function createInvoiceIfNeeded({
         planType: details.purchasedPlanType,
         amount: payment.amount,
         currency: payment.currency,
-        razorpayOrderId:
-          payment.razorpayOrderId ||
-          details.razorpayOrderId,
-        razorpayPaymentId:
-          payment.razorpayPaymentId ||
-          details.razorpayPaymentId,
+        razorpayOrderId: payment.razorpayOrderId,
+        razorpayPaymentId: payment.razorpayPaymentId,
         issuedAt: new Date(),
       },
     });
-  } catch (error: any) {
-    if (error?.code === "P2002") {
-      const concurrentInvoice =
-        await prisma.tutorInvoice.findUnique({
-          where: {
-            subscriptionId,
-          },
-        });
+  } catch (error: unknown) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "P2002"
+    ) {
+      const concurrentInvoice = await prisma.tutorInvoice.findUnique({
+        where: { subscriptionId },
+      });
 
-      if (concurrentInvoice) {
-        return concurrentInvoice;
-      }
+      if (concurrentInvoice) return concurrentInvoice;
     }
 
     throw error;
   }
 }
 
-async function sendInvoiceEmails(
-  invoiceId: string,
-  subscriptionId: string
-) {
+async function sendInvoiceEmails(invoiceId: string, subscriptionId: string) {
   const invoice = await prisma.tutorInvoice.findUnique({
-    where: {
-      id: invoiceId,
-    },
+    where: { id: invoiceId },
   });
 
-  if (!invoice) {
-    throw new Error("Invoice not found");
-  }
+  if (!invoice) throw new Error("Invoice not found");
 
-  const subscription =
-    await prisma.tutorSubscription.findUnique({
-      where: {
-        id: subscriptionId,
-      },
-      select: {
-        startsAt: true,
-        expiresAt: true,
-      },
-    });
+  const subscription = await prisma.tutorSubscription.findUnique({
+    where: { id: subscriptionId },
+    select: { startsAt: true, expiresAt: true },
+  });
 
   if (!subscription) {
     throw new Error("Subscription not found for invoice email");
@@ -401,10 +327,7 @@ async function sendInvoiceEmails(
   const resendKey = process.env.RESEND_API_KEY;
 
   if (!resendKey) {
-    console.error(
-      "RESEND_API_KEY is not configured; invoice email not sent"
-    );
-
+    console.error("RESEND_API_KEY is not configured; invoice email not sent");
     return;
   }
 
@@ -428,58 +351,49 @@ async function sendInvoiceEmails(
 
   if (!invoice.tutorEmailSentAt) {
     try {
-      await resend.emails.send({
+      const result = await resend.emails.send({
         from: FROM_EMAIL,
         to: invoice.tutorEmail,
         subject: `Axyon Home Tuition Invoice ${invoice.invoiceNumber}`,
         html,
       });
 
-      await prisma.tutorInvoice.update({
-        where: {
-          id: invoice.id,
-        },
-        data: {
-          tutorEmailSentAt: new Date(),
-        },
-      });
+      if (!result.error) {
+        await prisma.tutorInvoice.update({
+          where: { id: invoice.id },
+          data: { tutorEmailSentAt: new Date() },
+        });
+      } else {
+        console.error("Tutor invoice email error:", result.error);
+      }
     } catch (error) {
-      console.error(
-        "Failed to send tutor invoice email:",
-        error
-      );
+      console.error("Tutor invoice email error:", error);
     }
   }
 
-  const latest =
-    await prisma.tutorInvoice.findUnique({
-      where: {
-        id: invoice.id,
-      },
-    });
+  const latest = await prisma.tutorInvoice.findUnique({
+    where: { id: invoice.id },
+  });
 
-  if (!latest?.adminEmailSentAt) {
+  if (latest && !latest.adminEmailSentAt) {
     try {
-      await resend.emails.send({
+      const result = await resend.emails.send({
         from: FROM_EMAIL,
         to: ADMIN_EMAIL,
         subject: `Home Tuition Invoice Copy ${invoice.invoiceNumber}`,
         html,
       });
 
-      await prisma.tutorInvoice.update({
-        where: {
-          id: invoice.id,
-        },
-        data: {
-          adminEmailSentAt: new Date(),
-        },
-      });
+      if (!result.error) {
+        await prisma.tutorInvoice.update({
+          where: { id: invoice.id },
+          data: { adminEmailSentAt: new Date() },
+        });
+      } else {
+        console.error("Admin invoice email error:", result.error);
+      }
     } catch (error) {
-      console.error(
-        "Failed to send admin invoice email:",
-        error
-      );
+      console.error("Admin invoice email error:", error);
     }
   }
 }
@@ -491,41 +405,39 @@ export async function POST(request: Request) {
     if (!user) {
       return NextResponse.json(
         { error: "Campus login required" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
     if (user.isSuspended) {
       return NextResponse.json(
         { error: "Your account is suspended" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     if (!user.studentVerified) {
       return NextResponse.json(
         { error: "Campus student verification is required" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
-    const body = await request.json();
+    let body: any;
 
-    const subscriptionId = String(
-      body.subscriptionId ?? ""
-    ).trim();
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid request body" },
+        { status: 400 },
+      );
+    }
 
-    const razorpayOrderId = String(
-      body.razorpay_order_id ?? ""
-    ).trim();
-
-    const razorpayPaymentId = String(
-      body.razorpay_payment_id ?? ""
-    ).trim();
-
-    const razorpaySignature = String(
-      body.razorpay_signature ?? ""
-    ).trim();
+    const subscriptionId = String(body?.subscriptionId ?? "").trim();
+    const razorpayOrderId = String(body?.razorpay_order_id ?? "").trim();
+    const razorpayPaymentId = String(body?.razorpay_payment_id ?? "").trim();
+    const razorpaySignature = String(body?.razorpay_signature ?? "").trim();
 
     if (
       !subscriptionId ||
@@ -535,324 +447,344 @@ export async function POST(request: Request) {
     ) {
       return NextResponse.json(
         { error: "Incomplete payment information" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const keySecret =
-      process.env.RAZORPAY_KEY_SECRET;
+    const keyId = process.env.RAZORPAY_KEY_ID;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
-    if (!keySecret) {
-      console.error(
-        "Razorpay secret is not configured"
-      );
+    if (!keyId || !keySecret) {
+      console.error("Razorpay credentials are not configured");
 
       return NextResponse.json(
         { error: "Payment service is not configured" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
-    const subscription =
-      await prisma.tutorSubscription.findFirst({
-        where: {
-          id: subscriptionId,
-          userId: user.id,
-        },
-        select: {
-          id: true,
-          userId: true,
-          tutorProfileId: true,
-          status: true,
-          purchasedPrice: true,
-          purchasedPlanType: true,
-          durationDays: true,
-          razorpayOrderId: true,
-          razorpayPaymentId: true,
-        },
-      });
+    const subscription = await prisma.tutorSubscription.findFirst({
+      where: {
+        id: subscriptionId,
+        userId: user.id,
+      },
+      select: {
+        id: true,
+        userId: true,
+        tutorProfileId: true,
+        status: true,
+        purchasedPrice: true,
+        durationDays: true,
+        razorpayOrderId: true,
+        razorpayPaymentId: true,
+      },
+    });
 
     if (!subscription) {
       return NextResponse.json(
         { error: "Subscription not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     if (
       subscription.status === "ACTIVE" &&
-      subscription.razorpayPaymentId ===
-        razorpayPaymentId
+      subscription.razorpayPaymentId === razorpayPaymentId &&
+      subscription.razorpayOrderId === razorpayOrderId
     ) {
-      const existingInvoice =
-        await prisma.tutorInvoice.findUnique({
-          where: {
-            subscriptionId: subscription.id,
-          },
-        });
+      const paymentRecord = await prisma.tutorPayment.findFirst({
+        where: {
+          subscriptionId: subscription.id,
+          userId: user.id,
+          status: "ACTIVATED",
+          razorpayOrderId,
+          razorpayPaymentId,
+          amount: subscription.purchasedPrice,
+          currency: "INR",
+        },
+        select: { id: true },
+      });
 
-      if (existingInvoice) {
-        await sendInvoiceEmails(
-          existingInvoice.id,
-          subscription.id
+      if (!paymentRecord) {
+        return NextResponse.json(
+          { error: "Existing payment record is inconsistent" },
+          { status: 409 },
         );
       }
+
+      const existingInvoice = await prisma.tutorInvoice.findUnique({
+        where: { subscriptionId: subscription.id },
+      });
+
+      const invoice =
+        existingInvoice ??
+        (await createInvoiceIfNeeded({
+          userId: user.id,
+          subscriptionId: subscription.id,
+          paymentId: paymentRecord.id,
+        }));
+
+      await sendInvoiceEmails(invoice.id, subscription.id);
 
       return NextResponse.json({
         success: true,
         alreadyProcessed: true,
         subscriptionId: subscription.id,
-        invoiceNumber:
-          existingInvoice?.invoiceNumber || null,
+        invoiceNumber: invoice.invoiceNumber,
       });
     }
 
     if (subscription.status !== "PENDING") {
       return NextResponse.json(
         {
-          error:
-            "This subscription is no longer awaiting payment",
+          error: "This subscription is no longer awaiting payment",
           status: subscription.status,
         },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
     if (
-      subscription.razorpayOrderId !==
-      razorpayOrderId
+      !subscription.razorpayOrderId ||
+      subscription.razorpayOrderId !== razorpayOrderId
     ) {
       return NextResponse.json(
-        {
-          error:
-            "Payment order does not match subscription",
-        },
-        { status: 400 }
+        { error: "Payment order does not match subscription" },
+        { status: 400 },
       );
     }
 
-    const validSignature =
-      verifyRazorpaySignature(
+    if (
+      !Number.isSafeInteger(subscription.purchasedPrice) ||
+      subscription.purchasedPrice <= 0
+    ) {
+      return NextResponse.json(
+        { error: "Subscription amount is invalid" },
+        { status: 409 },
+      );
+    }
+
+    if (
+      !verifyRazorpaySignature(
         razorpayOrderId,
         razorpayPaymentId,
         razorpaySignature,
-        keySecret
-      );
-
-    if (!validSignature) {
+        keySecret,
+      )
+    ) {
       return NextResponse.json(
         { error: "Invalid payment signature" },
-        { status: 400 }
+        { status: 400 },
+      );
+    }
+
+    const razorpay = new Razorpay({
+      key_id: keyId,
+      key_secret: keySecret,
+    });
+
+    const razorpayPayment = await razorpay.payments.fetch(razorpayPaymentId);
+
+    if (
+      razorpayPayment.id !== razorpayPaymentId ||
+      razorpayPayment.order_id !== razorpayOrderId ||
+      razorpayPayment.amount !== subscription.purchasedPrice * 100 ||
+      razorpayPayment.currency !== "INR" ||
+      razorpayPayment.status !== "captured"
+    ) {
+      return NextResponse.json(
+        { error: "Razorpay payment does not match the subscription" },
+        { status: 409 },
+      );
+    }
+
+    const existingPayment = await prisma.tutorPayment.findFirst({
+      where: { razorpayPaymentId },
+      select: {
+        id: true,
+        subscriptionId: true,
+        userId: true,
+        amount: true,
+        currency: true,
+        razorpayOrderId: true,
+        status: true,
+      },
+    });
+
+    if (
+      existingPayment &&
+      (existingPayment.subscriptionId !== subscription.id ||
+        existingPayment.userId !== user.id ||
+        existingPayment.amount !== subscription.purchasedPrice ||
+        existingPayment.currency !== "INR" ||
+        existingPayment.razorpayOrderId !== razorpayOrderId)
+    ) {
+      return NextResponse.json(
+        { error: "Payment ID is already associated with another payment" },
+        { status: 409 },
+      );
+    }
+
+    if (existingPayment?.status === "ACTIVATED") {
+      return NextResponse.json(
+        { error: "Payment record and subscription status are inconsistent" },
+        { status: 409 },
       );
     }
 
     const now = new Date();
-
     const expiresAt = new Date(now);
+    expiresAt.setDate(expiresAt.getDate() + subscription.durationDays);
 
-    expiresAt.setDate(
-      expiresAt.getDate() +
-        subscription.durationDays
-    );
-
-    const activated =
-      await prisma.$transaction(
-        async (tx) => {
-          const current =
-            await tx.tutorSubscription.findUnique({
-              where: {
-                id: subscription.id,
-              },
-              select: {
-                id: true,
-                userId: true,
-                tutorProfileId: true,
-                status: true,
-                purchasedPrice: true,
-                razorpayOrderId: true,
-                razorpayPaymentId: true,
-              },
-            });
-
-          if (!current) {
-            throw new Error(
-              "Subscription disappeared during activation"
-            );
-          }
-
-          if (
-            current.status === "ACTIVE" &&
-            current.razorpayPaymentId ===
-              razorpayPaymentId
-          ) {
-            return current;
-          }
-
-          if (current.status !== "PENDING") {
-            throw new Error(
-              "Subscription is no longer pending"
-            );
-          }
-
-          const updated =
-            await tx.tutorSubscription.update({
-              where: {
-                id: subscription.id,
-              },
-              data: {
-                status: "ACTIVE",
-                startsAt: now,
-                expiresAt,
-                activatedAt: now,
-                razorpayPaymentId,
-                razorpaySignature,
-              },
-              select: {
-                id: true,
-                status: true,
-                startsAt: true,
-                expiresAt: true,
-                activatedAt: true,
-                razorpayOrderId: true,
-                razorpayPaymentId: true,
-              },
-            });
-
-          await tx.tutorProfile.update({
-            where: {
-              id: subscription.tutorProfileId,
-            },
-            data: {
-              status: "ACTIVE",
-              publishedAt: now,
-              pausedAt: null,
-            },
-          });
-
-          const existingPayment =
-            await tx.tutorPayment.findFirst({
-              where: {
-                razorpayPaymentId,
-              },
-              select: {
-                id: true,
-              },
-            });
-
-          if (!existingPayment) {
-            await tx.tutorPayment.create({
-              data: {
-                subscriptionId:
-                  subscription.id,
-                userId: subscription.userId,
-                amount:
-                  subscription.purchasedPrice,
-                currency: "INR",
-                status: "ACTIVATED",
-                razorpayOrderId,
-                razorpayPaymentId,
-                razorpaySignature,
-                verifiedAt: now,
-                activatedAt: now,
-              },
-            });
-          } else {
-            await tx.tutorPayment.update({
-              where: {
-                id: existingPayment.id,
-              },
-              data: {
-                status: "ACTIVATED",
-                razorpayOrderId,
-                razorpayPaymentId,
-                razorpaySignature,
-                verifiedAt: now,
-                activatedAt: now,
-                failureReason: null,
-              },
-            });
-          }
-
-          return updated;
-        }
-      );
-
-    /*
-     * Create exactly one invoice for the successful
-     * subscription payment.
-     */
-    const payment =
-      await prisma.tutorPayment.findFirst({
+    const activated = await prisma.$transaction(async (tx) => {
+      const claim = await tx.tutorSubscription.updateMany({
         where: {
-          subscriptionId: subscription.id,
-          razorpayPaymentId,
+          id: subscription.id,
+          userId: user.id,
+          status: "PENDING",
+          razorpayOrderId,
         },
-        select: {
-          id: true,
+        data: {
+          status: "ACTIVE",
+          startsAt: now,
+          expiresAt,
+          activatedAt: now,
+          razorpayPaymentId,
+          razorpaySignature,
         },
       });
 
-    if (!payment) {
-      throw new Error(
-        "Activated payment record not found"
-      );
+      if (claim.count !== 1) {
+        const current = await tx.tutorSubscription.findUnique({
+          where: { id: subscription.id },
+          select: {
+            id: true,
+            userId: true,
+            tutorProfileId: true,
+            status: true,
+            purchasedPrice: true,
+            razorpayOrderId: true,
+            razorpayPaymentId: true,
+            startsAt: true,
+            expiresAt: true,
+            activatedAt: true,
+          },
+        });
+
+        if (
+          current?.status === "ACTIVE" &&
+          current.userId === user.id &&
+          current.razorpayOrderId === razorpayOrderId &&
+          current.razorpayPaymentId === razorpayPaymentId
+        ) {
+          return current;
+        }
+
+        throw new Error("Subscription could not be claimed for activation");
+      }
+
+      await tx.tutorProfile.update({
+        where: { id: subscription.tutorProfileId },
+        data: {
+          status: "ACTIVE",
+          publishedAt: now,
+          pausedAt: null,
+        },
+      });
+
+      if (existingPayment) {
+        await tx.tutorPayment.update({
+          where: { id: existingPayment.id },
+          data: {
+            status: "ACTIVATED",
+            razorpayOrderId,
+            razorpayPaymentId,
+            razorpaySignature,
+            verifiedAt: now,
+            activatedAt: now,
+            failureReason: null,
+          },
+        });
+      } else {
+        await tx.tutorPayment.create({
+          data: {
+            subscriptionId: subscription.id,
+            userId: user.id,
+            amount: subscription.purchasedPrice,
+            currency: "INR",
+            status: "ACTIVATED",
+            razorpayOrderId,
+            razorpayPaymentId,
+            razorpaySignature,
+            verifiedAt: now,
+            activatedAt: now,
+          },
+        });
+      }
+
+      return tx.tutorSubscription.findUniqueOrThrow({
+        where: { id: subscription.id },
+        select: {
+          id: true,
+          userId: true,
+          tutorProfileId: true,
+          status: true,
+          purchasedPrice: true,
+          razorpayOrderId: true,
+          razorpayPaymentId: true,
+          startsAt: true,
+          expiresAt: true,
+          activatedAt: true,
+        },
+      });
+    });
+
+    const paymentRecord = await prisma.tutorPayment.findFirst({
+      where: {
+        subscriptionId: subscription.id,
+        userId: user.id,
+        status: "ACTIVATED",
+        razorpayOrderId,
+        razorpayPaymentId,
+        amount: subscription.purchasedPrice,
+        currency: "INR",
+      },
+      select: { id: true },
+    });
+
+    if (!paymentRecord) {
+      throw new Error("Activated payment record not found");
     }
 
-    const invoice =
-      await createInvoiceIfNeeded({
+    const invoice = await createInvoiceIfNeeded({
+      userId: user.id,
+      subscriptionId: subscription.id,
+      paymentId: paymentRecord.id,
+    });
+
+    await sendInvoiceEmails(invoice.id, subscription.id);
+
+    const existingNotification = await prisma.notification.findFirst({
+      where: {
         userId: user.id,
-        subscriptionId: subscription.id,
-        paymentId: payment.id,
-      });
-
-    /*
-     * Send invoice to tutor and a copy to admin.
-     * Email failures do not undo an already verified payment.
-     */
-    await sendInvoiceEmails(
-      invoice.id,
-      subscription.id
-    );
-
-    /*
-     * Payment success notification/email.
-     *
-     * The notification is checked first so repeated
-     * Razorpay callbacks cannot send duplicate success emails.
-     */
-    const existingNotification =
-      await prisma.notification.findFirst({
-        where: {
-          userId: user.id,
-          type: "HOME_TUITION_PAYMENT",
-          message: {
-            contains:
-              `Subscription ID: ${subscription.id}`,
-          },
+        type: "HOME_TUITION_PAYMENT",
+        message: {
+          contains: `Payment ID: ${razorpayPaymentId}`,
         },
-        select: {
-          id: true,
-        },
-      });
+      },
+      select: { id: true },
+    });
 
     if (!existingNotification) {
-      const expiryText =
-        expiresAt.toLocaleDateString(
-          "en-IN",
-          {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          }
-        );
+      const expiryText = formatDate(activated.expiresAt);
 
       await createNotification({
         userId: user.id,
-        title:
-          "Home Tuition payment successful",
+        title: "Home Tuition payment successful",
         message:
           `Your Home Tuition subscription payment was successful. ` +
-          `Your tutor profile is now active and published until ${expiryText}. ` +
+          `Your tutor profile is now active until ${expiryText}. ` +
+          `Payment ID: ${razorpayPaymentId}. ` +
           `Subscription ID: ${subscription.id}. ` +
           `Invoice: ${invoice.invoiceNumber}`,
         type: "HOME_TUITION_PAYMENT",
@@ -866,21 +798,17 @@ export async function POST(request: Request) {
       subscription: activated,
       invoice: {
         id: invoice.id,
-        invoiceNumber:
-          invoice.invoiceNumber,
+        invoiceNumber: invoice.invoiceNumber,
       },
       message:
         "Payment verified, invoice generated, and tutor subscription activated",
     });
   } catch (error) {
-    console.error(
-      "Home Tuition payment verification error:",
-      error
-    );
+    console.error("Home Tuition payment verification error:", error);
 
     return NextResponse.json(
       { error: "Failed to verify payment" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
